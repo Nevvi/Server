@@ -11,6 +11,6 @@ shell.echo("Deploying apps to stage: " + stage);
 shell.cd("apps");
 shell.ls().forEach(function (dir) {
     shell.cd(dir);
-    shell.exec('sls deploy --stage ' + stage);
+    shell.exec('serverless deploy --stage ' + stage);
     shell.cd('..');
 });
