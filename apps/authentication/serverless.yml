@@ -1,0 +1,78 @@
+service:
+  name: authentication
+
+plugins:
+  - serverless-prune-plugin
+  - serverless-webpack
+  - serverless-domain-manager
+
+custom:
+  prune:
+    automatic: true
+    number: 2
+  oauthDomainMap:
+    default: https://nevvi-development-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
+    production: https://nevvi-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
+  publicUserPoolClientMap:
+    default: ${ssm:/nevvi/cognito/nevvi-development-public-users/clients/authentication/id}
+    production: ${ssm:/nevvi/cognito/nevvi-public-users/clients/authentication/id}
+  apiUserPoolClientMap:
+    default: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/authentication/id}
+    production: ${ssm:/nevvi/cognito/nevvi-api-users/clients/authentication/id}
+  apiUserPoolClientSecretMap:
+    default: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/authentication/secret~true}
+    production: ${ssm:/nevvi/cognito/nevvi-api-users/clients/authentication/secret~true}
+  domainNameMap:
+    default: api.development.nevvi.net
+    production: api.nevvi.net
+  basePathMap:
+    production: authentication
+    development: authentication
+    default: ${self:provider.stage}-authentication
+  customDomain:
+    domainName: ${self:custom.domainNameMap.${self:provider.stage}, self:custom.domainNameMap.default}
+    basePath: ${self:custom.basePathMap.${self:provider.stage}, self:custom.basePathMap.default}
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, 'test'}
+  region: ${opt:region, 'us-east-1'}
+  apiName: authentication-${self:provider.stage}
+  stackName: authentication-${self:provider.stage}
+  deploymentBucket:
+    name: nevvi-serverless-deployment-bucket
+  deploymentPrefix: ${self:provider.stage}
+  environment:
+    OAUTH_DOMAIN_URL: ${self:custom.oauthDomainMap.${self:provider.stage}, self:custom.oauthDomainMap.default}
+    PUBLIC_USER_POOL_CLIENT_ID: ${self:custom.publicUserPoolClientMap.${self:provider.stage}, self:custom.publicUserPoolClientMap.default}
+    USER_API_URL: https://${self:custom.domainNameMap.${self:provider.stage}, self:custom.domainNameMap.default}/user
+    API_CLIENT_ID: ${self:custom.apiUserPoolClientMap.${self:provider.stage}, self:custom.apiUserPoolClientMap.default}
+    API_CLIENT_SECRET: ${self:custom.apiUserPoolClientSecretMap.${self:provider.stage}, self:custom.apiUserPoolClientSecretMap.default}
+    USER_API_SCOPES: user_api/user_api.all
+
+functions:
+  register:
+    handler: src/functions/AuthHandler.register
+    events:
+      - http:
+          path: /v1/register
+          method: post
+
+  login:
+    handler: src/functions/AuthHandler.login
+    events:
+      - http:
+          path: /v1/login
+          method: post
+
+  logout:
+    handler: src/functions/AuthHandler.logout
+    events:
+      - http:
+          path: /v1/logout
+          method: post
+
+  # Cognito Triggers
+  preSignUpTrigger:
+    handler: src/functions/CognitoTriggers.preSignUp

@@ -23,10 +23,7 @@ jobs:
         run: npm install
       - name: Initialize submodules
         run: cd shared/common && npm install
-      - name: Deploy
-        uses: serverless/github-action@master
-        with:
-          args: deploy --stage production
+      - name: Deploy all apps
+        run: node deploy-all.js
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_STAGE: "production"

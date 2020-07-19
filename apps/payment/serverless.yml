@@ -1,0 +1,74 @@
+service:
+  name: payment
+
+plugins:
+  - serverless-prune-plugin
+  - serverless-iam-roles-per-function
+  - serverless-webpack
+  - serverless-domain-manager
+
+custom:
+  prune:
+    automatic: true
+    number: 2
+  serverless-iam-roles-per-function:
+    defaultInherit: true
+  domainNameMap:
+    default: api.development.nevvi.net
+    production: api.nevvi.net
+  basePathMap:
+    production: payment
+    development: payment
+    default: ${self:provider.stage}-payment
+  customDomain:
+    domainName: ${self:custom.domainNameMap.${self:provider.stage}, self:custom.domainNameMap.default}
+    basePath: ${self:custom.basePathMap.${self:provider.stage}, self:custom.basePathMap.default}
+  merchantIdMap:
+    default: ${ssm:/nevvi/braintree/development-merchant-id~true}
+    production: ${ssm:/nevvi/braintree/merchant-id~true}
+  publicKeyMap:
+    default: "4sgpcpnnngn5p2jj"
+    production: "4sgpcpnnngn5p2jj"
+  privateKeyMap:
+    default: ${ssm:/nevvi/braintree/development-private-key~true}
+    production: ${ssm:/nevvi/braintree/private-key~true}
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, 'test'}
+  region: ${opt:region, 'us-east-1'}
+  apiName: payment-${self:provider.stage}
+  stackName: payment-${self:provider.stage}
+  deploymentBucket:
+    name: nevvi-serverless-deployment-bucket
+  deploymentPrefix: ${self:provider.stage}
+  environment:
+    BRAINTREE_ENVIRONMENT: sandbox
+    MERCHANT_ID: ${self:custom.merchantIdMap.${self:provider.stage}, self:custom.merchantIdMap.default}
+    PUBLIC_KEY: ${self:custom.publicKeyMap.${self:provider.stage}, self:custom.publicKeyMap.default}
+    PRIVATE_KEY: ${self:custom.privateKeyMap.${self:provider.stage}, self:custom.privateKeyMap.default}
+
+functions:
+  paymentAuthorizer:
+    handler: src/functions/Authorizer.authorize
+  createToken:
+    handler: src/functions/PaymentHandler.createToken
+    events:
+      - http:
+          path: /v1/token
+          method: post
+          authorizer:
+            name: paymentAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+  createTransaction:
+    handler: src/functions/PaymentHandler.createTransaction
+    events:
+      - http:
+          path: /v1/transaction
+          method: post
+          authorizer:
+            name: paymentAuthorizer
+            resultTtlInSeconds: 0
+            type: request

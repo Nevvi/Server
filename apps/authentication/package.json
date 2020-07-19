@@ -1,0 +1,29 @@
+{
+  "name": "authentication",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nevvi/Authentication.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Nevvi/Authentication/issues"
+  },
+  "homepage": "https://github.com/Nevvi/Authentication#readme",
+  "devDependencies": {
+    "serverless-domain-manager": "~3.3.2",
+    "serverless-webpack": "^5.3.2",
+    "webpack": "^4.43.0"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.678.0",
+    "axios": "^0.19.2",
+    "joi": "^14.3.1",
+    "serverless-prune-plugin": "^1.4.3"
+  }
+}
