@@ -23,8 +23,6 @@ jobs:
         run: npm install
       - name: Initialize submodules
         run: cd shared/common && npm install
-      - name: Install serverless
-        run: npm install -g serverless
       - name: Deploy all apps
         run: node deploy-all.js
         env:
