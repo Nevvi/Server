@@ -1,0 +1,23 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "deploy-all.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "deploy-all.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nevvi/Server.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Nevvi/Server/issues"
+  },
+  "homepage": "https://github.com/Nevvi/Server#readme",
+  "dependencies": {
+    "shelljs": "^0.8.4"
+  }
+}

@@ -24,7 +24,9 @@ jobs:
       - name: Initialize submodules
         run: cd shared/common && npm install
       - name: Deploy all apps
-        run: sh deploy-all.sh
+        run: node deploy-all.js
+        env:
+          AWS_STAGE: "development"
 #      - name: Deploy
 #        uses: serverless/github-action@master
 #        with:
