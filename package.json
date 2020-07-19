@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/Nevvi/Server#readme",
   "dependencies": {
+    "serverless": "^1.75.1",
     "shelljs": "^0.8.4"
   }
 }
