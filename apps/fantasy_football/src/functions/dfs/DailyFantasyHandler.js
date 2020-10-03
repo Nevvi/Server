@@ -1,6 +1,8 @@
 'use strict';
 
+const {Lineup, Configuration} = require('../../model/Lineup')
 const FantasyFootballService = require("../../service/FantasyFootballService")
+
 const service = new FantasyFootballService()
 
 module.exports.getContests = async (event) => {
@@ -23,8 +25,10 @@ module.exports.optimize = async (event) => {
             return createResponse(404, {message: `No matching contest found for id ${contestId}`})
         }
 
-        const optimized = await service.optimize(contest)
-        return createResponse(200, optimized)
+        // TODO - take this out of body if present
+        const lineup = new Lineup(null, null, null, null, null, null, null, null)
+        await service.optimize(contest, lineup)
+        return createResponse(200, lineup)
     } catch (e) {
         return createResponse(e.statusCode, e.message)
     }

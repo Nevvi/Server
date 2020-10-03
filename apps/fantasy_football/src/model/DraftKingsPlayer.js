@@ -11,4 +11,9 @@ module.exports = class {
         this.pointsPerGame = json.ppg
         this.isDisabled = json.IsDisabledFromDrafting
     }
+
+    // TODO - grab more granular data to calculate this
+    getValue() {
+        return this.pointsPerGame
+    }
 }
