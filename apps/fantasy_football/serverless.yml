@@ -1,0 +1,50 @@
+service:
+  name: fantasy-football
+
+plugins:
+  - serverless-prune-plugin
+  - serverless-iam-roles-per-function
+  - serverless-webpack
+  - serverless-domain-manager
+
+custom:
+  prune:
+    automatic: true
+    number: 2
+  serverless-iam-roles-per-function:
+    defaultInherit: true
+  domainNameMap:
+    default: api.development.nevvi.net
+    production: api.nevvi.net
+  basePathMap:
+    production: fantasy-football
+    development: fantasy-football
+    default: ${self:provider.stage}-fantasy-football
+  customDomain:
+    domainName: ${self:custom.domainNameMap.${self:provider.stage}, self:custom.domainNameMap.default}
+    basePath: ${self:custom.basePathMap.${self:provider.stage}, self:custom.basePathMap.default}
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, 'test'}
+  region: ${opt:region, 'us-east-1'}
+  apiName: fantasy-football-${self:provider.stage}
+  stackName: fantasy-football-${self:provider.stage}
+  deploymentBucket:
+    name: nevvi-serverless-deployment-bucket
+  deploymentPrefix: ${self:provider.stage}
+
+functions:
+  fantasyFootballAuthorizer:
+    handler: src/functions/Authorizer.authorize
+  getContests:
+    handler: src/functions/dfs/DailyFantasyHandler.getContests
+    events:
+      - http:
+          path: /dfs/v1/contests
+          method: get
+          authorizer:
+            name: fantasyFootballAuthorizer
+            resultTtlInSeconds: 0
+            type: request
