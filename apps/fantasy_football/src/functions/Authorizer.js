@@ -7,6 +7,7 @@ class Authorizer extends AbstractAuthorizer {
     generatePermissions(authPolicy, userId) {
         if (userId) {
             authPolicy.allowMethod(HttpVerb.GET, `/dfs/v1/contests`)
+            authPolicy.allowMethod(HttpVerb.POST, `/dfs/v1/contests/*/optimize`)
         } else {
             authPolicy.denyAllMethods()
         }

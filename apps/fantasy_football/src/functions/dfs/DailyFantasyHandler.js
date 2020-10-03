@@ -13,6 +13,23 @@ module.exports.getContests = async (event) => {
     }
 }
 
+module.exports.optimize = async (event) => {
+    try{
+        console.log("Received request to optimize")
+        const {contestId} = event.pathParameters
+        const contest = await service.getContest(parseInt(contestId))
+
+        if (!contest) {
+            return createResponse(404, {message: `No matching contest found for id ${contestId}`})
+        }
+
+        const optimized = await service.optimize(contest)
+        return createResponse(200, optimized)
+    } catch (e) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
 function createResponse(statusCode, body) {
     return {
         statusCode: statusCode || 500,

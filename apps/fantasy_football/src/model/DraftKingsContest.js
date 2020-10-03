@@ -3,6 +3,7 @@
 module.exports = class {
     constructor(json) {
         this.id = json.id
+        this.draftGroup = json.dg
         this.title = json.n
         this.cost = json.fpp
         this.prizes = json.po

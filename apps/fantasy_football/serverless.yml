@@ -48,3 +48,13 @@ functions:
             name: fantasyFootballAuthorizer
             resultTtlInSeconds: 0
             type: request
+  optimizeContest:
+    handler: src/functions/dfs/DailyFantasyHandler.optimize
+    events:
+      - http:
+          path: /dfs/v1/contests/{contestId}/optimize
+          method: post
+          authorizer:
+            name: fantasyFootballAuthorizer
+            resultTtlInSeconds: 0
+            type: request
