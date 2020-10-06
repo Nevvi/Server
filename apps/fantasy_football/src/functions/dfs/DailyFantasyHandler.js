@@ -25,9 +25,8 @@ module.exports.optimize = async (event) => {
             return createResponse(404, {message: `No matching contest found for id ${contestId}`})
         }
 
-        // TODO - take this out of body if present
-        const lineup = new Lineup(null, null, null, null, null, null, null, null)
-        await service.optimize(contest, lineup)
+        // TODO - extract preset players from body
+        const lineup = await service.optimize(contest)
         return createResponse(200, lineup)
     } catch (e) {
         return createResponse(e.statusCode, e.message)

@@ -1,123 +1,164 @@
 'use strict'
 
-const {FANTASY_POSITIONS} = require('../model/Constants')
+const {FANTASY_POSITIONS, ROSTER_POSITIONS} = require('../model/Constants')
+const {Lineup} = require('../model/Lineup')
 
 const MAX_SALARY = 50000
 
 module.exports = class {
     constructor() {}
 
+    optimize(players) {
+        return this.optimizeWithSalary(players, MAX_SALARY)
+    }
+
     // determine optimal lineup based on configuration and constraints
     // For now just use PPG until we integrate with more granular data and scoring options
-    optimize(players, lineup) {
+    optimizeWithSalary(players, maxSalary) {
         // 1. Group players by position
         const groups = groupBy(players, "position")
-        groups[FANTASY_POSITIONS.FLEX] = groups[FANTASY_POSITIONS.RUNNING_BACK].concat(groups[FANTASY_POSITIONS.WIDE_RECEIVER]).concat(groups[FANTASY_POSITIONS.TIGHT_END])
+        groups[FANTASY_POSITIONS.FLEX] = (groups[FANTASY_POSITIONS.RUNNING_BACK] || [])
+            .concat((groups[FANTASY_POSITIONS.WIDE_RECEIVER] || []))
+            .concat((groups[FANTASY_POSITIONS.TIGHT_END] || []))
 
         // 2. Sort the groups by "value"
-        Object.values(groups).forEach(positionGroup => {
-            positionGroup.sort((p1, p2) => p2.getValue() - p1.getValue())
+        Object.entries(groups).forEach(([position, players]) => {
+            groups[position] = players.filter(p => p.value > 0)
+                .sort((p1, p2) => p2.value - p1.value)
         })
 
         // 3. Initialize an optimal lineup with the available players and manual overrides
-        const optimizedLineup = new OptimizedLineup(lineup, groups)
+        const optimizedLineup = new OptimizedLineup(groups)
+
+        // 2D matrix where historyMap[X][Y] contains the index that Y was at the last time X moved
+        // Used for "resetting" when single position has dropped due to small decrements vs. large decrement in other position
+        // TODO - use map across positions for drop comparisons instead of single drop
+        let lastPositionDrop = null
 
         // 4. If over salary then decrement position index with lowest value loss that doesn't overlap
-        // 5. Repeat (4) until under or at salary cap
-        lineup.qb = optimizedLineup.qbIndex.player
-        lineup.rb1 = optimizedLineup.rb1Index.player
-        lineup.rb2 = optimizedLineup.rb2Index.player
-        lineup.wr1 = optimizedLineup.wr1Index.player
-        lineup.wr2 = optimizedLineup.wr2Index.player
-        lineup.te = optimizedLineup.teIndex.player
-        lineup.flex = optimizedLineup.flexIndex.player
-        lineup.dst = optimizedLineup.defenseIndex.player
+        while (optimizedLineup.getSalaryUsed() > maxSalary) {
+            // Get the individual drops at each roster spot sorted by smallest drop
+            const positionDrops = Object.keys(ROSTER_POSITIONS)
+                .map(rosterPosition => optimizedLineup.progressIndex(optimizedLineup[rosterPosition]))
+                .filter(i => i.comparePreviousValue() >= 0.0)
+
+            const sortedByValueDrop = positionDrops
+                .sort((a,b) => a.comparePreviousValue() - b.comparePreviousValue())
+
+            // The smallest individual drop across positions
+            let minValueDrop = sortedByValueDrop.length > 0 ? sortedByValueDrop[0] : null
+
+            if (minValueDrop === null) break
+
+            // console.log(`Smallest individual drop is roster spot ${minValueDrop.roster} from ${minValueDrop.previousIndex.index} to ${minValueDrop.index} with value ${minValueDrop.comparePreviousValue()}`)
+
+            // Same position has dropped consecutive times
+            if (lastPositionDrop === null) {
+                lastPositionDrop = minValueDrop.previousIndex
+            } else if (minValueDrop.roster === lastPositionDrop.roster) {
+                // Compare the total drop of this roster spot to the other drops to see if it would be better to do something else
+                const otherPositionDrops = positionDrops.filter(positionDrop => {
+                    return positionDrop !== minValueDrop && minValueDrop.compareValue(lastPositionDrop) > positionDrop.comparePreviousValue()
+                }).sort((a,b) => a.comparePreviousValue() - b.comparePreviousValue())
+
+                // There is another roster spot that has an individual drop smaller than the total drop at the last position
+                if (otherPositionDrops.length > 0) {
+                    console.log(`Found other roster spot (${otherPositionDrops[0].roster}) with smaller drop of ${otherPositionDrops[0].comparePreviousValue()} compared to total drop of ${minValueDrop.compareValue(lastPositionDrop)}. Resetting ${minValueDrop.roster} back to ${lastPositionDrop.index}`)
+                    // Reset the position that has been consecutively dropping back to where it was when it start dropping
+                    optimizedLineup[minValueDrop.roster] = lastPositionDrop
+
+                    // Override the min value drop to the other position that has the smallest overall drop
+                    minValueDrop = otherPositionDrops[0]
+                    lastPositionDrop = minValueDrop
+                }
+            } else {
+                // New roster position dropped
+                lastPositionDrop = minValueDrop
+            }
+
+            optimizedLineup[minValueDrop.roster] = minValueDrop
+        }
+
+        if (optimizedLineup.emptyRosterSpotsPresent() || optimizedLineup.getSalaryUsed() > maxSalary) {
+            throw new Error(`No roster possible with salary ${maxSalary}`)
+        }
+
+        return optimizedLineup.toLineup()
     }
+
+    initializeHistoryMap() {
+        const map = {}
+        Object.values(FANTASY_POSITIONS).forEach(pos1 => {
+            const positionMap = {}
+            Object.values(FANTASY_POSITIONS).forEach(pos2 => {
+                positionMap[pos2] = 0
+            })
+            map[pos1] = positionMap
+        })
+        return map
+    }
+
 }
 
 // TODO - make this agnostic to position counts??
 class OptimizedLineup {
-    constructor(lineup, players) {
+    constructor(players) {
         this.players = players
 
-        // Initialize all indexes to invalid ones
-        this.qbIndex = new PositionIndex(-1, FANTASY_POSITIONS.QUARTERBACK, null, null)
-        this.rb1Index = new PositionIndex(-1, FANTASY_POSITIONS.RUNNING_BACK, null, null)
-        this.rb2Index = new PositionIndex(-1, FANTASY_POSITIONS.RUNNING_BACK, null, null)
-        this.wr1Index = new PositionIndex(-1, FANTASY_POSITIONS.WIDE_RECEIVER, null, null)
-        this.wr2Index = new PositionIndex(-1, FANTASY_POSITIONS.WIDE_RECEIVER, null, null)
-        this.teIndex = new PositionIndex(-1, FANTASY_POSITIONS.TIGHT_END, null, null)
-        this.flexIndex = new PositionIndex(-1, FANTASY_POSITIONS.FLEX, null, null)
-        this.defenseIndex = new PositionIndex(-1, FANTASY_POSITIONS.DEFENSE, null, null)
-
-        // If players set manually then add them and lock them in
-        if (lineup.qb != null) this.findAndLockIndex(this.qbIndex, lineup.qb, this.players[FANTASY_POSITIONS.QUARTERBACK])
-        if (lineup.rb1 != null) this.findAndLockIndex(this.rb1Index, lineup.rb1, this.players[FANTASY_POSITIONS.RUNNING_BACK])
-        if (lineup.rb2 != null) this.findAndLockIndex(this.rb2Index, lineup.rb2, this.players[FANTASY_POSITIONS.RUNNING_BACK])
-        if (lineup.wr1 != null) this.findAndLockIndex(this.wr1Index, lineup.wr1, this.players[FANTASY_POSITIONS.WIDE_RECEIVER])
-        if (lineup.wr2 != null) this.findAndLockIndex(this.wr2Index, lineup.wr2, this.players[FANTASY_POSITIONS.WIDE_RECEIVER])
-        if (lineup.te != null) this.findAndLockIndex(this.teIndex, lineup.te, this.players[FANTASY_POSITIONS.TIGHT_END])
-        if (lineup.flex != null) this.findAndLockIndex(this.flexIndex, lineup.flex, this.players[FANTASY_POSITIONS.FLEX])
-        if (lineup.dst != null) this.findAndLockIndex(this.defenseIndex, lineup.dst, this.players[FANTASY_POSITIONS.DEFENSE])
-
-        // Once players are locked in progress each index to the next valid player
-        this.qbIndex = this.progressIndex(this.qbIndex)
-        this.rb1Index = this.progressIndex(this.rb1Index)
-        this.rb2Index = this.progressIndex(this.rb2Index)
-        this.wr1Index = this.progressIndex(this.wr1Index)
-        this.wr2Index = this.progressIndex(this.wr2Index)
-        this.teIndex = this.progressIndex(this.teIndex)
-        this.flexIndex = this.progressIndex(this.flexIndex)
-        this.defenseIndex = this.progressIndex(this.defenseIndex)
+        // Initialize all indexes to the first valid player for each roster spot
+        Object.entries(ROSTER_POSITIONS).forEach(([rosterPosition, fantasyPosition]) => {
+            this[rosterPosition] = this.progressIndex(new PositionIndex(-1, rosterPosition, fantasyPosition, null, null))
+        })
     }
 
-    findAndLockIndex(positionIndex, player, players) {
-        positionIndex.locked = true
-        positionIndex.index = players.indexOf(player)
-        positionIndex.player = player
+    emptyRosterSpotsPresent() {
+        return Object.keys(ROSTER_POSITIONS).filter(rosterPosition => !this[rosterPosition].player).length > 0
+    }
+
+    toLineup() {
+        return new Lineup(...(Object.keys(ROSTER_POSITIONS).map(rosterPosition => this[rosterPosition].player)))
     }
 
     // Return a new index object that would be the next valid player to go to
     progressIndex(positionIndex) {
-        console.log("Trying to increment position index", positionIndex)
+        // No players at position... shouldn't happen
+        if (!this.players[positionIndex.position] || this.players[positionIndex.position].length === 0) return positionIndex
 
-        if (positionIndex.locked) return positionIndex
+        const previousIndex = positionIndex.index >= 0 ? positionIndex : null
+        let newIndex = new PositionIndex(positionIndex.index, positionIndex.roster, positionIndex.position, positionIndex.player, previousIndex)
 
-        let newIndex, newPlayer, nextIndex = positionIndex.index
         do {
-            nextIndex = nextIndex + 1
-            console.log(`Trying to increment from ${positionIndex.index} to ${nextIndex}`)
+            const nextIndex = newIndex.index + 1
 
-            // All remaining players in use from other positions... return original.
-            if (positionIndex.index >= this.players[positionIndex.position].length) return positionIndex
+            // All remaining players in use from other positions... return original
+            if (nextIndex >= this.players[positionIndex.position].length){
+                positionIndex.previousIndex = newIndex.player !== positionIndex.player ? previousIndex : null
+                return positionIndex
+            }
 
-            const previousIndex = positionIndex.index >= 0 ? positionIndex.index : null
-            newPlayer = this.players[positionIndex.position][nextIndex]
-            newIndex = new PositionIndex(nextIndex, positionIndex.position, newPlayer, previousIndex)
-        } while(this.isPlayerInUse(newPlayer))
+            newIndex.player = this.players[positionIndex.position][nextIndex]
+            newIndex.index = nextIndex
+        } while(this.isPlayerInUse(newIndex.player))
 
         return newIndex
     }
 
     isPlayerInUse(player) {
-        return this.qbIndex.player === player ||
-            this.rb1Index.player === player ||
-            this.rb2Index.player === player ||
-            this.wr1Index.player === player ||
-            this.wr2Index.player === player ||
-            this.teIndex.player === player ||
-            this.flexIndex.player === player ||
-            this.defenseIndex.player === player
+        return Object.keys(ROSTER_POSITIONS)
+            .find(rosterPosition => this[rosterPosition] && this[rosterPosition].player === player)
     }
 
     getSalaryUsed() {
-        return this.qbIndex.getCost() + this.rb1Index.getCost() + this.rb2Index.getCost() + this.wr1Index.getCost() + this.wr2Index.getCost() + this.teIndex.getCost() + this.flexIndex.getCost() + this.defenseIndex.getCost()
+        return Object.keys(ROSTER_POSITIONS)
+            .map(rosterPosition => this[rosterPosition].getCost())
+            .reduce((a,b) => a + b, 0)
     }
 }
 
 class PositionIndex {
-    constructor(index, position, player, previousIndex) {
+    constructor(index, roster, position, player, previousIndex) {
         this.locked = false
+        this.roster = roster
         this.position = position
         this.index = index
         this.player = player
@@ -129,11 +170,15 @@ class PositionIndex {
     }
 
     getValue() {
-        return this.player !== null ? this.player.getValue() : 0.0
+        return this.player !== null ? this.player.value : 0.0
     }
 
-    compareValue(positionIndex) {
-        return positionIndex === this ? -1 : this.getValue() - positionIndex.getValue()
+    compareValue(otherIndex) {
+        return otherIndex && otherIndex.index !== this.index ? otherIndex.getValue() - this.getValue() : -1
+    }
+
+    comparePreviousValue() {
+        return this.compareValue(this.previousIndex)
     }
 }
 

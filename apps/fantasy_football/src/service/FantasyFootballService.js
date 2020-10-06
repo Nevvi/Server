@@ -23,11 +23,12 @@ module.exports = class PaymentService {
         return contests.sort(c => c.startTime)
     }
 
-    async optimize(contest, lineup) {
+    async optimize(contest) {
         const players = await this.draftKingsDAO.getPlayers(contest.draftGroup)
+        const filtered = players.filter(p => p.status !== "IR")
         // TODO - filter out players if desired
-        console.log(`Evaluating ${players.length} players`)
-        this.optimizer.optimize(players, lineup)
+        console.log(`Evaluating ${filtered.length} out of ${players.length} total players`)
+        return this.optimizer.optimize(filtered)
     }
 
 }

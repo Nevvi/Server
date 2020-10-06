@@ -9,11 +9,7 @@ module.exports = class {
         this.status = json.i // IR = Injured Reserve, Q = Questionable, PPD = Postponed, etc.
         this.cost = json.s
         this.pointsPerGame = json.ppg
+        this.value = json.ppg
         this.isDisabled = json.IsDisabledFromDrafting
-    }
-
-    // TODO - grab more granular data to calculate this
-    getValue() {
-        return this.pointsPerGame
     }
 }

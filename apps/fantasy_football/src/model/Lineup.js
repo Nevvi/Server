@@ -6,7 +6,7 @@ module.exports.Configuration = class {
     constructor() {
         this.qbCount = 1
         this.rbCount = 2
-        this.wrCount = 2
+        this.wrCount = 3
         this.teCount = 1
         this.flexCount = 1
         this.defenseCount = 1
@@ -39,12 +39,13 @@ module.exports.Configuration = class {
 }
 
 module.exports.Lineup = class {
-    constructor(qb1, rb1, rb2, wr1, wr2, te, flex, dst) {
+    constructor(qb1, rb1, rb2, wr1, wr2, wr3, te, flex, dst) {
         this.qb = qb1
         this.rb1 = rb1
         this.rb2 = rb2
         this.wr1 = wr1
         this.wr2 = wr2
+        this.wr3 = wr3
         this.te = te
         this.flex = flex
         this.dst = dst
