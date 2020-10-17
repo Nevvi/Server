@@ -1,8 +1,8 @@
 'use strict'
 
 const axios = require('axios')
-const Contest = require('../../model/DraftKingsContest')
-const Player = require('../../model/DraftKingsPlayer')
+const Contest = require('../model/DraftKingsContest')
+const Player = require('../model/DraftKingsPlayer')
 
 module.exports = class {
 

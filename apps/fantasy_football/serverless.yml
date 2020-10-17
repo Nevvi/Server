@@ -13,6 +13,11 @@ custom:
     number: 2
   serverless-iam-roles-per-function:
     defaultInherit: true
+  playerTableNameMap:
+    default: fantasy-players-dev
+    production: fantasy-players
+  playerTableName: ${self:custom.playerTableNameMap.${self:provider.stage}, self:custom.playerTableNameMap.default}
+  playerTableArn: ${ssm:/nevvi/dynamodb/${self:custom.playerTableName}/arn}
   domainNameMap:
     default: api.development.nevvi.net
     production: api.nevvi.net
@@ -34,10 +39,24 @@ provider:
   deploymentBucket:
     name: nevvi-serverless-deployment-bucket
   deploymentPrefix: ${self:provider.stage}
+  environment:
+    PLAYER_TABLE: ${self:custom.playerTableName}
 
 functions:
   fantasyFootballAuthorizer:
     handler: src/functions/Authorizer.authorize
+  refreshPlayers:
+    timeout: 30
+    handler: src/functions/dfs/DailyFantasyHandler.refreshPlayers
+    events:
+      - http:
+          path: /dfs/v1/players/refresh
+          method: post
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:BatchWriteItem
+        Resource: ${self:custom.playerTableArn}
   getContests:
     handler: src/functions/dfs/DailyFantasyHandler.getContests
     events:
@@ -58,3 +77,8 @@ functions:
             name: fantasyFootballAuthorizer
             resultTtlInSeconds: 0
             type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: ${self:custom.playerTableArn}

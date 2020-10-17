@@ -1,7 +1,7 @@
 'use strict'
 
 const LineupOptimizer = require('../../src/service/LineupOptimizer')
-const Player = require('../../src/model/DraftKingsPlayer')
+const {ValuedPlayer} = require('../../src/model/Player')
 const {POSITIONS} = require('../../src/model/Constants')
 
 const optimizer = new LineupOptimizer()
@@ -153,5 +153,5 @@ test('Multiple players in different roster spots - 1 with small jumps 1 with big
 });
 
 function generatePlayer(id, position, value, cost) {
-    return new Player({pid: id, pn: position, ppg: value, s: cost})
+    return new ValuedPlayer({id, position}, value, cost)
 }

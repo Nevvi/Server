@@ -1,13 +1,20 @@
 'use strict'
 
-const DraftkingsDAO = require('../dao/draftkings/DraftkingsDAO')
+const DraftkingsDAO = require('../dao/DraftkingsDAO')
+const PlayerDAO = require('../dao/PlayerDAO')
 const LineupOptimizer = require('./LineupOptimizer')
 const Constants = require('../model/Constants')
+const {ValuedPlayer} = require('../model/Player')
 
 module.exports = class PaymentService {
     constructor() {
         this.draftKingsDAO = new DraftkingsDAO()
+        this.playerDAO = new PlayerDAO()
         this.optimizer = new LineupOptimizer()
+    }
+
+    async refreshPlayers() {
+        await this.playerDAO.refreshPlayers()
     }
 
     async getContest(contestId) {
@@ -24,11 +31,46 @@ module.exports = class PaymentService {
     }
 
     async optimize(contest) {
-        const players = await this.draftKingsDAO.getPlayers(contest.draftGroup)
-        const filtered = players.filter(p => p.status !== "IR")
+        // TODO - get the pre-computed player values for the week
+        // Get all the players in our system and all the players eligible for the given contest
+        const [allPlayers, availablePlayers] = await Promise.all([
+            this.playerDAO.getAllPlayers(),
+            this.draftKingsDAO.getPlayers(contest.draftGroup)
+        ])
+
         // TODO - filter out players if desired
-        console.log(`Evaluating ${filtered.length} out of ${players.length} total players`)
-        return this.optimizer.optimize(filtered)
+        const filtered = availablePlayers.filter(p => p.status !== "IR" && p.status !== "O" && !p.isDisabled)
+        console.log(`Evaluating ${filtered.length} out of ${allPlayers.length} total players`)
+
+        // Combine the DK info with our own info
+        const mapped = filtered.map(dkp => {
+            if (dkp.position === Constants.POSITIONS.DEFENSE) {
+                // TODO - grab team some other way? or store defense as a "PLAYER" in the system
+                return new ValuedPlayer(dkp, dkp.pointsPerGame, dkp.cost)
+            }
+
+            // Otherwise grab from known players
+            const player = allPlayers.find(p =>
+                generatePlayerKey(p.firstName, p.lastName, p.position) === generatePlayerKey(dkp.firstName, dkp.lastName, dkp.position)
+            )
+
+            // Ideally this never happens...
+            if (!player) {
+                console.log(`Could not find known player info for DKP ${dkp.firstName} ${dkp.lastName} ${dkp.position}`)
+                return null
+            }
+
+            // TODO - grab value from player document once it is pre-computed in our system
+            return new ValuedPlayer(player, dkp.pointsPerGame, dkp.cost)
+        }).filter(m => m !== null)
+
+        console.log(`Lost ${filtered.length - mapped.length} players due to bad mapping`)
+
+        return this.optimizer.optimize(mapped)
     }
 
+}
+
+function generatePlayerKey(firstName, lastName, position) {
+    return `${firstName.toUpperCase()}_${lastName.toUpperCase()}_${position.toUpperCase()}`
 }

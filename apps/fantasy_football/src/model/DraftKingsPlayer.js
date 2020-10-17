@@ -8,8 +8,7 @@ module.exports = class {
         this.position = json.pn // RB, WR, etc.
         this.status = json.i // IR = Injured Reserve, Q = Questionable, PPD = Postponed, etc.
         this.cost = json.s
-        this.pointsPerGame = json.ppg
-        this.value = json.ppg
+        this.pointsPerGame = parseFloat(json.ppg)
         this.isDisabled = json.IsDisabledFromDrafting
     }
 }

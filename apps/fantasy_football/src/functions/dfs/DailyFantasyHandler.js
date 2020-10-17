@@ -5,6 +5,16 @@ const FantasyFootballService = require("../../service/FantasyFootballService")
 
 const service = new FantasyFootballService()
 
+module.exports.refreshPlayers = async (event) => {
+    try{
+        console.log("Received request to refresh players")
+        await service.refreshPlayers()
+        return createResponse(200, {message: "Success!"})
+    } catch (e) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
 module.exports.getContests = async (event) => {
     try{
         console.log("Received request to get contests")
