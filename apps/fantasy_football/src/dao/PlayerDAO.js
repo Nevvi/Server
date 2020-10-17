@@ -9,9 +9,7 @@ module.exports = class {
     constructor() {
         this.table = process.env.PLAYER_TABLE
         this.db = new AWS.DynamoDB.DocumentClient({})
-
-        // TODO make this out of username/password SSM variables
-        this.authorization = 'Basic MzQzMGYxZjAtNjczOC00ZTc0LWI0YmYtMzFlNDU5Ok1ZU1BPUlRTRkVFRFM='
+        this.authorization = process.env.MYSPORTSFEEDS_AUTHORIZATION_TOKEN
         this.baseUrl = 'https://api.mysportsfeeds.com/v2.1/pull/nfl'
     }
 

@@ -41,6 +41,7 @@ provider:
   deploymentPrefix: ${self:provider.stage}
   environment:
     PLAYER_TABLE: ${self:custom.playerTableName}
+    MYSPORTSFEEDS_AUTHORIZATION_TOKEN: ${ssm:/nevvi/mysportsfeeds/authorization~true}
 
 functions:
   fantasyFootballAuthorizer:
