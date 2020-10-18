@@ -42,6 +42,7 @@ provider:
   environment:
     PLAYER_TABLE: ${self:custom.playerTableName}
     MYSPORTSFEEDS_AUTHORIZATION_TOKEN: ${ssm:/nevvi/mysportsfeeds/authorization~true}
+    MYSPORTSFEEDS_SEASON: 2020-2021-regular
 
 functions:
   fantasyFootballAuthorizer:
@@ -52,6 +53,18 @@ functions:
     events:
       - http:
           path: /dfs/v1/players/refresh
+          method: post
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:BatchWriteItem
+        Resource: ${self:custom.playerTableArn}
+  refreshPlayerStats:
+    timeout: 30
+    handler: src/functions/dfs/DailyFantasyHandler.loadPlayerStats
+    events:
+      - http:
+          path: /dfs/v1/players/week/{week}/refresh
           method: post
     iamRoleStatements:
       - Effect: Allow
@@ -74,6 +87,21 @@ functions:
       - http:
           path: /dfs/v1/contests/{contestId}/optimize
           method: post
+          authorizer:
+            name: fantasyFootballAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: ${self:custom.playerTableArn}
+  getPlayer:
+    handler: src/functions/dfs/DailyFantasyHandler.getPlayer
+    events:
+      - http:
+          path: /dfs/v1/players/{playerId}
+          method: get
           authorizer:
             name: fantasyFootballAuthorizer
             resultTtlInSeconds: 0

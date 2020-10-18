@@ -1,13 +1,18 @@
 'use strict'
 
 class Player {
-    constructor(id, firstName, lastName, position, team, imageUrl) {
+    constructor(id, firstName, lastName, position, team, imageUrl, weeklyStats) {
         this.id = id
         this.firstName = firstName
         this.lastName = lastName
         this.position = position
         this.team = team
         this.imageUrl = imageUrl
+        this.weeklyStats = weeklyStats || {}
+    }
+
+    getStats(week) {
+        return this.weeklyStats[week]
     }
 }
 

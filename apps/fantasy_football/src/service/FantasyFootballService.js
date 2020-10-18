@@ -13,8 +13,17 @@ module.exports = class PaymentService {
         this.optimizer = new LineupOptimizer()
     }
 
+    async getPlayer(playerId) {
+        return await this.playerDAO.getPlayer(playerId)
+    }
+
     async refreshPlayers() {
         await this.playerDAO.refreshPlayers()
+    }
+
+    // TODO - break this out into chunks for SQS queue processing? (doing this for all players could timeout sometimes)
+    async loadPlayerStats(week) {
+        await this.playerDAO.loadPlayerStats(week)
     }
 
     async getContest(contestId) {

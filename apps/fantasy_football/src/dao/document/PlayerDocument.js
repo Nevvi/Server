@@ -4,13 +4,18 @@ const {Player} = require("../../model/Player")
 
 module.exports = class {
     constructor(body) {
-        // dynamodb fields
-        this.partitionKey = 'PLAYER'
-        this.sortKey = body.id
+        // primary index by player id to group all information about an individual player
+        this.partitionKey = body.id
+        this.sortKey = 'PLAYER'
 
+        // gsi1 with hardcoded string so we can query for all players or players + position in the entire league
+        this.gsi1pk = 'PLAYER'
+        this.gsi1sk = body.position
+
+        // if player is currently on a team then gsi2 on team so we can find all players or players + position on a given team
         if (body.team) {
-            this.gsi1pk = body.team
-            this.gsi1sk = `PLAYER^${body.id}`
+            this.gsi2pk = body.team
+            this.gsi2sk = body.position
         }
 
         // data fields

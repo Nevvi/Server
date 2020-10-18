@@ -15,6 +15,17 @@ module.exports.refreshPlayers = async (event) => {
     }
 }
 
+module.exports.loadPlayerStats = async (event) => {
+    try{
+        console.log("Received request to load player stats")
+        const {week} = event.pathParameters
+        await service.loadPlayerStats(parseInt(week))
+        return createResponse(200, {message: "Success!"})
+    } catch (e) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
 module.exports.getContests = async (event) => {
     try{
         console.log("Received request to get contests")
@@ -38,6 +49,22 @@ module.exports.optimize = async (event) => {
         // TODO - extract preset players from body
         const lineup = await service.optimize(contest)
         return createResponse(200, lineup)
+    } catch (e) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
+module.exports.getPlayer = async (event) => {
+    try{
+        console.log("Received request to get player")
+        const {playerId} = event.pathParameters
+        const player = await service.getPlayer(playerId)
+
+        if (!player) {
+            return createResponse(404, {message: `No matching player found for id ${playerId}`})
+        }
+
+        return createResponse(200, player)
     } catch (e) {
         return createResponse(e.statusCode, e.message)
     }
