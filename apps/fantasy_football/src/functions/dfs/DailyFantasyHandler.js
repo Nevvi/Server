@@ -1,6 +1,5 @@
 'use strict';
 
-const {Lineup, Configuration} = require('../../model/Lineup')
 const FantasyFootballService = require("../../service/FantasyFootballService")
 
 const service = new FantasyFootballService()
@@ -67,6 +66,30 @@ module.exports.getPlayer = async (event) => {
         return createResponse(200, player)
     } catch (e) {
         return createResponse(e.statusCode, e.message)
+    }
+}
+
+// {"playerId": "7478", "week": "1"}
+module.exports.evaluatePlayer = async (event) => {
+    try {
+        console.log(`Processing ${event.Records.length} message(s)`)
+        await Promise.all(event.Records.map(async record => {
+            console.log(`Processing message ${record.messageId} - ${record.body}`)
+            const body = JSON.parse(record.body)
+
+            const player = await service.getPlayer(body.playerId.toString())
+
+            if (!player) {
+                console.log(`No player found with id ${body.playerId.toString()}`)
+                return
+            }
+
+            await service.evaluatePlayer(player, body.week.toString())
+            console.log(`Done processing message ${record.messageId}`)
+        }))
+        console.log(`Done processing ${event.Records.length} message(s)`)
+    } catch (e) {
+        console.log(e)
     }
 }
 

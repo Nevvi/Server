@@ -26,6 +26,12 @@ module.exports = class PaymentService {
         await this.playerDAO.loadPlayerStats(week)
     }
 
+    async evaluatePlayer(player, week) {
+        console.log(`Evaluating player ${player.firstName} ${player.lastName} during week ${week}`)
+        // TODO - generate value for week
+        // TODO - save player value to DB
+    }
+
     async getContest(contestId) {
         // 1 is the status for NFL
         // TODO - add call in DAO for single contest
