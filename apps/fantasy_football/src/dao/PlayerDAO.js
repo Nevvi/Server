@@ -6,6 +6,7 @@ const axios = require('axios')
 // DTOs
 const PlayerDocument = require('./document/PlayerDocument')
 const GamelogDocument = require('./document/GamelogDocument')
+const PlayerValueDocument = require('./document/PlayerValueDocument')
 const PlayerGamelogDTO = require('./dto/PlayerGamelogDTO')
 
 // Models
@@ -143,11 +144,25 @@ module.exports = class {
         // Multiple document types live under same partition key
         // Extract each type and construct the player model accordingly
         // TODO - convert gamelog document to gamelog model
+        const player = new PlayerDocument(baseInformation).toPlayer()
+
         const statsMap = {}
         playerInformation.Items.filter(i => i.sortKey.startsWith('STATS')).forEach(i => statsMap[i.week.toString()] = new GamelogDocument(i))
-        const player = new PlayerDocument(baseInformation).toPlayer()
         player.weeklyStats = statsMap
 
+        const valueMap = {}
+        playerInformation.Items.filter(i => i.sortKey.startsWith('VALUE')).forEach(i => valueMap[i.week.toString()] = new PlayerValueDocument(i))
+        player.weeklyValues = valueMap
+
         return player
+    }
+
+    async savePlayerValue(player, week) {
+        console.log(`Saving player value for ${player.firstName} ${player.lastName} on week ${week}`)
+        const value = player.getValue(week)
+        await this.db.put({
+            TableName: this.table,
+            Item: new PlayerValueDocument({id: player.id, week: week, ...value})
+        }).promise()
     }
 }

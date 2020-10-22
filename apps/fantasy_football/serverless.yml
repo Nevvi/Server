@@ -64,6 +64,18 @@ functions:
         Action:
           - dynamodb:BatchWriteItem
         Resource: ${self:custom.playerTableArn}
+  refreshGames:
+    timeout: 30
+    handler: src/functions/dfs/DailyFantasyHandler.refreshGames
+    events:
+      - http:
+          path: /dfs/v1/games/refresh
+          method: post
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:BatchWriteItem
+        Resource: ${self:custom.playerTableArn}
   refreshPlayerStats:
     timeout: 30
     handler: src/functions/dfs/DailyFantasyHandler.loadPlayerStats
@@ -116,7 +128,6 @@ functions:
         Action:
           - dynamodb:Query
         Resource: ${self:custom.playerTableArn}
-
   evaluatePlayer:
     handler: src/functions/dfs/DailyFantasyHandler.evaluatePlayer
     events:
@@ -125,4 +136,6 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:Query
+          - dynamodb:GetItem
+          - dynamodb:PutItem
         Resource: ${self:custom.playerTableArn}

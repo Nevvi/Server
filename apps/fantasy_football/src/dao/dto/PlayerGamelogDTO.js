@@ -59,7 +59,6 @@ class ReceivingStatsDTO {
         this.rec40Plus = json.rec40Plus
         this.fumbles = json.recFumbles
     }
-
 }
 
 module.exports = class {

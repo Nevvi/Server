@@ -14,6 +14,16 @@ module.exports.refreshPlayers = async (event) => {
     }
 }
 
+module.exports.refreshGames = async (event) => {
+    try{
+        console.log("Received request to refresh games")
+        await service.refreshGames()
+        return createResponse(200, {message: "Success!"})
+    } catch (e) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
 module.exports.loadPlayerStats = async (event) => {
     try{
         console.log("Received request to load player stats")

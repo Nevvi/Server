@@ -2,7 +2,9 @@
 
 const DraftkingsDAO = require('../dao/DraftkingsDAO')
 const PlayerDAO = require('../dao/PlayerDAO')
+const GameDAO = require('../dao/GameDAO')
 const LineupOptimizer = require('./LineupOptimizer')
+const PlayerEvaluator = require('./PlayerEvaluator')
 const Constants = require('../model/Constants')
 const {ValuedPlayer} = require('../model/Player')
 
@@ -10,7 +12,9 @@ module.exports = class PaymentService {
     constructor() {
         this.draftKingsDAO = new DraftkingsDAO()
         this.playerDAO = new PlayerDAO()
+        this.gameDAO = new GameDAO()
         this.optimizer = new LineupOptimizer()
+        this.playerEvaluator = new PlayerEvaluator(this.playerDAO, this.gameDAO)
     }
 
     async getPlayer(playerId) {
@@ -21,6 +25,10 @@ module.exports = class PaymentService {
         await this.playerDAO.refreshPlayers()
     }
 
+    async refreshGames() {
+        await this.gameDAO.refreshGames()
+    }
+
     // TODO - break this out into chunks for SQS queue processing? (doing this for all players could timeout sometimes)
     async loadPlayerStats(week) {
         await this.playerDAO.loadPlayerStats(week)
@@ -28,8 +36,11 @@ module.exports = class PaymentService {
 
     async evaluatePlayer(player, week) {
         console.log(`Evaluating player ${player.firstName} ${player.lastName} during week ${week}`)
-        // TODO - generate value for week
-        // TODO - save player value to DB
+        const game = await this.gameDAO.getGame(player.team, week)
+        const playerValue = game ? await this.playerEvaluator.evaluatePlayer(player, game, week) : {value: 0, explanations: ['Bye week']}
+        console.log(`Value for player: ${JSON.stringify(playerValue)}`)
+        player.setValue(week, playerValue)
+        await this.playerDAO.savePlayerValue(player, week)
     }
 
     async getContest(contestId) {
@@ -75,7 +86,7 @@ module.exports = class PaymentService {
                 return null
             }
 
-            // TODO - grab value from player document once it is pre-computed in our system
+            // TODO - somehow get week information into here? assume latest week for now
             return new ValuedPlayer(player, dkp.pointsPerGame, dkp.cost)
         }).filter(m => m !== null)
 

@@ -25,16 +25,6 @@ module.exports = class {
         this.passingStats = body.passingStats
         this.rushingStats = body.rushingStats
         this.receivingStats = body.receivingStats
-    }
-
-    toPlayer() {
-        return new Player(
-            this.id,
-            this.firstName,
-            this.lastName,
-            this.position,
-            this.team,
-            this.imageUrl
-        )
+        this.value = body.value
     }
 }
