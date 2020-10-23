@@ -12,10 +12,14 @@ const PlayerGamelogDTO = require('./dto/PlayerGamelogDTO')
 // Models
 const {Player} = require('../model/Player')
 
+const { v4: uuidv4 } = require('uuid')
+
 module.exports = class {
     constructor() {
         this.table = process.env.PLAYER_TABLE
+        this.queue = process.env.PLAYER_ACTION_QUEUE
         this.db = new AWS.DynamoDB.DocumentClient({})
+        this.sqs = new AWS.SQS({})
         this.authorization = process.env.MYSPORTSFEEDS_AUTHORIZATION_TOKEN
         this.baseUrl = 'https://api.mysportsfeeds.com/v2.1/pull/nfl'
         this.currentSeason = process.env.MYSPORTSFEEDS_SEASON
@@ -28,7 +32,7 @@ module.exports = class {
         const players = await this.db.query({
             TableName: this.table,
             IndexName: "GSI1",
-            KeyConditionExpression: "gsi1pk = :partitionKey",
+            KeyConditionExpression: "gsi1pk = :gsi1pk",
             ExpressionAttributeValues: {
                 ":gsi1pk": "PLAYER"
             }
@@ -157,12 +161,60 @@ module.exports = class {
         return player
     }
 
+    async getWeeklyValues(week) {
+        console.log(`Getting all player values for week ${week}`)
+
+        // TODO - handle pagination for large response
+        const values = await this.db.query({
+            TableName: this.table,
+            IndexName: "GSI1",
+            KeyConditionExpression: "gsi1pk = :gsi1pk",
+            ExpressionAttributeValues: {
+                ":gsi1pk": `VALUE^${week}`
+            }
+        }).promise()
+
+        return values.Items.map(doc => new PlayerValueDocument(doc))
+    }
+
     async savePlayerValue(player, week) {
         console.log(`Saving player value for ${player.firstName} ${player.lastName} on week ${week}`)
         const value = player.getValue(week)
         await this.db.put({
             TableName: this.table,
-            Item: new PlayerValueDocument({id: player.id, week: week, ...value})
+            Item: new PlayerValueDocument({
+                id: player.id,
+                week: week,
+                firstName: player.firstName,
+                lastName: player.lastName,
+                position: player.position,
+                explanations: value.explanations,
+                value: value.value
+            })
         }).promise()
+    }
+
+    async evaluatePlayers(week) {
+        const allPlayers = await this.getAllPlayers()
+
+        // Batch write supports a max of 10 requests at a time
+        let i,j,chunk = 10;
+        for (i=0,j=allPlayers.length; i<j; i+=chunk) {
+            // Map the player into an SQS request
+            const requests = allPlayers.slice(i,i+chunk).map(player => {
+                return {
+                    Id: uuidv4(),
+                    MessageBody: JSON.stringify({playerId: player.id, week: week})
+                }
+            })
+
+            // Send the 10 messages
+            await this.sqs.sendMessageBatch({
+                Entries: requests,
+                QueueUrl: this.queue
+            }).promise()
+        }
+
+        return allPlayers
     }
 }

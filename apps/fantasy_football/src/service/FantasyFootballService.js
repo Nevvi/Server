@@ -6,7 +6,6 @@ const GameDAO = require('../dao/GameDAO')
 const LineupOptimizer = require('./LineupOptimizer')
 const PlayerEvaluator = require('./PlayerEvaluator')
 const Constants = require('../model/Constants')
-const {ValuedPlayer} = require('../model/Player')
 
 module.exports = class PaymentService {
     constructor() {
@@ -34,11 +33,25 @@ module.exports = class PaymentService {
         await this.playerDAO.loadPlayerStats(week)
     }
 
+    async evaluatePlayers(week) {
+        console.log(`Evaluating players for week ${week}`)
+        return await this.playerDAO.evaluatePlayers(week)
+    }
+
     async evaluatePlayer(player, week) {
         console.log(`Evaluating player ${player.firstName} ${player.lastName} during week ${week}`)
+
+        if (!player.team) {
+            console.log("Player not on team.. not submitting value")
+            return
+        }
+
         const game = await this.gameDAO.getGame(player.team, week)
-        const playerValue = game ? await this.playerEvaluator.evaluatePlayer(player, game, week) : {value: 0, explanations: ['Bye week']}
-        console.log(`Value for player: ${JSON.stringify(playerValue)}`)
+        const playerValue = game ? await this.playerEvaluator.evaluatePlayer(player, game, week) : {
+            value: 0,
+            explanations: ['Bye week']
+        }
+        console.log(`Value for player ${player.id}: ${JSON.stringify(playerValue)}`)
         player.setValue(week, playerValue)
         await this.playerDAO.savePlayerValue(player, week)
     }
@@ -56,38 +69,40 @@ module.exports = class PaymentService {
         return contests.sort(c => c.startTime)
     }
 
-    async optimize(contest) {
+    async optimize(contest, week) {
         // TODO - get the pre-computed player values for the week
         // Get all the players in our system and all the players eligible for the given contest
-        const [allPlayers, availablePlayers] = await Promise.all([
-            this.playerDAO.getAllPlayers(),
+        const [weeklyValues, availablePlayers] = await Promise.all([
+            this.playerDAO.getWeeklyValues(week),
             this.draftKingsDAO.getPlayers(contest.draftGroup)
         ])
 
         // TODO - filter out players if desired
         const filtered = availablePlayers.filter(p => p.status !== "IR" && p.status !== "O" && !p.isDisabled)
-        console.log(`Evaluating ${filtered.length} out of ${allPlayers.length} total players`)
+        console.log(`Evaluating ${filtered.length} out of ${weeklyValues.length} total players`)
 
         // Combine the DK info with our own info
         const mapped = filtered.map(dkp => {
             if (dkp.position === Constants.POSITIONS.DEFENSE) {
                 // TODO - grab team some other way? or store defense as a "PLAYER" in the system
-                return new ValuedPlayer(dkp, dkp.pointsPerGame, dkp.cost)
+                dkp.value = dkp.pointsPerGame
+                return dkp
             }
 
             // Otherwise grab from known players
-            const player = allPlayers.find(p =>
+            const playerValue = weeklyValues.find(p =>
                 generatePlayerKey(p.firstName, p.lastName, p.position) === generatePlayerKey(dkp.firstName, dkp.lastName, dkp.position)
             )
 
             // Ideally this never happens...
-            if (!player) {
+            if (!playerValue) {
                 console.log(`Could not find known player info for DKP ${dkp.firstName} ${dkp.lastName} ${dkp.position}`)
                 return null
             }
 
-            // TODO - somehow get week information into here? assume latest week for now
-            return new ValuedPlayer(player, dkp.pointsPerGame, dkp.cost)
+            // Append the DraftKings cost to the player
+            playerValue.cost = dkp.cost
+            return playerValue
         }).filter(m => m !== null)
 
         console.log(`Lost ${filtered.length - mapped.length} players due to bad mapping`)

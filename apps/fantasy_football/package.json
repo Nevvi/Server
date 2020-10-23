@@ -27,6 +27,7 @@
     "joi": "^14.3.1",
     "node-core-lib": "^0.11.11",
     "serverless-iam-roles-per-function": "^2.0.2",
-    "serverless-prune-plugin": "^1.4.3"
+    "serverless-prune-plugin": "^1.4.3",
+    "uuid": "^8.3.1"
   }
 }

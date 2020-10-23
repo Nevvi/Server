@@ -26,15 +26,6 @@ class Player {
     }
 }
 
-class ValuedPlayer extends Player {
-    constructor(player, value, cost) {
-        super(player.id, player.firstName, player.lastName, player.position, player.team, player.imageUrl);
-        this.value = value
-        this.cost = cost
-    }
-}
-
 module.exports = {
-    Player,
-    ValuedPlayer
+    Player
 }

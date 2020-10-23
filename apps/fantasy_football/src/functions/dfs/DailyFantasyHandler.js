@@ -49,6 +49,7 @@ module.exports.optimize = async (event) => {
     try{
         console.log("Received request to optimize")
         const {contestId} = event.pathParameters
+
         const contest = await service.getContest(parseInt(contestId))
 
         if (!contest) {
@@ -56,7 +57,8 @@ module.exports.optimize = async (event) => {
         }
 
         // TODO - extract preset players from body
-        const lineup = await service.optimize(contest)
+        // TODO - dont hardcode week. Get it from contest, path param, or something else
+        const lineup = await service.optimize(contest, "7")
         return createResponse(200, lineup)
     } catch (e) {
         return createResponse(e.statusCode, e.message)
@@ -94,12 +96,22 @@ module.exports.evaluatePlayer = async (event) => {
                 return
             }
 
-            await service.evaluatePlayer(player, body.week.toString())
-            console.log(`Done processing message ${record.messageId}`)
+            return service.evaluatePlayer(player, body.week.toString())
         }))
         console.log(`Done processing ${event.Records.length} message(s)`)
     } catch (e) {
         console.log(e)
+    }
+}
+
+module.exports.evaluatePlayers = async (event) => {
+    try{
+        console.log("Received request to evaluate players")
+        const {week} = event.pathParameters
+        const players = await service.evaluatePlayers(week)
+        return createResponse(200, {message: `Submitted requests to evaluate ${players.length} players`})
+    } catch (e) {
+        return createResponse(e.statusCode, e.message)
     }
 }
 

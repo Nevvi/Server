@@ -23,6 +23,7 @@ custom:
     production: player-actions
   playerActionQueueName: ${self:custom.playerActionQueueNameMap.${self:provider.stage}, self:custom.playerActionQueueNameMap.default}
   playerActionQueueArn: ${ssm:/nevvi/sqs/${self:custom.playerActionQueueName}/arn}
+  playerActionQueueUrl: ${ssm:/nevvi/sqs/${self:custom.playerActionQueueName}/url}
   domainNameMap:
     default: api.development.nevvi.net
     production: api.nevvi.net
@@ -46,6 +47,7 @@ provider:
   deploymentPrefix: ${self:provider.stage}
   environment:
     PLAYER_TABLE: ${self:custom.playerTableName}
+    PLAYER_ACTION_QUEUE: ${self:custom.playerActionQueueUrl}
     MYSPORTSFEEDS_AUTHORIZATION_TOKEN: ${ssm:/nevvi/mysportsfeeds/authorization~true}
     MYSPORTSFEEDS_SEASON: 2020-2021-regular
 
@@ -112,7 +114,7 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: ${self:custom.playerTableArn}
+        Resource: ${self:custom.playerTableArn}/index/GSI1
   getPlayer:
     handler: src/functions/dfs/DailyFantasyHandler.getPlayer
     events:
@@ -128,6 +130,23 @@ functions:
         Action:
           - dynamodb:Query
         Resource: ${self:custom.playerTableArn}
+  evaluatePlayers:
+    timeout: 30
+    handler: src/functions/dfs/DailyFantasyHandler.evaluatePlayers
+    events:
+      - http:
+          path: /dfs/v1/players/week/{week}/evaluate
+          method: post
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: ${self:custom.playerTableArn}/index/GSI1
+      - Effect: Allow
+        Action:
+          - sqs:SendMessage
+          - sqs:SendMessageBatch
+        Resource: ${self:custom.playerActionQueueArn}
   evaluatePlayer:
     handler: src/functions/dfs/DailyFantasyHandler.evaluatePlayer
     events:
