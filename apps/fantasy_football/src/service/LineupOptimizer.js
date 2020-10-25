@@ -2,6 +2,7 @@
 
 const {FANTASY_POSITIONS, ROSTER_POSITIONS} = require('../model/Constants')
 const {Lineup} = require('../model/Lineup')
+const {groupAndSortByPosition} = require('../util/Utils')
 
 const MAX_SALARY = 50000
 
@@ -16,16 +17,7 @@ module.exports = class {
     // For now just use PPG until we integrate with more granular data and scoring options
     optimizeWithSalary(players, maxSalary) {
         // 1. Group players by position
-        const groups = groupBy(players, "position")
-        groups[FANTASY_POSITIONS.FLEX] = (groups[FANTASY_POSITIONS.RUNNING_BACK] || [])
-            .concat((groups[FANTASY_POSITIONS.WIDE_RECEIVER] || []))
-            .concat((groups[FANTASY_POSITIONS.TIGHT_END] || []))
-
-        // 2. Sort the groups by "value"
-        Object.entries(groups).forEach(([position, players]) => {
-            groups[position] = players.filter(p => p.value > 0)
-                .sort((p1, p2) => p2.value - p1.value)
-        })
+        const groups = groupAndSortByPosition(players)
 
         // 3. Initialize an optimal lineup with the available players and manual overrides
         const optimizedLineup = new OptimizedLineup(groups)
@@ -181,10 +173,3 @@ class PositionIndex {
         return this.compareValue(this.previousIndex)
     }
 }
-
-const groupBy = function(xs, key) {
-    return xs.reduce(function(rv, x) {
-        (rv[x[key]] = rv[x[key]] || []).push(x);
-        return rv;
-    }, {});
-};

@@ -27,8 +27,9 @@ module.exports = class {
             }
         }).promise()
 
-        // TODO - map to model
-        return gameInfo.Item
+        if (!gameInfo.Item) return null
+
+        return new GameDocument(gameInfo.Item).toModel()
     }
 
     async refreshGames() {

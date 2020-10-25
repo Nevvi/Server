@@ -20,6 +20,10 @@ module.exports = class PaymentService {
         return await this.playerDAO.getPlayer(playerId)
     }
 
+    async getPlayerValues(week) {
+        return await this.playerDAO.getWeeklyValues(week)
+    }
+
     async refreshPlayers() {
         await this.playerDAO.refreshPlayers()
     }

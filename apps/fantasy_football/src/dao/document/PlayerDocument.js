@@ -27,7 +27,7 @@ module.exports = class {
         this.imageUrl = body.imageUrl
     }
 
-    toPlayer() {
+    toModel() {
         return new Player(
             this.id,
             this.firstName,

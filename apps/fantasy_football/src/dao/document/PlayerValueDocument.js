@@ -1,5 +1,7 @@
 'use strict'
 
+const {PlayerValue} = require('../../model/Player')
+
 module.exports = class {
     constructor(body) {
         // primary index by player id to group all information about a single player
@@ -18,5 +20,9 @@ module.exports = class {
         this.firstName = body.firstName
         this.lastName = body.lastName
         this.position = body.position
+    }
+
+    toModel() {
+        return new PlayerValue(this.id, this.week, this.value, this.explanations, this.firstName, this.lastName, this.position)
     }
 }

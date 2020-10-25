@@ -1,5 +1,6 @@
 'use strict';
 
+const {groupAndSortByPosition} = require('../../util/Utils')
 const FantasyFootballService = require("../../service/FantasyFootballService")
 
 const service = new FantasyFootballService()
@@ -110,6 +111,17 @@ module.exports.evaluatePlayers = async (event) => {
         const {week} = event.pathParameters
         const players = await service.evaluatePlayers(week)
         return createResponse(200, {message: `Submitted requests to evaluate ${players.length} players`})
+    } catch (e) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
+module.exports.getPlayerValues = async (event) => {
+    try{
+        console.log("Received request to get player values")
+        const {week} = event.pathParameters
+        const players = await service.getPlayerValues(week)
+        return createResponse(200, groupAndSortByPosition(players))
     } catch (e) {
         return createResponse(e.statusCode, e.message)
     }

@@ -10,10 +10,6 @@ module.exports = class {
         this.gsi1pk = body.opponent
         this.gsi1sk = `${body.position}^${body.week}`
 
-        // TODO - leverage this
-        // this.gsi2pk =
-        // this.gsi2sk =
-
         // data fields
         this.id = body.id
         this.firstName = body.firstName

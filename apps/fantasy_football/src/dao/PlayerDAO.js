@@ -10,7 +10,7 @@ const PlayerValueDocument = require('./document/PlayerValueDocument')
 const PlayerGamelogDTO = require('./dto/PlayerGamelogDTO')
 
 // Models
-const {Player} = require('../model/Player')
+const {Player, PlayerValue} = require('../model/Player')
 
 const { v4: uuidv4 } = require('uuid')
 
@@ -38,7 +38,7 @@ module.exports = class {
             }
         }).promise()
 
-        return players.Items.map(doc => new PlayerDocument(doc).toPlayer())
+        return players.Items.map(doc => new PlayerDocument(doc).toModel())
     }
 
     async refreshPlayers() {
@@ -148,7 +148,7 @@ module.exports = class {
         // Multiple document types live under same partition key
         // Extract each type and construct the player model accordingly
         // TODO - convert gamelog document to gamelog model
-        const player = new PlayerDocument(baseInformation).toPlayer()
+        const player = new PlayerDocument(baseInformation).toModel()
 
         const statsMap = {}
         playerInformation.Items.filter(i => i.sortKey.startsWith('STATS')).forEach(i => statsMap[i.week.toString()] = new GamelogDocument(i))
@@ -174,7 +174,7 @@ module.exports = class {
             }
         }).promise()
 
-        return values.Items.map(doc => new PlayerValueDocument(doc))
+        return values.Items.map(doc => new PlayerValueDocument(doc).toModel())
     }
 
     async savePlayerValue(player, week) {

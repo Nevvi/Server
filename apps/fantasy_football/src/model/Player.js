@@ -26,6 +26,19 @@ class Player {
     }
 }
 
+class PlayerValue {
+    constructor(playerId, week, value, explanations, firstName, lastName, position) {
+        this.id = playerId
+        this.week = week
+        this.value = value
+        this.explanations = explanations
+        this.firstName = firstName
+        this.lastName = lastName
+        this.position = position
+    }
+}
+
 module.exports = {
-    Player
+    Player,
+    PlayerValue
 }
