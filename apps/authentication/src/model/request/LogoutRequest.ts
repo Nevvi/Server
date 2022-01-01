@@ -1,15 +1,18 @@
 'use strict'
 
 const Joi = require('joi');
-const UserRequest = require('./UserRequest')
+import {UserRequest} from './UserRequest';
 
 const logoutSchema = {
     accessToken: Joi.string().required(),
 }
 
-module.exports = class LoginRequest extends UserRequest {
-    constructor(accessToken) {
+class LogoutRequest extends UserRequest {
+    public accessToken: string;
+    constructor(accessToken: string) {
         super(logoutSchema)
         this.accessToken = accessToken
     }
 }
+
+export {LogoutRequest}

@@ -1,5 +1,7 @@
-service:
-  name: authentication
+service: authentication
+
+frameworkVersion: '2'
+variablesResolutionMode: 20210326
 
 plugins:
   - serverless-prune-plugin
@@ -20,8 +22,8 @@ custom:
     default: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/authentication/id}
     production: ${ssm:/nevvi/cognito/nevvi-api-users/clients/authentication/id}
   apiUserPoolClientSecretMap:
-    default: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/authentication/secret~true}
-    production: ${ssm:/nevvi/cognito/nevvi-api-users/clients/authentication/secret~true}
+    default: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/authentication/secret}
+    production: ${ssm:/nevvi/cognito/nevvi-api-users/clients/authentication/secret}
   domainNameMap:
     default: api.development.nevvi.net
     production: api.nevvi.net
@@ -35,7 +37,8 @@ custom:
 
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs14.x
+  lambdaHashingVersion: 20201221
   stage: ${opt:stage, 'test'}
   region: ${opt:region, 'us-east-1'}
   apiName: authentication-${self:provider.stage}

@@ -1,10 +1,12 @@
 'use strict'
 
+import {Handler} from "aws-lambda";
+
 const AbstractAuthorizer = require('../../../../shared/common/authorization/AbstractAuthorizer')
-const {HttpVerb} = require('../../../../shared/common/authorization/AuthPolicy')
+const {AuthPolicy, HttpVerb} = require('../../../../shared/common/authorization/AuthPolicy')
 
 class UserAuthorizer extends AbstractAuthorizer {
-    generatePermissions(authPolicy, userId) {
+    generatePermissions(authPolicy: typeof AuthPolicy, userId: string) {
         if (userId) {
             authPolicy.allowMethod(HttpVerb.GET, `/v1/users/${userId}`)
             authPolicy.allowMethod(HttpVerb.PATCH, `/v1/users/${userId}`)
@@ -16,6 +18,6 @@ class UserAuthorizer extends AbstractAuthorizer {
 
 const authorizer = new UserAuthorizer()
 
-module.exports.authorize = async (event) => {
+export const authorize: Handler = async (event) => {
     return await authorizer.authorize(event)
 }

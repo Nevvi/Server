@@ -2,7 +2,8 @@
 
 const UserHttpClient = require('../../../../../shared/common/http/user/UserHttpClient')
 
-module.exports = class UserDao {
+class UserDao {
+    private client: any;
     constructor() {
         this.client = new UserHttpClient(
             process.env.USER_API_URL,
@@ -12,7 +13,7 @@ module.exports = class UserDao {
         )
     }
 
-    async createUser(username) {
+    async createUser(username: string) {
         try {
             return await this.client.createUser({username})
         } catch (e) {
@@ -21,3 +22,5 @@ module.exports = class UserDao {
         }
     }
 }
+
+export {UserDao}

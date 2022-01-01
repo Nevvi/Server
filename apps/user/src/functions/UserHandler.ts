@@ -1,60 +1,61 @@
 'use strict';
 
-const {UserNotFoundError} = require('../error/Errors')
+import {UserNotFoundError} from '../error/Errors';
 
-const RegisterRequest = require('../model/request/RegisterRequest')
-const UpdateRequest = require('../model/request/UpdateRequest')
+import {RegisterRequest} from '../model/request/RegisterRequest';
+import {UpdateRequest} from '../model/request/UpdateRequest';
 
-const UserService = require('../service/UserService')
+import {UserService} from '../service/UserService';
+import {Handler} from "aws-lambda";
 const userService = new UserService()
 
-module.exports.getUser = async (event) => {
+export const getUser: Handler = async (event) => {
     try{
         console.log("Received request to get user")
         const {userId} = event.pathParameters
-        const user = await getUser(userId)
+        const user = await getUserById(userId)
         return createResponse(200, user)
-    } catch (e) {
+    } catch (e: any) {
         return createResponse(e.statusCode, e.message)
     }
 }
 
-module.exports.createUser = async (event) => {
+export const createUser: Handler = async (event) => {
     try{
         console.log("Received request to create user")
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
-        const request = new RegisterRequest(body)
+        const request = new RegisterRequest(body.username)
         request.validate()
         const user = await userService.createUser(request)
         return createResponse(201, user)
-    } catch (e) {
+    } catch (e: any) {
         return createResponse(e.statusCode, e.message)
     }
 }
 
-module.exports.updateUser = async (event) => {
+export const updateUser: Handler = async (event) => {
     try{
         console.log("Received request to update user")
 
         // validate incoming request is good
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
-        const request = new UpdateRequest(body)
+        const request = new UpdateRequest(body.firstName, body.lastName)
         request.validate(body)
 
         // validate user exists with that username
         const {userId} = event.pathParameters
-        const existingUser = await getUser(userId)
+        const existingUser = await getUserById(userId)
 
         // update the info on that user
         const updatedUser = await userService.updateUser(existingUser, request)
 
         return createResponse(200, updatedUser)
-    } catch (e) {
+    } catch (e: any) {
         return createResponse(e.statusCode, e.message)
     }
 }
 
-async function getUser(userId) {
+async function getUserById(userId: string) {
     const user = await userService.getUser(userId)
 
     if (!user) {
@@ -64,7 +65,7 @@ async function getUser(userId) {
     return user
 }
 
-function createResponse(statusCode, body) {
+function createResponse(statusCode: number, body: object) {
     return {
         statusCode: statusCode || 500,
         body: JSON.stringify(body)

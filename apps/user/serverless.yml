@@ -1,5 +1,7 @@
-service:
-  name: user
+service: user
+
+frameworkVersion: '2'
+variablesResolutionMode: 20210326
 
 plugins:
   - serverless-prune-plugin
@@ -35,7 +37,8 @@ custom:
 
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs14.x
+  lambdaHashingVersion: 20201221
   stage: ${opt:stage, 'test'}
   region: ${opt:region, 'us-east-1'}
   apiName: user-${self:provider.stage}

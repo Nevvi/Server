@@ -1,5 +1,7 @@
-service:
-  name: payment
+service: payment
+
+frameworkVersion: '2'
+variablesResolutionMode: 20210326
 
 plugins:
   - serverless-prune-plugin
@@ -24,18 +26,19 @@ custom:
     domainName: ${self:custom.domainNameMap.${self:provider.stage}, self:custom.domainNameMap.default}
     basePath: ${self:custom.basePathMap.${self:provider.stage}, self:custom.basePathMap.default}
   merchantIdMap:
-    default: ${ssm:/nevvi/braintree/development-merchant-id~true}
-    production: ${ssm:/nevvi/braintree/merchant-id~true}
+    default: ${ssm:/nevvi/braintree/development-merchant-id}
+    production: ${ssm:/nevvi/braintree/merchant-id}
   publicKeyMap:
     default: "4sgpcpnnngn5p2jj"
     production: "4sgpcpnnngn5p2jj"
   privateKeyMap:
-    default: ${ssm:/nevvi/braintree/development-private-key~true}
-    production: ${ssm:/nevvi/braintree/private-key~true}
+    default: ${ssm:/nevvi/braintree/development-private-key}
+    production: ${ssm:/nevvi/braintree/private-key}
 
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs14.x
+  lambdaHashingVersion: 20201221
   stage: ${opt:stage, 'test'}
   region: ${opt:region, 'us-east-1'}
   apiName: payment-${self:provider.stage}

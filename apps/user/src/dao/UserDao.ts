@@ -1,21 +1,25 @@
 'use strict'
 
 // documents
-const UserDocument = require('./document/UserDocument')
+import {DocumentClient} from "aws-sdk/clients/dynamodb";
+
+const UserDocument = require('./document/UserDocument.ts')
 
 // models
-const User = require('../model/user/User')
+import {User} from '../model/user/User';
 
-const {UserAlreadyExistsError, UserNotFoundError} = require('../error/Errors')
+const {UserAlreadyExistsError, UserNotFoundError} = require('../error/Errors.ts')
 const AWS = require('aws-sdk')
 
-module.exports = class UserDao {
+class UserDao {
+    private db: DocumentClient;
+    private table: string;
     constructor() {
         this.db = new AWS.DynamoDB.DocumentClient({})
-        this.table = process.env.USER_TABLE
+        this.table = process.env.USER_TABLE || ""
     }
 
-    async getUser(userId) {
+    async getUser(userId: string): Promise<User | null> {
         const result = await this.db.get({
             TableName: this.table,
             Key: {
@@ -28,7 +32,7 @@ module.exports = class UserDao {
         return document ? new User(document) : null
     }
 
-    async createUser(user) {
+    async createUser(user: User): Promise<User> {
         const now = new Date().toISOString()
         user.createDate = now
         user.createBy = 'HARDCODED_FOR_NOW'
@@ -43,7 +47,7 @@ module.exports = class UserDao {
                 Item: document,
                 ConditionExpression: 'attribute_not_exists(partitionKey) and attribute_not_exists(sortKey)'
             }).promise()
-        } catch (e) {
+        } catch (e: any) {
             if (e.code === 'ConditionalCheckFailedException') {
                 throw new UserAlreadyExistsError(document.partitionKey)
             }
@@ -53,7 +57,7 @@ module.exports = class UserDao {
         return user
     }
 
-    async updateUser(user) {
+    async updateUser(user: User): Promise<User> {
         user.updateDate = new Date().toISOString()
         user.updateBy = 'HARDCODED_FOR_NOW'
 
@@ -65,7 +69,7 @@ module.exports = class UserDao {
                 Item: document,
                 ConditionExpression: 'attribute_exists(partitionKey) and attribute_exists(sortKey)'
             }).promise()
-        } catch (e) {
+        } catch (e: any) {
             if (e.code === 'ConditionalCheckFailedException') {
                 throw new UserNotFoundError(document.partitionKey)
             }
@@ -75,3 +79,5 @@ module.exports = class UserDao {
         return user
     }
 }
+
+export {UserDao}

@@ -1,17 +1,20 @@
 'use strict'
 
-const {InvalidRequestError} = require('../../error/Errors')
+import {InvalidRequestError} from '../../error/Errors';
 const Joi = require('joi');
 
-module.exports = class Request {
-    constructor(schema) {
+class UserRequest {
+    private validationSchema: object;
+    constructor(schema: object) {
         this.validationSchema = schema
     }
 
-    validate(body) {
+    validate(body?: object) {
         const {error} = Joi.object().keys(this.validationSchema).validate(body ? body : this, {convert: false, stripUnknown: true})
         if (error) {
             throw new InvalidRequestError(error.message)
         }
     }
 }
+
+export {UserRequest}
