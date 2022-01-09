@@ -3,7 +3,8 @@
 module.exports = class {
     partitionKey: string;
     sortKey: string;
-    username: string;
+    gsi1pk: string;
+    gsi2pk: string;
     firstName: string;
     lastName: string;
     email: string;
@@ -15,14 +16,15 @@ module.exports = class {
 
     constructor(body: object) {
         // @ts-ignore
-        const {phoneNumber, createDate, username, lastName, email, firstName, updateDate, updateBy, createBy} = body;
+        const {phoneNumber, createDate, lastName, email, firstName, updateDate, updateBy, createBy} = body;
 
         // dynamodb fields
-        this.partitionKey = username
+        this.partitionKey = email
         this.sortKey = 'USER'
+        this.gsi1pk = email
+        this.gsi2pk = phoneNumber
 
         // data fields
-        this.username = username
         this.firstName = firstName
         this.lastName = lastName
         this.email = email

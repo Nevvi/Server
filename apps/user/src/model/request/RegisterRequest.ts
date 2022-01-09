@@ -4,14 +4,17 @@ const Joi = require('joi');
 import {UserRequest} from './UserRequest';
 
 const registerSchema = {
-    username: Joi.string().required() // maps to cognito username
+    email: Joi.string().email().required(),
+    phoneNumber: Joi.string().required(), // assume this was already validated upstream
 }
 
 class RegisterRequest extends UserRequest {
-    private username: string;
-    constructor(username: string) {
+    private email: string;
+    private phoneNumber: string;
+    constructor(email: string, phoneNumber: string) {
         super(registerSchema)
-        this.username = username
+        this.email = email
+        this.phoneNumber = phoneNumber
     }
 }
 

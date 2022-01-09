@@ -1,7 +1,6 @@
 'use strict'
 
 class User {
-    username: any;
     firstName: any;
     lastName: any;
     email: string;
@@ -12,10 +11,9 @@ class User {
     updateBy: string;
     constructor(body: object) {
         // @ts-ignore
-        const {phoneNumber, createDate, username, lastName, email, firstName, updateDate, updateBy, createBy} = body;
+        const {phoneNumber, createDate, lastName, email, firstName, updateDate, updateBy, createBy} = body;
         
         // data fields
-        this.username = username
         this.firstName = firstName
         this.lastName = lastName
         this.email = email

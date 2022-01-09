@@ -62,6 +62,13 @@ functions:
           path: /v1/register
           method: post
 
+  confirm:
+    handler: src/functions/AuthHandler.confirm
+    events:
+      - http:
+          path: /v1/confirm
+          method: post
+
   login:
     handler: src/functions/AuthHandler.login
     events:
@@ -75,7 +82,3 @@ functions:
       - http:
           path: /v1/logout
           method: post
-
-  # Cognito Triggers
-  preSignUpTrigger:
-    handler: src/functions/CognitoTriggers.preSignUp

@@ -16,6 +16,10 @@ class LoginResponse {
     }
 }
 
+class ConfirmResponse {
+
+}
+
 class LogoutResponse {
 
 }
@@ -37,4 +41,4 @@ class RegisterResponse {
 
 }
 
-export {LoginResponse, LogoutResponse, RegisterResponse}
+export {LoginResponse, LogoutResponse, RegisterResponse, ConfirmResponse}

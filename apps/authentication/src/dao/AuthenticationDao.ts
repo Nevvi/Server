@@ -5,10 +5,12 @@ import {LoginRequest} from "../model/request/LoginRequest";
 import {RegisterRequest} from "../model/request/RegisterRequest";
 import {LogoutRequest} from "../model/request/LogoutRequest";
 import {
+    ConfirmSignUpRequest, ConfirmSignUpResponse,
     GlobalSignOutResponse,
     InitiateAuthResponse,
     SignUpResponse
 } from "aws-sdk/clients/cognitoidentityserviceprovider";
+import {ConfirmRequest} from "../model/request/ConfirmRequest";
 
 const AWS = require('aws-sdk')
 
@@ -25,7 +27,19 @@ class AuthenticationDao {
         return await this.cognito.signUp({
             ClientId: this.clientId,
             Password: request.password,
-            Username: request.username
+            Username: request.email, // default to email login but phone can be used once verified
+            UserAttributes: [
+                {Name: "email", Value: request.email},
+                {Name: "phone_number", Value: request.phoneNumber}
+            ]
+        }).promise()
+    }
+
+    async confirm(request: ConfirmRequest): Promise<ConfirmSignUpResponse> {
+        return await this.cognito.confirmSignUp({
+            ClientId: this.clientId,
+            Username: request.username,
+            ConfirmationCode: request.confirmationCode
         }).promise()
     }
 

@@ -13,9 +13,9 @@ class UserDao {
         )
     }
 
-    async createUser(username: string) {
+    async createUser(email: string, phoneNumber: string) {
         try {
-            return await this.client.createUser({username})
+            return await this.client.createUser({email, phoneNumber})
         } catch (e) {
             console.log(`Failed to create user`, e)
             throw e

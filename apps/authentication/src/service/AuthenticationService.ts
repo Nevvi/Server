@@ -4,10 +4,11 @@ import {AuthenticationDao} from "../dao/AuthenticationDao";
 import {UserDao} from '../dao/user/UserDao';
 import {RegisterRequest} from "../model/request/RegisterRequest";
 import {LoginRequest} from "../model/request/LoginRequest";
-import {LoginResponse, LogoutResponse, RegisterResponse} from "../model/response/Response";
+import {ConfirmResponse, LoginResponse, LogoutResponse, RegisterResponse} from "../model/response/Response";
 import {InvalidRequestError} from "../error/Errors";
 import {LogoutRequest} from "../model/request/LogoutRequest";
 import {SignUpResponse} from "aws-sdk/clients/cognitoidentityserviceprovider";
+import {ConfirmRequest} from "../model/request/ConfirmRequest";
 
 class AuthenticationService {
     private authenticationDao: AuthenticationDao;
@@ -22,9 +23,13 @@ class AuthenticationService {
         const signUpResponse: SignUpResponse = await this.authenticationDao.register(registerRequest)
 
         // create profile
-        await this.userDao.createUser(registerRequest.username)
+        await this.userDao.createUser(registerRequest.email, registerRequest.phoneNumber)
 
         return new RegisterResponse(signUpResponse)
+    }
+
+    async confirm(confirmRequest: ConfirmRequest) {
+        return await this.authenticationDao.confirm(confirmRequest)
     }
 
     async login(loginRequest: LoginRequest): Promise<LoginResponse> {

@@ -4,16 +4,19 @@ const Joi = require('joi');
 import {UserRequest} from './UserRequest';
 
 const registerSchema = {
-    username: Joi.string().required(),
+    email: Joi.string().email().required(),
+    phoneNumber: Joi.string().required(), // leave validation to cognito
     password: Joi.string().required()
 }
 
 class RegisterRequest extends UserRequest {
-    public username: string;
+    public email: string;
+    public phoneNumber: string;
     public password: string;
-    constructor(username: string, password: string) {
+    constructor(email: string, phoneNumber: string, password: string) {
         super(registerSchema)
-        this.username = username
+        this.email = email
+        this.phoneNumber = phoneNumber
         this.password = password
     }
 }

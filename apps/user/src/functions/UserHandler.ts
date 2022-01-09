@@ -24,7 +24,7 @@ export const createUser: Handler = async (event) => {
     try{
         console.log("Received request to create user")
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
-        const request = new RegisterRequest(body.username)
+        const request = new RegisterRequest(body.email, body.phoneNumber)
         request.validate()
         const user = await userService.createUser(request)
         return createResponse(201, user)
