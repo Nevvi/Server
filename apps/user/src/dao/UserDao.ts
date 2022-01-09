@@ -29,7 +29,14 @@ class UserDao {
         }).promise()
 
         const document = result && result.Item
-        return document ? new User(document) : null
+        const user = document ? new User(document) : null
+
+        // Map the id back into the user so that it doesn't get lost
+        if (user && document) {
+            user.id = document.partitionKey
+        }
+
+        return user
     }
 
     async createUser(user: User): Promise<User> {

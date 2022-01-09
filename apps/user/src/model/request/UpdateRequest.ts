@@ -4,7 +4,9 @@ const Joi = require('joi');
 import {UserRequest} from './UserRequest';
 
 const updateSchema = {
-    username: Joi.forbidden(), // can't change this
+    id: Joi.forbidden(), // can't change this
+    email: Joi.forbidden(), // not allowed via this endpoint
+    phoneNumber: Joi.forbidden(), // not allowed via this endpoint
     firstName: Joi.string(),
     lastName: Joi.string()
 }
