@@ -23,7 +23,7 @@ class AuthenticationService {
         const signUpResponse: SignUpResponse = await this.authenticationDao.register(registerRequest)
 
         // create profile
-        await this.userDao.createUser(registerRequest.email, registerRequest.phoneNumber)
+        await this.userDao.createUser(signUpResponse.UserSub, registerRequest.email, registerRequest.phoneNumber)
 
         return new RegisterResponse(signUpResponse)
     }
@@ -39,7 +39,9 @@ class AuthenticationService {
             throw new InvalidRequestError("Received undefined login response")
         }
 
-        return new LoginResponse(loginRequest.username, authResult.AuthenticationResult!);
+        const user = await this.authenticationDao.getUser(authResult.AuthenticationResult?.AccessToken!)
+
+        return new LoginResponse(user.Username, authResult.AuthenticationResult!);
     }
 
     async logout(logoutRequest: LogoutRequest): Promise<LogoutResponse> {

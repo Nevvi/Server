@@ -16,10 +16,10 @@ module.exports = class {
 
     constructor(body: object) {
         // @ts-ignore
-        const {phoneNumber, createDate, lastName, email, firstName, updateDate, updateBy, createBy} = body;
+        const {id, phoneNumber, createDate, lastName, email, firstName, updateDate, updateBy, createBy} = body;
 
         // dynamodb fields
-        this.partitionKey = email
+        this.partitionKey = id
         this.sortKey = 'USER'
         this.gsi1pk = email
         this.gsi2pk = phoneNumber

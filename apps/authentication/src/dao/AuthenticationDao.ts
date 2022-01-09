@@ -5,7 +5,7 @@ import {LoginRequest} from "../model/request/LoginRequest";
 import {RegisterRequest} from "../model/request/RegisterRequest";
 import {LogoutRequest} from "../model/request/LogoutRequest";
 import {
-    ConfirmSignUpRequest, ConfirmSignUpResponse,
+    ConfirmSignUpRequest, ConfirmSignUpResponse, GetUserResponse,
     GlobalSignOutResponse,
     InitiateAuthResponse,
     SignUpResponse
@@ -21,6 +21,12 @@ class AuthenticationDao {
         this.cognito = new AWS.CognitoIdentityServiceProvider()
         // @ts-ignore
         this.clientId = process.env.PUBLIC_USER_POOL_CLIENT_ID
+    }
+
+    async getUser(accessToken: string): Promise<GetUserResponse> {
+        return await this.cognito.getUser({
+            AccessToken: accessToken
+        }).promise()
     }
 
     async register(request: RegisterRequest): Promise<SignUpResponse> {
