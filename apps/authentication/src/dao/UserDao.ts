@@ -5,6 +5,7 @@ import {LoginRequest} from "../model/request/LoginRequest";
 import {RegisterRequest} from "../model/request/RegisterRequest";
 import {LogoutRequest} from "../model/request/LogoutRequest";
 import {
+    AdminGetUserResponse, AdminUpdateUserAttributesResponse,
     ConfirmSignUpRequest, ConfirmSignUpResponse, GetUserResponse,
     GlobalSignOutResponse,
     InitiateAuthResponse,
@@ -27,16 +28,17 @@ class UserDao {
         this.userPoolId = process.env.PUBLIC_USER_POOL_ID
     }
 
-    async getUser(accessToken: string): Promise<GetUserResponse> {
-        return await this.cognito.getUser({
-            AccessToken: accessToken
+    async getUser(userId: string): Promise<AdminGetUserResponse> {
+        return await this.cognito.adminGetUser({
+            Username: userId,
+            UserPoolId: this.userPoolId
         }).promise()
     }
 
     async getUserByEmail(email: string): Promise<UserType | null> {
         const users = await this.cognito.listUsers({
             UserPoolId: this.userPoolId,
-            Filter: `email=${email}`
+            Filter: `email=\"${email}\"`
         }).promise()
 
         return users.Users?.length === 1 ? users.Users[0] : null
@@ -45,20 +47,21 @@ class UserDao {
     async getUserByPhone(phoneNumber: string): Promise<UserType | null> {
         const users = await this.cognito.listUsers({
             UserPoolId: this.userPoolId,
-            Filter: `phone_number=${phoneNumber}`
+            Filter: `phone_number=\"${phoneNumber}\"`
         }).promise()
 
         return users.Users?.length === 1 ? users.Users[0] : null
     }
 
-    async updateUser(accessToken: string, request: UpdateRequest): Promise<UpdateUserAttributesResponse> {
+    async updateUser(username: string, request: UpdateRequest): Promise<AdminUpdateUserAttributesResponse> {
         const attributes = []
         if (request.name) {
             attributes.push({Name: "name", Value: request.name})
         }
 
-        return await this.cognito.updateUserAttributes({
-            AccessToken: accessToken,
+        return await this.cognito.adminUpdateUserAttributes({
+            Username: username,
+            UserPoolId: this.userPoolId,
             UserAttributes: attributes
         }).promise()
     }

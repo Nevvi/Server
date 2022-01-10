@@ -84,6 +84,11 @@ functions:
       - http:
           path: /v1/login
           method: post
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - cognito-idp:ListUsers
+        Resource: ${self:custom.publicUserPoolArn}
 
   logout:
     handler: src/functions/AuthHandler.logout
@@ -105,7 +110,7 @@ functions:
     iamRoleStatements:
       - Effect: Allow
         Action:
-          - cognito-idp:GetUser
+          - cognito-idp:AdminGetUser
         Resource: ${self:custom.publicUserPoolArn}
 
   updateUser:
@@ -121,6 +126,6 @@ functions:
     iamRoleStatements:
       - Effect: Allow
         Action:
-          - cognito-idp:GetUser
-          - cognito-idp:UpdateUserAttributes
+          - cognito-idp:AdminGetUser
+          - cognito-idp:AdminUpdateUserAttributes
         Resource: ${self:custom.publicUserPoolArn}

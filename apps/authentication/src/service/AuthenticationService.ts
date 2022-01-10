@@ -33,9 +33,12 @@ class AuthenticationService {
             throw new InvalidRequestError("Received undefined login response")
         }
 
-        const user = await this.userDao.getUser(authResult.AuthenticationResult?.AccessToken!)
+        let user = await this.userDao.getUserByEmail(loginRequest.username)
+        if (!user) {
+            user = await this.userDao.getUserByPhone(loginRequest.username)
+        }
 
-        return new LoginResponse(user.Username, authResult.AuthenticationResult!);
+        return new LoginResponse(user?.Username!, authResult.AuthenticationResult!);
     }
 
     async logout(logoutRequest: LogoutRequest): Promise<LogoutResponse> {

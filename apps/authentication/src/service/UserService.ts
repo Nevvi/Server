@@ -2,7 +2,7 @@
 
 import {UserDao} from '../dao/UserDao';
 import {UpdateRequest} from "../model/request/UpdateRequest";
-import {GetUserResponse} from "aws-sdk/clients/cognitoidentityserviceprovider";
+import {AdminGetUserResponse} from "aws-sdk/clients/cognitoidentityserviceprovider";
 
 class UserService {
     private userDao: UserDao;
@@ -10,13 +10,13 @@ class UserService {
         this.userDao = new UserDao()
     }
 
-    async getUser(accessToken: string): Promise<GetUserResponse> {
-        return await this.userDao.getUser(accessToken)
+    async getUser(userId: string): Promise<AdminGetUserResponse> {
+        return await this.userDao.getUser(userId)
     }
 
-    async updateUser(accessToken: string, request: UpdateRequest): Promise<GetUserResponse> {
-        await this.userDao.updateUser(accessToken, request)
-        return await this.getUser(accessToken)
+    async updateUser(userId: string, request: UpdateRequest): Promise<AdminGetUserResponse> {
+        await this.userDao.updateUser(userId, request)
+        return await this.getUser(userId)
     }
 }
 

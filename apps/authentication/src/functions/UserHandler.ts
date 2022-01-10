@@ -12,8 +12,8 @@ export const getUser: Handler = async (event) => {
     try{
         console.log("Received request to get user")
 
-        const accessToken = event.headers.AccessToken || event.headers.accessToken
-        const user = await getUserByToken(accessToken)
+        const {userId} = event.pathParameters
+        const user = await getUserById(userId)
         return createResponse(200, user)
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)
@@ -29,8 +29,8 @@ export const updateUser: Handler = async (event) => {
         const request = new UpdateRequest(body.name)
         request.validate()
 
-        const accessToken = event.headers.AccessToken || event.headers.accessToken
-        const updatedUser = await userService.updateUser(accessToken, request)
+        const {userId} = event.pathParameters
+        const updatedUser = await userService.updateUser(userId, request)
 
         return createResponse(200, updatedUser)
     } catch (e: any) {
@@ -38,8 +38,8 @@ export const updateUser: Handler = async (event) => {
     }
 }
 
-async function getUserByToken(accessToken: string) {
-    const user = await userService.getUser(accessToken)
+async function getUserById(userId: string) {
+    const user = await userService.getUser(userId)
 
     if (!user) {
         throw new UserNotFoundError()
