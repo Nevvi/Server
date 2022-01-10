@@ -7,7 +7,9 @@ import {LogoutRequest} from '../model/request/LogoutRequest';
 
 import {AuthenticationService} from '../service/AuthenticationService';
 import {ConfirmRequest} from "../model/request/ConfirmRequest";
+import {UserService} from "../service/UserService";
 const authenticationService = new AuthenticationService()
+const userService = new UserService();
 
 export const register: Handler = async (event: any) => {
     try {

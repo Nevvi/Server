@@ -14,7 +14,22 @@ class InvalidRequestError extends HttpStatusCodeError {
     }
 }
 
+class UserNotFoundError extends HttpStatusCodeError {
+    constructor() {
+        super(`No matching user found`, 404)
+    }
+}
+
+class UserAlreadyExistsError extends HttpStatusCodeError {
+    constructor(userId: string) {
+        super(`User already exists with id: ${userId}`, 409)
+    }
+}
+
+
 export {
     HttpStatusCodeError,
-    InvalidRequestError
+    InvalidRequestError,
+    UserNotFoundError,
+    UserAlreadyExistsError
 }

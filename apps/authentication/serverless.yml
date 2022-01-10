@@ -5,6 +5,7 @@ variablesResolutionMode: 20210326
 
 plugins:
   - serverless-prune-plugin
+  - serverless-iam-roles-per-function
   - serverless-webpack
   - serverless-domain-manager
 
@@ -15,15 +16,19 @@ custom:
   oauthDomainMap:
     default: https://nevvi-development-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
     production: https://nevvi-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
-  publicUserPoolClientMap:
-    default: ${ssm:/nevvi/cognito/nevvi-development-public-users/clients/authentication/id}
-    production: ${ssm:/nevvi/cognito/nevvi-public-users/clients/authentication/id}
-  apiUserPoolClientMap:
-    default: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/authentication/id}
-    production: ${ssm:/nevvi/cognito/nevvi-api-users/clients/authentication/id}
-  apiUserPoolClientSecretMap:
-    default: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/authentication/secret}
-    production: ${ssm:/nevvi/cognito/nevvi-api-users/clients/authentication/secret}
+  apiUserPoolNameMap:
+    default: nevvi-development-api-users
+    production: nevvi-api-users
+  publicUserPoolNameMap:
+    default: nevvi-development-public-users
+    production: nevvi-public-users
+  publicUserPoolName: ${self:custom.publicUserPoolNameMap.${self:provider.stage}, self:custom.publicUserPoolNameMap.default}
+  publicUserPoolArn: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/arn}
+  publicUserPoolId: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/id}
+  publicUserPoolClientId: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/clients/authentication/id}
+  apiUserPoolName: ${self:custom.apiUserPoolNameMap.${self:provider.stage}, self:custom.apiUserPoolNameMap.default}
+  apiUserPoolClientId: ${ssm:/nevvi/cognito/${self:custom.apiUserPoolName}/clients/authentication/id}
+  apiUserPoolClientSecret: ${ssm:/nevvi/cognito/${self:custom.apiUserPoolName}/clients/authentication/secret}
   domainNameMap:
     default: api.development.nevvi.net
     production: api.nevvi.net
@@ -48,13 +53,17 @@ provider:
   deploymentPrefix: ${self:provider.stage}
   environment:
     OAUTH_DOMAIN_URL: ${self:custom.oauthDomainMap.${self:provider.stage}, self:custom.oauthDomainMap.default}
-    PUBLIC_USER_POOL_CLIENT_ID: ${self:custom.publicUserPoolClientMap.${self:provider.stage}, self:custom.publicUserPoolClientMap.default}
+    PUBLIC_USER_POOL_CLIENT_ID: ${self:custom.publicUserPoolClientId}
+    PUBLIC_USER_POOL_ID: ${self:custom.publicUserPoolId}
     USER_API_URL: https://${self:custom.domainNameMap.${self:provider.stage}, self:custom.domainNameMap.default}/user
-    API_CLIENT_ID: ${self:custom.apiUserPoolClientMap.${self:provider.stage}, self:custom.apiUserPoolClientMap.default}
-    API_CLIENT_SECRET: ${self:custom.apiUserPoolClientSecretMap.${self:provider.stage}, self:custom.apiUserPoolClientSecretMap.default}
+    API_CLIENT_ID: ${self:custom.apiUserPoolClientId}
+    API_CLIENT_SECRET: ${self:custom.apiUserPoolClientSecret}
     USER_API_SCOPES: user_api/user_api.all
 
 functions:
+  userAuthorizer:
+    handler: src/functions/UserAuthorizer.authorize
+
   register:
     handler: src/functions/AuthHandler.register
     events:
@@ -82,3 +91,36 @@ functions:
       - http:
           path: /v1/logout
           method: post
+
+  getUser:
+    handler: src/functions/UserHandler.getUser
+    events:
+      - http:
+          path: /v1/users/{userId}
+          method: get
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - cognito-idp:GetUser
+        Resource: ${self:custom.publicUserPoolArn}
+
+  updateUser:
+    handler: src/functions/UserHandler.updateUser
+    events:
+      - http:
+          path: /v1/users/{userId}
+          method: patch
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - cognito-idp:GetUser
+          - cognito-idp:UpdateUserAttributes
+        Resource: ${self:custom.publicUserPoolArn}

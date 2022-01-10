@@ -8,24 +8,58 @@ import {
     ConfirmSignUpRequest, ConfirmSignUpResponse, GetUserResponse,
     GlobalSignOutResponse,
     InitiateAuthResponse,
-    SignUpResponse
+    SignUpResponse, UpdateUserAttributesResponse, UserType
 } from "aws-sdk/clients/cognitoidentityserviceprovider";
 import {ConfirmRequest} from "../model/request/ConfirmRequest";
+import {UpdateRequest} from "../model/request/UpdateRequest";
 
 const AWS = require('aws-sdk')
 
-class AuthenticationDao {
+class UserDao {
     private cognito: CognitoIdentityServiceProvider;
     private clientId: string;
+    private userPoolId: string;
     constructor() {
         this.cognito = new AWS.CognitoIdentityServiceProvider()
         // @ts-ignore
         this.clientId = process.env.PUBLIC_USER_POOL_CLIENT_ID
+        // @ts-ignore
+        this.userPoolId = process.env.PUBLIC_USER_POOL_ID
     }
 
     async getUser(accessToken: string): Promise<GetUserResponse> {
         return await this.cognito.getUser({
             AccessToken: accessToken
+        }).promise()
+    }
+
+    async getUserByEmail(email: string): Promise<UserType | null> {
+        const users = await this.cognito.listUsers({
+            UserPoolId: this.userPoolId,
+            Filter: `email=${email}`
+        }).promise()
+
+        return users.Users?.length === 1 ? users.Users[0] : null
+    }
+
+    async getUserByPhone(phoneNumber: string): Promise<UserType | null> {
+        const users = await this.cognito.listUsers({
+            UserPoolId: this.userPoolId,
+            Filter: `phone_number=${phoneNumber}`
+        }).promise()
+
+        return users.Users?.length === 1 ? users.Users[0] : null
+    }
+
+    async updateUser(accessToken: string, request: UpdateRequest): Promise<UpdateUserAttributesResponse> {
+        const attributes = []
+        if (request.name) {
+            attributes.push({Name: "name", Value: request.name})
+        }
+
+        return await this.cognito.updateUserAttributes({
+            AccessToken: accessToken,
+            UserAttributes: attributes
         }).promise()
     }
 
@@ -65,6 +99,7 @@ class AuthenticationDao {
             AccessToken: request.accessToken,
         }).promise()
     }
+
 }
 
-export {AuthenticationDao}
+export {UserDao}
