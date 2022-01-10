@@ -82,6 +82,22 @@ functions:
         Action:
           - dynamodb:PutItem
         Resource: ${self:custom.userTableArn}
+  updateUserContact:
+    handler: src/functions/UserHandler.updateUserContact
+    events:
+      - http:
+          path: /api/v1/users/{userId}/contact
+          method: post
+          authorizer:
+            arn: ${self:custom.apiUserPoolArn}
+            scopes:
+              - user_api/user_api.all
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+        Resource: ${self:custom.userTableArn}
   updateUser:
     handler: src/functions/UserHandler.updateUser
     events:

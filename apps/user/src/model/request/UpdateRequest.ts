@@ -6,7 +6,9 @@ import {UserRequest} from './UserRequest';
 const updateSchema = {
     id: Joi.forbidden(), // can't change this
     email: Joi.forbidden(), // not allowed via this endpoint
+    emailConfirmed: Joi.forbidden(), // not allowed via this endpoint
     phoneNumber: Joi.forbidden(), // not allowed via this endpoint
+    phoneNumberConfirmed: Joi.forbidden(), // not allowed via this endpoint
     firstName: Joi.string(),
     lastName: Joi.string()
 }

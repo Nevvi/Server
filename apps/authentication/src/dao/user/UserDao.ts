@@ -21,6 +21,24 @@ class UserDao {
             throw e
         }
     }
+
+    async confirmUserEmail(id: string) {
+        try {
+            return await this.client.updateUserContact(id, {emailConfirmed: true})
+        } catch (e) {
+            console.log(`Failed to update user contact`, e)
+            throw e
+        }
+    }
+
+    async confirmUserPhoneNumber(id: string) {
+        try {
+            return await this.client.updateUserContact(id, {phoneNumberConfirmed: true})
+        } catch (e) {
+            console.log(`Failed to update user contact`, e)
+            throw e
+        }
+    }
 }
 
 export {UserDao}

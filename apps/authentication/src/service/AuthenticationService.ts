@@ -28,8 +28,11 @@ class AuthenticationService {
         return new RegisterResponse(signUpResponse)
     }
 
-    async confirm(confirmRequest: ConfirmRequest) {
-        return await this.authenticationDao.confirm(confirmRequest)
+    async confirm(confirmRequest: ConfirmRequest): Promise<ConfirmResponse> {
+        const response = await this.authenticationDao.confirm(confirmRequest)
+        // TODO - get user by email to get the sub of that user
+        await this.userDao.confirmUserEmail(confirmRequest.username)
+        return response
     }
 
     async login(loginRequest: LoginRequest): Promise<LoginResponse> {

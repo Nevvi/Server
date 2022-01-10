@@ -7,6 +7,7 @@ import {UpdateRequest} from '../model/request/UpdateRequest';
 
 import {UserService} from '../service/UserService';
 import {Handler} from "aws-lambda";
+import {UpdateContactRequest} from "../model/request/UpdateContactRequest";
 const userService = new UserService()
 
 export const getUser: Handler = async (event) => {
@@ -28,6 +29,28 @@ export const createUser: Handler = async (event) => {
         request.validate()
         const user = await userService.createUser(request)
         return createResponse(201, user)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
+export const updateUserContact: Handler = async (event) => {
+    try{
+        console.log("Received request to update user contact")
+
+        // validate incoming request is good
+        const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
+        const request = new UpdateContactRequest(body.email, body.emailConfirmed, body.phoneNumber, body.phoneNumberConfirmed)
+        request.validate(body)
+
+        // validate user exists with that username
+        const {userId} = event.pathParameters
+        const existingUser = await getUserById(userId)
+
+        // update the info on that user
+        const updatedUser = await userService.updateUserContact(existingUser, request)
+
+        return createResponse(200, updatedUser)
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)
     }
