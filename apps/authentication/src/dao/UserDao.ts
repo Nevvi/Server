@@ -70,10 +70,9 @@ class UserDao {
         return await this.cognito.signUp({
             ClientId: this.clientId,
             Password: request.password,
-            Username: request.email, // default to email login but phone can be used once verified
+            Username: request.email,
             UserAttributes: [
-                {Name: "email", Value: request.email},
-                {Name: "phone_number", Value: request.phoneNumber}
+                {Name: "email", Value: request.email}
             ]
         }).promise()
     }

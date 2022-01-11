@@ -22,14 +22,18 @@ class UserService {
     }
 
     _mapToUser(response: AdminGetUserResponse): User {
-        const attributes = response.UserAttributes
-        const userId = attributes?.find(a => a.Name === 'sub')?.Value
-        const email = attributes?.find(a => a.Name === 'email')?.Value
-        const emailVerified = attributes?.find(a => a.Name === 'email_verified')?.Value
+        const attributes = response.UserAttributes!
+
+        // always present after registration
+        const userId = attributes.find(a => a.Name === 'sub')!.Value!
+        const email = attributes.find(a => a.Name === 'email')!.Value!
+        const emailVerified = attributes.find(a => a.Name === 'email_verified')!.Value! === 'true'
+
+        // not always present
         const phone = attributes?.find(a => a.Name === 'phone_number')?.Value
-        const phoneVerified = attributes?.find(a => a.Name === 'phone_number_verified')?.Value
+        const phoneVerified = attributes?.find(a => a.Name === 'phone_number_verified')?.Value === 'true'
         const name = attributes?.find(a => a.Name === 'name')?.Value
-        // @ts-ignore
+
         return new User(userId, email, emailVerified, phone, phoneVerified, name)
     }
 }

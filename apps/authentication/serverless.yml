@@ -16,6 +16,16 @@ custom:
   oauthDomainMap:
     default: https://nevvi-development-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
     production: https://nevvi-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
+  domainNameMap:
+    default: api.development.nevvi.net
+    production: api.nevvi.net
+  basePathMap:
+    production: authentication
+    development: authentication
+    default: ${self:provider.stage}-authentication
+  customDomain:
+    domainName: ${self:custom.domainNameMap.${self:provider.stage}, self:custom.domainNameMap.default}
+    basePath: ${self:custom.basePathMap.${self:provider.stage}, self:custom.basePathMap.default}
   apiUserPoolNameMap:
     default: nevvi-development-api-users
     production: nevvi-api-users
@@ -29,16 +39,7 @@ custom:
   apiUserPoolName: ${self:custom.apiUserPoolNameMap.${self:provider.stage}, self:custom.apiUserPoolNameMap.default}
   apiUserPoolClientId: ${ssm:/nevvi/cognito/${self:custom.apiUserPoolName}/clients/authentication/id}
   apiUserPoolClientSecret: ${ssm:/nevvi/cognito/${self:custom.apiUserPoolName}/clients/authentication/secret}
-  domainNameMap:
-    default: api.development.nevvi.net
-    production: api.nevvi.net
-  basePathMap:
-    production: authentication
-    development: authentication
-    default: ${self:provider.stage}-authentication
-  customDomain:
-    domainName: ${self:custom.domainNameMap.${self:provider.stage}, self:custom.domainNameMap.default}
-    basePath: ${self:custom.basePathMap.${self:provider.stage}, self:custom.basePathMap.default}
+
 
 provider:
   name: aws

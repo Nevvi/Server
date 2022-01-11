@@ -13,7 +13,7 @@ export const register: Handler = async (event: any) => {
     try {
         console.log("Received request to create an account")
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
-        const request = new RegisterRequest(body.email, body.phoneNumber, body.password)
+        const request = new RegisterRequest(body.email, body.password)
         request.validate()
         const registerResponse = await authenticationService.register(request)
         return createResponse(200, registerResponse)
