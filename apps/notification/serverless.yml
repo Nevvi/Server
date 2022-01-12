@@ -1,0 +1,98 @@
+service: notification
+
+frameworkVersion: '2'
+variablesResolutionMode: 20210326
+
+plugins:
+  - serverless-prune-plugin
+  - serverless-iam-roles-per-function
+  - serverless-webpack
+  - serverless-domain-manager
+
+custom:
+  prune:
+    automatic: true
+    number: 2
+  serverless-iam-roles-per-function:
+    defaultInherit: true
+  domainNameMap:
+    default: api.development.nevvi.net
+    production: api.nevvi.net
+  basePathMap:
+    production: notification
+    development: notification
+    default: ${self:provider.stage}-notification
+  customDomain:
+    domainName: ${self:custom.domainNameMap.${self:provider.stage}, self:custom.domainNameMap.default}
+    basePath: ${self:custom.basePathMap.${self:provider.stage}, self:custom.basePathMap.default}
+  notificationTableNameMap:
+    default: notification-dev
+    production: notification
+  notificationTableName: ${self:custom.notificationTableNameMap.${self:provider.stage}, self:custom.notificationTableNameMap.default}
+  notificationTableArn: ${ssm:/nevvi/dynamodb/${self:custom.notificationTableName}/arn}
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  lambdaHashingVersion: 20201221
+  stage: ${opt:stage, 'test'}
+  region: ${opt:region, 'us-east-1'}
+  apiName: notification-${self:provider.stage}
+  stackName: notification-${self:provider.stage}
+  deploymentBucket:
+    name: nevvi-serverless-deployment-bucket
+  deploymentPrefix: ${self:provider.stage}
+  environment:
+    NOTIFICATION_TABLE: ${self:custom.notificationTableName}
+
+functions:
+  authorizer:
+    handler: src/functions/Authorizer.authorize
+
+  createGroup:
+    handler: src/functions/NotificationHandler.createGroup
+    events:
+      - http:
+          path: /v1/users/{userId}/groups
+          method: post
+          authorizer:
+            name: authorizer
+            resultTtlInSeconds: 0
+            type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource: ${self:custom.notificationTableArn}
+
+  getGroups:
+    handler: src/functions/NotificationHandler.getGroups
+    events:
+      - http:
+          path: /v1/users/{userId}/groups
+          method: get
+          authorizer:
+            name: authorizer
+            resultTtlInSeconds: 0
+            type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: ${self:custom.notificationTableArn}
+
+  getGroup:
+    handler: src/functions/NotificationHandler.getGroup
+    events:
+      - http:
+          path: /v1/users/{userId}/groups/{groupId}
+          method: get
+          authorizer:
+            name: authorizer
+            resultTtlInSeconds: 0
+            type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+        Resource: ${self:custom.notificationTableArn}
