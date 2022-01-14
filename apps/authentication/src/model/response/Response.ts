@@ -1,6 +1,11 @@
 'use strict'
 
-import {AuthenticationResultType, SignUpResponse} from "aws-sdk/clients/cognitoidentityserviceprovider";
+import {
+    AuthenticationResultType,
+    GetUserAttributeVerificationCodeResponse,
+    SignUpResponse
+} from "aws-sdk/clients/cognitoidentityserviceprovider";
+import {User} from "../User";
 
 class LoginResponse {
     private id: string;
@@ -38,7 +43,6 @@ class RegisterResponse {
         this.codeDeliveryMedium = signupResponse.CodeDeliveryDetails?.DeliveryMedium;
         this.codeDeliveryAttribute = signupResponse.CodeDeliveryDetails?.AttributeName;
     }
-
 }
 
 export {LoginResponse, LogoutResponse, RegisterResponse, ConfirmResponse}

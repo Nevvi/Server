@@ -26,7 +26,7 @@ export const updateUser: Handler = async (event) => {
 
         // validate incoming request is good
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
-        const request = new UpdateRequest(body.name)
+        const request = new UpdateRequest(body.phoneNumber, body.name)
         request.validate()
 
         const {userId} = event.pathParameters
