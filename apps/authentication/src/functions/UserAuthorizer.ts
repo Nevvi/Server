@@ -10,6 +10,8 @@ class UserAuthorizer extends AbstractAuthorizer {
         if (userId) {
             authPolicy.allowMethod(HttpVerb.GET, `/v1/users/${userId}`)
             authPolicy.allowMethod(HttpVerb.PATCH, `/v1/users/${userId}`)
+            authPolicy.allowMethod(HttpVerb.POST, `/v1/users/${userId}/sendCode`)
+            authPolicy.allowMethod(HttpVerb.POST, `/v1/users/${userId}/confirmCode`)
         } else {
             authPolicy.denyAllMethods()
         }

@@ -6,13 +6,15 @@ import {RegisterRequest} from "../model/request/RegisterRequest";
 import {LogoutRequest} from "../model/request/LogoutRequest";
 import {
     AdminGetUserResponse, AdminUpdateUserAttributesResponse,
-    ConfirmSignUpRequest, ConfirmSignUpResponse, GetUserResponse,
+    ConfirmSignUpRequest, ConfirmSignUpResponse, GetUserAttributeVerificationCodeResponse, GetUserResponse,
     GlobalSignOutResponse,
     InitiateAuthResponse,
-    SignUpResponse, UpdateUserAttributesResponse, UserType
+    SignUpResponse, UpdateUserAttributesResponse, UserType, VerifyUserAttributeResponse
 } from "aws-sdk/clients/cognitoidentityserviceprovider";
-import {ConfirmRequest} from "../model/request/ConfirmRequest";
+import {ConfirmSignupRequest} from "../model/request/ConfirmSignupRequest";
 import {UpdateRequest} from "../model/request/UpdateRequest";
+import {SendCodeRequest} from "../model/request/SendCodeRequest";
+import {ConfirmCodeRequest} from "../model/request/ConfirmCodeRequest";
 
 const AWS = require('aws-sdk')
 
@@ -77,7 +79,7 @@ class UserDao {
         }).promise()
     }
 
-    async confirm(request: ConfirmRequest): Promise<ConfirmSignUpResponse> {
+    async confirm(request: ConfirmSignupRequest): Promise<ConfirmSignUpResponse> {
         return await this.cognito.confirmSignUp({
             ClientId: this.clientId,
             Username: request.username,
@@ -102,6 +104,20 @@ class UserDao {
         }).promise()
     }
 
+    async sendVerificationCode(request: SendCodeRequest): Promise<GetUserAttributeVerificationCodeResponse> {
+        return await this.cognito.getUserAttributeVerificationCode({
+            AccessToken: request.accessToken,
+            AttributeName: request.attributeName
+        }).promise()
+    }
+
+    async verifyCode(request: ConfirmCodeRequest): Promise<VerifyUserAttributeResponse> {
+        return await this.cognito.verifyUserAttribute({
+            AccessToken: request.accessToken,
+            AttributeName: request.attributeName,
+            Code: request.code
+        }).promise()
+    }
 }
 
 export {UserDao}

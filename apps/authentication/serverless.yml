@@ -98,6 +98,38 @@ functions:
           path: /v1/logout
           method: post
 
+  sendVerificationCode:
+    handler: src/functions/AuthHandler.sendCode
+    events:
+      - http:
+          path: /v1/users/{userId}/sendCode
+          method: post
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - cognito-idp:GetUserAttributeVerificationCode
+        Resource: ${self:custom.publicUserPoolArn}
+
+  confirmVerificationCode:
+    handler: src/functions/AuthHandler.confirmCode
+    events:
+      - http:
+          path: /v1/users/{userId}/confirmCode
+          method: post
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - cognito-idp:VerifyUserAttribute
+        Resource: ${self:custom.publicUserPoolArn}
+
   getUser:
     handler: src/functions/UserHandler.getUser
     events:

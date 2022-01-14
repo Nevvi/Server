@@ -6,7 +6,9 @@ import {LoginRequest} from '../model/request/LoginRequest';
 import {LogoutRequest} from '../model/request/LogoutRequest';
 
 import {AuthenticationService} from '../service/AuthenticationService';
-import {ConfirmRequest} from "../model/request/ConfirmRequest";
+import {ConfirmSignupRequest} from "../model/request/ConfirmSignupRequest";
+import {SendCodeRequest} from "../model/request/SendCodeRequest";
+import {ConfirmCodeRequest} from "../model/request/ConfirmCodeRequest";
 const authenticationService = new AuthenticationService()
 
 export const register: Handler = async (event: any) => {
@@ -26,7 +28,7 @@ export const confirm: Handler = async (event: any) => {
     try {
         console.log("Received request to confirm an account")
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
-        const request = new ConfirmRequest(body.username, body.confirmationCode)
+        const request = new ConfirmSignupRequest(body.username, body.confirmationCode)
         request.validate()
         const confirmResponse = await authenticationService.confirm(request)
         return createResponse(200, confirmResponse)
@@ -56,6 +58,34 @@ export const logout: Handler = async (event: any) => {
         request.validate()
         const logoutResponse = await authenticationService.logout(request)
         return createResponse(200, logoutResponse)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
+export const sendCode: Handler = async (event: any) => {
+    try {
+        console.log("Received request to send a new verification code")
+        const {attribute} = (event.queryStringParameters || {})
+        const accessToken = event.headers.AccessToken || event.headers.accesstoken
+        const request = new SendCodeRequest(accessToken, attribute)
+        request.validate()
+        const response = await authenticationService.sendCode(request)
+        return createResponse(200, response)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
+export const confirmCode: Handler = async (event: any) => {
+    try {
+        console.log("Received request to confirm a verification code")
+        const {attribute, code} = (event.queryStringParameters || {})
+        const accessToken = event.headers.AccessToken || event.headers.accesstoken
+        const request = new ConfirmCodeRequest(accessToken, attribute, code)
+        request.validate()
+        const response = await authenticationService.confirmCode(request)
+        return createResponse(200, response)
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)
     }

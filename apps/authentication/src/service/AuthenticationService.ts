@@ -7,7 +7,9 @@ import {ConfirmResponse, LoginResponse, LogoutResponse, RegisterResponse} from "
 import {InvalidRequestError} from "../error/Errors";
 import {LogoutRequest} from "../model/request/LogoutRequest";
 import {SignUpResponse} from "aws-sdk/clients/cognitoidentityserviceprovider";
-import {ConfirmRequest} from "../model/request/ConfirmRequest";
+import {ConfirmSignupRequest} from "../model/request/ConfirmSignupRequest";
+import {ConfirmCodeRequest} from "../model/request/ConfirmCodeRequest";
+import {SendCodeRequest} from "../model/request/SendCodeRequest";
 
 class AuthenticationService {
     private userDao: UserDao;
@@ -22,7 +24,7 @@ class AuthenticationService {
         return new RegisterResponse(signUpResponse)
     }
 
-    async confirm(confirmRequest: ConfirmRequest): Promise<ConfirmResponse> {
+    async confirm(confirmRequest: ConfirmSignupRequest): Promise<ConfirmResponse> {
         return await this.userDao.confirm(confirmRequest)
     }
 
@@ -44,6 +46,14 @@ class AuthenticationService {
     async logout(logoutRequest: LogoutRequest): Promise<LogoutResponse> {
         await this.userDao.logout(logoutRequest)
         return new LogoutResponse()
+    }
+
+    async sendCode(request: SendCodeRequest) {
+        return await this.userDao.sendVerificationCode(request)
+    }
+
+    async confirmCode(request: ConfirmCodeRequest) {
+        return await this.userDao.verifyCode(request)
     }
 }
 

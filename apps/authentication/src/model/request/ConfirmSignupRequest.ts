@@ -8,7 +8,7 @@ const registerSchema = {
     confirmationCode: Joi.string().required()
 }
 
-class ConfirmRequest extends UserRequest {
+class ConfirmSignupRequest extends UserRequest {
     public username: string;
     public confirmationCode: string;
     constructor(username: string, confirmationCode: string) {
@@ -18,4 +18,4 @@ class ConfirmRequest extends UserRequest {
     }
 }
 
-export {ConfirmRequest};
+export {ConfirmSignupRequest}
