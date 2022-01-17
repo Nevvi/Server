@@ -37,8 +37,7 @@ custom:
   publicUserPoolId: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/id}
   publicUserPoolClientId: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/clients/authentication/id}
   apiUserPoolName: ${self:custom.apiUserPoolNameMap.${self:provider.stage}, self:custom.apiUserPoolNameMap.default}
-  apiUserPoolClientId: ${ssm:/nevvi/cognito/${self:custom.apiUserPoolName}/clients/authentication/id}
-  apiUserPoolClientSecret: ${ssm:/nevvi/cognito/${self:custom.apiUserPoolName}/clients/authentication/secret}
+  apiUserPoolArn: ${ssm:/nevvi/cognito/${self:custom.apiUserPoolName}/arn}
 
 
 provider:
@@ -56,10 +55,6 @@ provider:
     OAUTH_DOMAIN_URL: ${self:custom.oauthDomainMap.${self:provider.stage}, self:custom.oauthDomainMap.default}
     PUBLIC_USER_POOL_CLIENT_ID: ${self:custom.publicUserPoolClientId}
     PUBLIC_USER_POOL_ID: ${self:custom.publicUserPoolId}
-    USER_API_URL: https://${self:custom.domainNameMap.${self:provider.stage}, self:custom.domainNameMap.default}/user
-    API_CLIENT_ID: ${self:custom.apiUserPoolClientId}
-    API_CLIENT_SECRET: ${self:custom.apiUserPoolClientSecret}
-    USER_API_SCOPES: user_api/user_api.all
 
 functions:
   userAuthorizer:
@@ -161,4 +156,20 @@ functions:
         Action:
           - cognito-idp:AdminGetUser
           - cognito-idp:AdminUpdateUserAttributes
+        Resource: ${self:custom.publicUserPoolArn}
+
+  searchUser:
+    handler: src/functions/UserHandler.searchUser
+    events:
+      - http:
+          path: /api/v1/users
+          method: get
+          authorizer:
+            arn: ${self:custom.apiUserPoolArn}
+            scopes:
+              - user_api/user_api.all
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - cognito-idp:ListUsers
         Resource: ${self:custom.publicUserPoolArn}

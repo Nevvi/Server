@@ -18,6 +18,9 @@ custom:
   domainNameMap:
     default: api.development.nevvi.net
     production: api.nevvi.net
+  oauthDomainMap:
+    default: https://nevvi-development-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
+    production: https://nevvi-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
   basePathMap:
     production: notification
     development: notification
@@ -25,11 +28,17 @@ custom:
   customDomain:
     domainName: ${self:custom.domainNameMap.${self:provider.stage}, self:custom.domainNameMap.default}
     basePath: ${self:custom.basePathMap.${self:provider.stage}, self:custom.basePathMap.default}
+  apiUserPoolNameMap:
+    default: nevvi-development-api-users
+    production: nevvi-api-users
   notificationTableNameMap:
     default: notification-dev
     production: notification
   notificationTableName: ${self:custom.notificationTableNameMap.${self:provider.stage}, self:custom.notificationTableNameMap.default}
   notificationTableArn: ${ssm:/nevvi/dynamodb/${self:custom.notificationTableName}/arn}
+  apiUserPoolName: ${self:custom.apiUserPoolNameMap.${self:provider.stage}, self:custom.apiUserPoolNameMap.default}
+  apiUserPoolClientId: ${ssm:/nevvi/cognito/${self:custom.apiUserPoolName}/clients/notification/id}
+  apiUserPoolClientSecret: ${ssm:/nevvi/cognito/${self:custom.apiUserPoolName}/clients/notification/secret}
 
 provider:
   name: aws
@@ -44,6 +53,11 @@ provider:
   deploymentPrefix: ${self:provider.stage}
   environment:
     NOTIFICATION_TABLE: ${self:custom.notificationTableName}
+    OAUTH_DOMAIN_URL: ${self:custom.oauthDomainMap.${self:provider.stage}, self:custom.oauthDomainMap.default}
+    USER_API_URL: https://${self:custom.domainNameMap.${self:provider.stage}, self:custom.domainNameMap.default}/authentication
+    API_CLIENT_ID: ${self:custom.apiUserPoolClientId}
+    API_CLIENT_SECRET: ${self:custom.apiUserPoolClientSecret}
+    USER_API_SCOPES: user_api/user_api.all
 
 functions:
   authorizer:
@@ -96,3 +110,18 @@ functions:
         Action:
           - dynamodb:GetItem
         Resource: ${self:custom.notificationTableArn}
+
+  handleResponse:
+    handler: src/functions/NotificationHandler.handleUserResponse
+    events:
+      - sns:
+          arn: arn:aws:sns:us-east-1:275527036335:user-responses
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: ${self:custom.notificationTableArn}
+      - Effect: Allow
+        Action:
+          - sns:Publish
+        Resource: "*"

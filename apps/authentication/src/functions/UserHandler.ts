@@ -8,6 +8,17 @@ import {UserService} from '../service/UserService';
 import {Handler} from "aws-lambda";
 const userService = new UserService()
 
+export const searchUser: Handler = async (event) => {
+    try{
+        console.log("Received request to search user")
+        const {phoneNumber} = (event.queryStringParameters || {})
+        const user = await userService.searchUsers(phoneNumber)
+        return createResponse(200, user)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
 export const getUser: Handler = async (event) => {
     try{
         console.log("Received request to get user")

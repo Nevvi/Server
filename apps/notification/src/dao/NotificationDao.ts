@@ -4,7 +4,11 @@
 import {DocumentClient} from "aws-sdk/clients/dynamodb";
 import {NotificationGroup} from "../model/NotificationGroup";
 import {fromModel, fromRow, NotificationGroupDocument} from "./NotificationGroupDocument";
-import {NotificationGroupAlreadyExistsError, NotificationGroupDoesNotExistError} from "../error/Errors";
+import {
+    InvalidRequestError,
+    NotificationGroupAlreadyExistsError,
+    NotificationGroupDoesNotExistError
+} from "../error/Errors";
 
 const AWS = require('aws-sdk')
 
@@ -30,6 +34,30 @@ class NotificationDao {
         }
 
         return fromRow(result.Item)
+    }
+
+    async getNotificationGroupByCode(referenceCode: number): Promise<NotificationGroupDocument> {
+        const result = await this.db.query({
+            TableName: this.table,
+            IndexName: "GSI1",
+            KeyConditionExpression: '#gsi1pk = :gsi1pk and begins_with(#gsi1sk, :gsi1sk)',
+            ExpressionAttributeNames:{
+                "#gsi1pk": "gsi1pk",
+                "#gsi1sk": 'gsi1sk'
+            },
+            ExpressionAttributeValues: {
+                ":gsi1pk": referenceCode.toString(),
+                ":gsi1sk": "GROUP^"
+            }
+        }).promise()
+
+        if (!result.Items?.length) {
+            throw new NotificationGroupDoesNotExistError(referenceCode.toString())
+        } else if (result.Items.length > 1) {
+            throw new InvalidRequestError(`Found too many groups for code ${referenceCode}`)
+        }
+
+        return fromRow(result.Items[0]);
     }
 
     async getNotificationGroups(userId: string): Promise<NotificationGroupDocument[]> {
