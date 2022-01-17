@@ -5,15 +5,18 @@ import {fromDocument, newNotificationGroup, NotificationGroup} from "../model/No
 import {CreateGroupRequest} from "../model/request/CreateGroupRequest";
 import {Command, UserResponse} from "../model/UserResponse";
 import {UserDao} from "../dao/UserDao";
+import {NotificationSender} from "../dao/NotificationSender";
 
 const FILTERED_COMMANDS = [Command.HELP, Command.STOP, Command.UNSTOP]
 
 class NotificationService {
     private userDao: UserDao;
     private notificationDao: NotificationDao;
+    private notificationSender: NotificationSender;
     constructor() {
         this.userDao = new UserDao()
         this.notificationDao = new NotificationDao()
+        this.notificationSender = new NotificationSender()
     }
 
     async getNotificationGroup(userId: string, groupId: string): Promise<NotificationGroup> {
@@ -30,6 +33,8 @@ class NotificationService {
 
     async createNotificationGroup(createGroupRequest: CreateGroupRequest): Promise<NotificationGroup> {
         const notificationGroup = newNotificationGroup(createGroupRequest.userId, createGroupRequest.name)
+        const topic = await this.notificationSender.createTopic(notificationGroup.id, notificationGroup.name)
+        notificationGroup.topicArn = topic.TopicArn
         const response = await this.notificationDao.createNotificationGroup(notificationGroup)
         return fromDocument(response)
     }
@@ -54,18 +59,18 @@ class NotificationService {
     async listUserGroups(phoneNumber: string) {
         const user = await this.userDao.getUserByPhone(phoneNumber)
         if (!user) {
-            await this.userDao.sendMessage(phoneNumber, "Could not find a matching user for this phone number")
+            await this.notificationSender.sendMessage(phoneNumber, "Could not find a matching user for this phone number")
             return
         }
 
         const groups = await this.getNotificationGroups(user.userId)
         if (groups.length === 0){
-            await this.userDao.sendMessage(phoneNumber, "No groups have been created yet for this user")
+            await this.notificationSender.sendMessage(phoneNumber, "No groups have been created yet for this user")
             return
         }
 
         const message = groups.map(group => `${group.referenceCode}: ${group.name}`).join("\n")
-        await this.userDao.sendMessage(phoneNumber, message)
+        await this.notificationSender.sendMessage(phoneNumber, message)
     }
 }
 

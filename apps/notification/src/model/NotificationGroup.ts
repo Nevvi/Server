@@ -8,7 +8,8 @@ class NotificationGroup {
     referenceCode: number
     userId: string
     name: string
-    createDate: string;
+    createDate: string
+    topicArn?: string
     constructor(id: string, referenceCode: number, userId: string, name: string, createDate: string) {
         this.id = id
         this.referenceCode = referenceCode
@@ -30,13 +31,15 @@ function newNotificationGroup(userId: string, name: string): NotificationGroup {
 }
 
 function fromDocument(document: NotificationGroupDocument) : NotificationGroup {
-    return new NotificationGroup(
+    const group = new NotificationGroup(
         document.id,
         document.referenceCode,
         document.userId,
         document.name,
         document.createDate
     )
+    group.topicArn = document.topicArn
+    return group
 }
 
 export {NotificationGroup, fromDocument, newNotificationGroup}

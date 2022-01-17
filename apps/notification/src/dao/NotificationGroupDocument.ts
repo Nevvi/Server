@@ -11,8 +11,9 @@ class NotificationGroupDocument {
     referenceCode: number
     userId: string
     name: string
+    topicArn: string
     createDate: string
-    constructor(id: string, referenceCode: number, userId: string, name: string, createDate: string) {
+    constructor(id: string, referenceCode: number, userId: string, name: string, topicArn: string, createDate: string) {
         // need the uuid to be in the primary to make updates and queries easier
         // id is seeded from name so it will prevent duplicate names
         this.partitionKey = userId
@@ -25,6 +26,7 @@ class NotificationGroupDocument {
         this.referenceCode = referenceCode
         this.userId = userId
         this.name = name
+        this.topicArn = topicArn
         this.createDate = createDate
     }
 }
@@ -35,6 +37,7 @@ function fromRow(row: any) : NotificationGroupDocument {
         row.referenceCode,
         row.userId,
         row.name,
+        row.topicArn,
         row.createDate
     )
 }
@@ -45,6 +48,7 @@ function fromModel(model: NotificationGroup) : NotificationGroupDocument {
         model.referenceCode,
         model.userId,
         model.name,
+        model.topicArn!,
         model.createDate
     )
 }
