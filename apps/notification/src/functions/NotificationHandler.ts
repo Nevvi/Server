@@ -54,7 +54,13 @@ export const handleUserResponse: Handler = async (event: any) => {
         return new UserResponse(message.originationNumber, message.messageBody)
     })
 
-    await Promise.all(responses.map((response: UserResponse) => notificationService.handleUserResponse(response)))
+    await Promise.all(responses.map((response: UserResponse) => {
+        try {
+            return notificationService.handleUserResponse(response)
+        } catch (e) {
+            console.log("Failed to process request", response, e)
+        }
+    }))
 }
 
 function createResponse(statusCode: number, body: object) {

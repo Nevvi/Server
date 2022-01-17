@@ -6,6 +6,7 @@ import {CreateGroupRequest} from "../model/request/CreateGroupRequest";
 import {Command, UserResponse} from "../model/UserResponse";
 import {UserDao} from "../dao/UserDao";
 import {NotificationSender} from "../dao/NotificationSender";
+import {NotificationGroupSubscriber} from "../model/NotificationGroupSubscriber";
 
 const FILTERED_COMMANDS = [Command.HELP, Command.STOP, Command.UNSTOP]
 
@@ -21,6 +22,11 @@ class NotificationService {
 
     async getNotificationGroup(userId: string, groupId: string): Promise<NotificationGroup> {
         const response = await this.notificationDao.getNotificationGroup(userId, groupId)
+        return fromDocument(response)
+    }
+
+    async getNotificationGroupByCode(groupCode: number): Promise<NotificationGroup> {
+        const response = await this.notificationDao.getNotificationGroupByCode(groupCode)
         return fromDocument(response)
     }
 
@@ -50,7 +56,7 @@ class NotificationService {
         } else if (command === Command.SEND) {
             console.log("SENDING")
         } else if (command === Command.SUBSCRIBE) {
-            console.log("SUBSCRIBING")
+            await this.subscribeUserGroup(response.originatingNumber, response.getGroupCode()!)
         } else if (command === Command.UNSUBSCRIBE) {
             console.log("UNSUBSCRIBING")
         }
@@ -71,6 +77,15 @@ class NotificationService {
 
         const message = groups.map(group => `${group.referenceCode}: ${group.name}`).join("\n")
         await this.notificationSender.sendMessage(phoneNumber, message)
+    }
+
+    async subscribeUserGroup(phoneNumber: string, groupCode: number) {
+        const group = await this.getNotificationGroupByCode(groupCode)
+        // TODO - check if already subscribed
+        const response = await this.notificationSender.createSubscription(group.topicArn!, phoneNumber)
+        const subscriber = new NotificationGroupSubscriber(group.userId, group.id, group.referenceCode, response.SubscriptionArn!, phoneNumber, new Date().toISOString())
+        await this.notificationDao.createNotificationGroupSubscriber(subscriber)
+        await this.notificationSender.sendMessage(phoneNumber, `Successfully subscribed to ${group.name}\n\nReply UNSUBSCRIBE ${group.referenceCode} to stop receiving messages.`)
     }
 }
 

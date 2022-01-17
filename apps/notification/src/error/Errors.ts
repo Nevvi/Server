@@ -26,9 +26,16 @@ class NotificationGroupAlreadyExistsError extends HttpStatusCodeError {
     }
 }
 
+class NotificationGroupSubscriberAlreadyExistsError extends HttpStatusCodeError {
+    constructor(phoneNumber: string) {
+        super(`Notification group subscriber already exists for this phone number: ${phoneNumber}`, 409)
+    }
+}
+
 export {
     HttpStatusCodeError,
     InvalidRequestError,
     NotificationGroupDoesNotExistError,
-    NotificationGroupAlreadyExistsError
+    NotificationGroupAlreadyExistsError,
+    NotificationGroupSubscriberAlreadyExistsError
 }

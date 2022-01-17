@@ -1,7 +1,7 @@
 'use strict'
 
 import {SNS} from "aws-sdk";
-import {CreateTopicResponse, PublishResponse} from "aws-sdk/clients/sns";
+import {CreateTopicResponse, PublishResponse, SubscribeResponse} from "aws-sdk/clients/sns";
 
 const AWS = require('aws-sdk')
 
@@ -17,6 +17,14 @@ class NotificationSender {
             Attributes: {
                 DisplayName: displayName
             }
+        }).promise()
+    }
+
+    async createSubscription(topic: string, phoneNumber: string): Promise<SubscribeResponse> {
+        return await this.sns.subscribe({
+            TopicArn: topic,
+            Protocol: "sms",
+            Endpoint: phoneNumber
         }).promise()
     }
 

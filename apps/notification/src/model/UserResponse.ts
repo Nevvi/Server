@@ -19,7 +19,7 @@ class UserResponse {
         this.message = message
     }
 
-    getCommand() {
+    getCommand(): Command {
         if (!this.message) return Command.UNKNOWN
 
         const keyword = this.message.trim().toUpperCase().split(" ")[0]
@@ -32,6 +32,21 @@ class UserResponse {
         if (keyword === 'UNSUBSCRIBE') return Command.UNSUBSCRIBE
 
         return Command.UNKNOWN
+    }
+
+    getGroupCode(): number | undefined {
+        if (!this.message) return undefined
+
+        const parts = this.message.trim().toUpperCase().split(" ")
+
+        // first part should be the command
+        if (parts.length < 2) return undefined
+
+        // group code should always follow the command
+        const code = parseInt(parts[1])
+        if (isNaN(code)) return undefined
+
+        return code
     }
 }
 

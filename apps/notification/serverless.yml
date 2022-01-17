@@ -123,9 +123,14 @@ functions:
     iamRoleStatements:
       - Effect: Allow
         Action:
+          - dynamodb:PutItem
           - dynamodb:Query
         Resource: ${self:custom.notificationTableArn}
       - Effect: Allow
         Action:
-          - sns:Publish
+          - dynamodb:Query
+        Resource: ${self:custom.notificationTableArn}/index/GSI1
+      - Effect: Allow
+        Action:
+          - sns:*
         Resource: "*"
