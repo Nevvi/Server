@@ -20,8 +20,10 @@ class NotificationService {
     }
 
     async getNotificationGroup(userId: string, groupId: string): Promise<NotificationGroup> {
+        // get the group using the user id first to ensure the user owns the group
         const response = await this.notificationDao.getNotificationGroup(userId, groupId)
-        return fromDocument(response)
+        // call back to get ALL the group info using the reference code
+        return await this.notificationDao.getNotificationGroupInfo(response.referenceCode)
     }
 
     async getNotificationGroupByCode(groupCode: number): Promise<NotificationGroup> {

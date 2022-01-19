@@ -114,6 +114,10 @@ functions:
         Action:
           - dynamodb:GetItem
         Resource: ${self:custom.notificationTableArn}
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: ${self:custom.notificationTableArn}/index/GSI1
 
   handleResponse:
     handler: src/functions/NotificationHandler.handleUserResponse
