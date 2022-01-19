@@ -2,10 +2,10 @@
 
 enum Command {
     HELP,
-    STOP,
-    UNSTOP,
     LIST,
+    INFO,
     SEND,
+    DELETE,
     SUBSCRIBE,
     UNSUBSCRIBE,
     UNKNOWN
@@ -24,10 +24,10 @@ class UserResponse {
 
         const keyword = this.message.trim().toUpperCase().split(" ")[0]
         if (keyword === 'HELP') return Command.HELP
-        if (keyword === 'STOP') return Command.STOP
-        if (keyword === 'UNSTOP') return Command.UNSTOP
+        if (keyword === 'INFO') return Command.INFO
         if (keyword === 'LIST') return Command.LIST
         if (keyword === 'SEND') return Command.SEND
+        if (keyword === 'DELETE') return Command.DELETE
         if (keyword === 'SUBSCRIBE') return Command.SUBSCRIBE
         if (keyword === 'UNSUBSCRIBE') return Command.UNSUBSCRIBE
 
@@ -47,6 +47,17 @@ class UserResponse {
         if (isNaN(code)) return undefined
 
         return code
+    }
+
+    getMessageText(): string | undefined {
+        if (!this.message) return undefined
+
+        const parts = this.message.trim().split(" ")
+
+        // first part should be the command
+        if (parts.length < 3) return undefined
+
+        return parts.slice(2).filter(p => p.trim() !== "").map(p => p.trim()).join(" ")
     }
 }
 

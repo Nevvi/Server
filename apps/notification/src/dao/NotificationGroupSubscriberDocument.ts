@@ -31,17 +31,6 @@ class NotificationGroupSubscriberDocument {
     }
 }
 
-function fromRow(row: any) : NotificationGroupSubscriberDocument {
-    return new NotificationGroupSubscriberDocument(
-        row.id,
-        row.referenceCode,
-        row.userId,
-        row.name,
-        row.topicArn,
-        row.createDate
-    )
-}
-
 function fromModel(model: NotificationGroupSubscriber) : NotificationGroupSubscriberDocument {
     return new NotificationGroupSubscriberDocument(
         model.groupOwnerId,
@@ -53,4 +42,4 @@ function fromModel(model: NotificationGroupSubscriber) : NotificationGroupSubscr
     )
 }
 
-export {NotificationGroupSubscriberDocument, fromRow, fromModel}
+export {NotificationGroupSubscriberDocument, fromModel}

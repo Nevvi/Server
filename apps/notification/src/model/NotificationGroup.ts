@@ -10,12 +10,18 @@ class NotificationGroup {
     name: string
     createDate: string
     topicArn?: string
+
+    subscribers: any
+    messages: any
     constructor(id: string, referenceCode: number, userId: string, name: string, createDate: string) {
         this.id = id
         this.referenceCode = referenceCode
         this.userId = userId
         this.name = name
         this.createDate = createDate
+
+        this.subscribers = []
+        this.messages = []
     }
 }
 

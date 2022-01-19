@@ -1,6 +1,8 @@
 'use strict'
 
 import {NotificationGroup} from "../model/NotificationGroup";
+import {NotificationGroupSubscriber} from "../model/NotificationGroupSubscriber";
+import {Notification} from "../model/Notification";
 
 class NotificationGroupDocument {
     partitionKey: string
@@ -31,17 +33,6 @@ class NotificationGroupDocument {
     }
 }
 
-function fromRow(row: any) : NotificationGroupDocument {
-    return new NotificationGroupDocument(
-        row.id,
-        row.referenceCode,
-        row.userId,
-        row.name,
-        row.topicArn,
-        row.createDate
-    )
-}
-
 function fromModel(model: NotificationGroup) : NotificationGroupDocument {
     return new NotificationGroupDocument(
         model.id,
@@ -53,4 +44,4 @@ function fromModel(model: NotificationGroup) : NotificationGroupDocument {
     )
 }
 
-export {NotificationGroupDocument, fromRow, fromModel}
+export {NotificationGroupDocument, fromModel}

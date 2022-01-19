@@ -1,16 +1,20 @@
 'use strict'
 
+import {
+    NotificationGroupAlreadyExistsError,
+    NotificationGroupDoesNotExistError,
+    NotificationGroupSubscriberAlreadyExistsError,
+    SubscriberDoesNotExistError
+} from "../error/Errors";
+
 // documents
 import {DocumentClient} from "aws-sdk/clients/dynamodb";
-import {NotificationGroup} from "../model/NotificationGroup";
-import {fromModel as fromGroupModel, fromRow as fromGroupRow, NotificationGroupDocument} from "./NotificationGroupDocument";
-import {
-    InvalidRequestError,
-    NotificationGroupAlreadyExistsError,
-    NotificationGroupDoesNotExistError, NotificationGroupSubscriberAlreadyExistsError
-} from "../error/Errors";
-import {NotificationGroupSubscriber} from "../model/NotificationGroupSubscriber";
+import {fromDocument as fromGroupDocument, NotificationGroup} from "../model/NotificationGroup";
+import {fromModel as fromGroupModel, NotificationGroupDocument} from "./NotificationGroupDocument";
+import {fromDocument as fromSubscriberDocument, NotificationGroupSubscriber} from "../model/NotificationGroupSubscriber";
 import {fromModel as fromSubscriberModel, NotificationGroupSubscriberDocument} from "./NotificationGroupSubscriberDocument";
+import {fromDocument as fromNotificationDocument, Notification} from "../model/Notification";
+import {fromModel as fromNotificationModel, NotificationDocument} from "./NotificationDocument";
 
 const AWS = require('aws-sdk')
 
@@ -35,7 +39,7 @@ class NotificationDao {
             throw new NotificationGroupDoesNotExistError(groupId)
         }
 
-        return fromGroupRow(result.Item)
+        return result.Item as NotificationGroupDocument
     }
 
     async getNotificationGroupByCode(referenceCode: number): Promise<NotificationGroupDocument> {
@@ -55,11 +59,35 @@ class NotificationDao {
 
         if (!result.Items?.length) {
             throw new NotificationGroupDoesNotExistError(referenceCode.toString())
-        } else if (result.Items.length > 1) {
-            throw new InvalidRequestError(`Found too many groups for code ${referenceCode}`)
         }
 
-        return fromGroupRow(result.Items[0]);
+        return result.Items[0] as NotificationGroupDocument
+    }
+
+    // Queries for ALL information related to a group (group, subscribers, messages, etc.) in 1 query
+    async getNotificationGroupInfo(referenceCode: number): Promise<NotificationGroup> {
+        const result = await this.db.query({
+            TableName: this.table,
+            IndexName: "GSI1",
+            KeyConditionExpression: '#gsi1pk = :gsi1pk',
+            ExpressionAttributeNames:{
+                "#gsi1pk": "gsi1pk",
+            },
+            ExpressionAttributeValues: {
+                ":gsi1pk": referenceCode.toString()
+            }
+        }).promise()
+
+        const groupRow = (result.Items || []).find(i => i.sortKey.includes("GROUP^"))
+        if (!result.Items?.length || !groupRow) {
+            throw new NotificationGroupDoesNotExistError(referenceCode.toString())
+        }
+
+        const group = fromGroupDocument(groupRow as NotificationGroupDocument)
+        group.subscribers = result.Items.filter(i => i.sortKey.includes("SUBSCRIBER^")).map(r => fromSubscriberDocument(r as NotificationGroupSubscriberDocument))
+        group.messages = result.Items.filter(i => i.sortKey.includes("MESSAGE^")).map(r => fromNotificationDocument(r as NotificationDocument))
+
+        return group;
     }
 
     async getNotificationGroups(userId: string): Promise<NotificationGroupDocument[]> {
@@ -76,7 +104,7 @@ class NotificationDao {
             }
         }).promise()
 
-        return (result.Items || []).map(i => fromGroupRow(i));
+        return (result.Items || []).map(i => i as NotificationGroupDocument);
     }
 
     async createNotificationGroup(notificationGroup: NotificationGroup): Promise<NotificationGroupDocument> {
@@ -113,6 +141,44 @@ class NotificationDao {
             }
             throw e
         }
+
+        return document
+    }
+
+    async getNotificationGroupSubscriber(groupOwnerId: string, groupId: string, phoneNumber: string): Promise<NotificationGroupSubscriberDocument> {
+        const result = await this.db.get({
+            TableName: this.table,
+            Key: {
+                partitionKey: groupOwnerId,
+                sortKey: `SUBSCRIBER^${groupId}^${phoneNumber}`
+            }
+        }).promise()
+
+        if (!result.Item) {
+            throw new SubscriberDoesNotExistError(phoneNumber, groupId)
+        }
+
+        return result.Item as NotificationGroupSubscriberDocument
+    }
+
+    async deleteNotificationGroupSubscriber(groupOwnerId: string, groupId: string, phoneNumber: string) {
+        await this.db.delete({
+            TableName: this.table,
+            Key: {
+                partitionKey: groupOwnerId,
+                sortKey: `SUBSCRIBER^${groupId}^${phoneNumber}`
+            }
+        }).promise()
+    }
+
+    async createNotification(notification: Notification): Promise<NotificationDocument> {
+        const document: NotificationDocument = fromNotificationModel(notification)
+
+        // Notifications don't really have any uniqueness so no need to check
+        await this.db.put({
+            TableName: this.table,
+            Item: document,
+        }).promise()
 
         return document
     }

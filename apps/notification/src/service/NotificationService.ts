@@ -7,8 +7,7 @@ import {Command, UserResponse} from "../model/UserResponse";
 import {UserDao} from "../dao/UserDao";
 import {NotificationSender} from "../dao/NotificationSender";
 import {NotificationGroupSubscriber} from "../model/NotificationGroupSubscriber";
-
-const FILTERED_COMMANDS = [Command.HELP, Command.STOP, Command.UNSTOP]
+import {newNotification} from "../model/Notification";
 
 class NotificationService {
     private userDao: UserDao;
@@ -47,19 +46,34 @@ class NotificationService {
 
     async handleUserResponse(response: UserResponse) {
         const command = response.getCommand()
+        console.log(`Processing a ${command} command from ${response.originatingNumber}`)
 
-        // AWS handles these.. we don't need to intervene
-        if (FILTERED_COMMANDS.includes(command) || command === Command.UNKNOWN) return
-
-        if (command === Command.LIST) {
+        if (command === Command.HELP) {
+            await this.sendHelpMessage(response.originatingNumber)
+        } else if (command === Command.LIST) {
             await this.listUserGroups(response.originatingNumber)
+        } else if (command === Command.INFO) {
+            await this.getGroupInfo(response.originatingNumber, response.getGroupCode()!)
+        } else if (command === Command.DELETE) {
+            await this.deleteUserGroup(response.originatingNumber, response.getGroupCode()!)
         } else if (command === Command.SEND) {
-            console.log("SENDING")
+            await this.broadcastMessage(response.originatingNumber, response.getGroupCode()!, response.getMessageText()!)
         } else if (command === Command.SUBSCRIBE) {
             await this.subscribeUserGroup(response.originatingNumber, response.getGroupCode()!)
         } else if (command === Command.UNSUBSCRIBE) {
-            console.log("UNSUBSCRIBING")
+            await this.unSubscribeUserGroup(response.originatingNumber, response.getGroupCode()!)
         }
+    }
+
+    async sendHelpMessage(phoneNumber: string) {
+        const message = "LIST to list the groups you are an owner of.\n" +
+            "INFO ### to get group info if you are the owner.\n" +
+            "DELETE ### to delete a group you own.\n" +
+            "SEND ### to send a message to a group if you are the owner.\n" +
+            "SUBSCRIBE ### to subscribe to group messages.\n" +
+            "UNSUBSCRIBE ### to stop getting messages for a group."
+
+        await this.notificationSender.sendMessage(phoneNumber, message)
     }
 
     async listUserGroups(phoneNumber: string) {
@@ -79,13 +93,90 @@ class NotificationService {
         await this.notificationSender.sendMessage(phoneNumber, message)
     }
 
+    async getGroupInfo(phoneNumber: string, groupCode: number) {
+        // get user by phone number and get group by group code
+        const [user, group] = await Promise.all([
+            this.userDao.getUserByPhone(phoneNumber),
+            this.notificationDao.getNotificationGroupInfo(groupCode)
+        ])
+        if (!user || user.userId !== group.userId) {
+            await this.notificationSender.sendMessage(phoneNumber, "You are not allowed to view info for this group")
+            return
+        }
+
+        const numSubscribers = group.subscribers.length
+        const numMessages = group.messages.length
+        const message = `Subscribed to this group: ${numSubscribers}\n` +
+            `Messages sent: ${numMessages}`;
+
+        await this.notificationSender.sendMessage(phoneNumber, message)
+    }
+
+    async deleteUserGroup(phoneNumber: string, groupCode: number) {
+        // get user by phone number and get group by group code
+        const [user, group] = await Promise.all([
+            this.userDao.getUserByPhone(phoneNumber),
+            this.notificationDao.getNotificationGroupByCode(groupCode)
+        ])
+        if (!user || user.userId !== group.userId) {
+            await this.notificationSender.sendMessage(phoneNumber, "You are not allowed to delete this group")
+            return
+        }
+
+        await this.notificationSender.deleteTopic(group.topicArn)
+        // TODO - disable group in dynamo
+    }
+
+    async broadcastMessage(phoneNumber: string, groupCode: number, message: string) {
+        // get user by phone number and get group by group code
+        const [user, group] = await Promise.all([
+            this.userDao.getUserByPhone(phoneNumber),
+            this.notificationDao.getNotificationGroupByCode(groupCode)
+        ])
+        if (user.userId !== group.userId) {
+            await this.notificationSender.sendMessage(phoneNumber, "You are not allowed to send messages to this group")
+            return
+        }
+
+        // publish message to the topic in the group and store it in dynamo
+        const notification = newNotification(fromDocument(group), message)
+        await this.notificationSender.broadcastMessage(group.topicArn, message)
+        await this.notificationSender.sendMessage(phoneNumber, `Successfully sent message to ${group.name}`)
+        await this.notificationDao.createNotification(notification)
+    }
+
     async subscribeUserGroup(phoneNumber: string, groupCode: number) {
         const group = await this.getNotificationGroupByCode(groupCode)
-        // TODO - check if already subscribed
+
+        try {
+            await this.notificationDao.getNotificationGroupSubscriber(group.userId, group.id, phoneNumber)
+            await this.notificationSender.sendMessage(phoneNumber, `You are already subscribed to messages for this group`)
+        } catch (e: any) {
+            // If 404 that means subscriber doesn't exist
+            if (e.statusCode !== 404) throw e
+        }
+
         const response = await this.notificationSender.createSubscription(group.topicArn!, phoneNumber)
         const subscriber = new NotificationGroupSubscriber(group.userId, group.id, group.referenceCode, response.SubscriptionArn!, phoneNumber, new Date().toISOString())
         await this.notificationDao.createNotificationGroupSubscriber(subscriber)
         await this.notificationSender.sendMessage(phoneNumber, `Successfully subscribed to ${group.name}\n\nReply UNSUBSCRIBE ${group.referenceCode} to stop receiving messages.`)
+    }
+
+    async unSubscribeUserGroup(phoneNumber: string, groupCode: number) {
+        const group = await this.getNotificationGroupByCode(groupCode)
+
+        try {
+            const subscriber = await this.notificationDao.getNotificationGroupSubscriber(group.userId, group.id, phoneNumber)
+            await this.notificationSender.deleteSubscription(subscriber.subscriberArn)
+            await this.notificationDao.deleteNotificationGroupSubscriber(group.userId, group.id, phoneNumber)
+            await this.notificationSender.sendMessage(phoneNumber, `Successfully unsubscribed to ${group.name}\n\nReply SUBSCRIBE ${group.referenceCode} to receive messages again.`)
+        } catch (e: any) {
+            if (e.statusCode === 404) {
+                await this.notificationSender.sendMessage(phoneNumber, `You are already unsubscribed to this group`)
+            } else {
+                throw e
+            }
+        }
     }
 }
 

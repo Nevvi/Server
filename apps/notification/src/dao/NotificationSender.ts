@@ -20,11 +20,30 @@ class NotificationSender {
         }).promise()
     }
 
+    async deleteTopic(topicArn: string) {
+        return await this.sns.deleteTopic({
+            TopicArn: topicArn
+        }).promise()
+    }
+
     async createSubscription(topic: string, phoneNumber: string): Promise<SubscribeResponse> {
         return await this.sns.subscribe({
             TopicArn: topic,
             Protocol: "sms",
             Endpoint: phoneNumber
+        }).promise()
+    }
+
+    async deleteSubscription(subscriptionArn: string) {
+        await this.sns.unsubscribe({
+            SubscriptionArn: subscriptionArn
+        }).promise()
+    }
+
+    async broadcastMessage(topicArn: string, message: string): Promise<PublishResponse> {
+        return await this.sns.publish({
+            Message: message,
+            TopicArn: topicArn
         }).promise()
     }
 
