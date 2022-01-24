@@ -1,7 +1,7 @@
 # Nevvi
 
-![Develop](https://github.com/Nevvi/Server/blob/develop/.github/workflows/deploy-dev.yml/badge.svg)
-![Production](https://github.com/Nevvi/Server/blob/master/.github/workflows/deploy-prod.yml/badge.svg)
+![Develop](https://github.com/Nevvi/Server/actions/workflows/deploy-dev.yml/badge.svg)
+![Production](https://github.com/Nevvi/Server/actions/workflows/deploy-prod.yml/badge.svg)
 
 The Nevvi backend is powered by AWS using API Gateway, Lambda, DynamoDB, SNS, and Cognito. The server is broken up into 
 3 different applications.
