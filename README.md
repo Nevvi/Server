@@ -38,8 +38,7 @@ keeping the version consistent is nice.
 
 DO NOT USE `development` or `production` as the stage name otherwise it could break dev/prod. Let CICD manage that.
 
-This will create a new domain in API Gateway for your stage and can be accessed like https://api.development.nevvi.net
-/tyler-{app_you_are_working_on}/
+This will create a new domain in API Gateway for your stage and can be accessed like https://api.development.nevvi.net/tyler-{app_you_are_working_on}/
 
 When done it is nice to clean up the test stack by running `../../node_modules/serverless/bin/serverless.js remove --stage {stage}`
 as there is nothing that will do it automatically. 
