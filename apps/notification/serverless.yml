@@ -34,8 +34,13 @@ custom:
   notificationTableNameMap:
     default: notification-dev
     production: notification
+  userResponseTopicNameMap:
+    default: user-responses-dev
+    production: user-responses
   notificationTableName: ${self:custom.notificationTableNameMap.${self:provider.stage}, self:custom.notificationTableNameMap.default}
   notificationTableArn: ${ssm:/nevvi/dynamodb/${self:custom.notificationTableName}/arn}
+  userResponseTopicName: ${self:custom.userResponseTopicNameMap.${self:provider.stage}, self:custom.userResponseTopicNameMap.default}
+  userResponseTopicArn: ${ssm:/nevvi/sns/${self:custom.userResponseTopicName}/arn}
   apiUserPoolName: ${self:custom.apiUserPoolNameMap.${self:provider.stage}, self:custom.apiUserPoolNameMap.default}
   apiUserPoolClientId: ${ssm:/nevvi/cognito/${self:custom.apiUserPoolName}/clients/notification/id}
   apiUserPoolClientSecret: ${ssm:/nevvi/cognito/${self:custom.apiUserPoolName}/clients/notification/secret}
@@ -144,7 +149,7 @@ functions:
     handler: src/functions/NotificationHandler.handleUserResponse
     events:
       - sns:
-          arn: arn:aws:sns:us-east-1:275527036335:user-responses
+          arn: ${self:custom.userResponseTopicArn}
     iamRoleStatements:
       - Effect: Allow
         Action:
