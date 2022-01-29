@@ -16,7 +16,7 @@ class InvalidRequestError extends HttpStatusCodeError {
 
 class NotificationGroupDoesNotExistError extends HttpStatusCodeError {
     constructor(id: string) {
-        super(`Notification group with id ${id} does not exist`, 404)
+        super(`Notification group with id ${id} does not exist for user`, 404)
     }
 }
 

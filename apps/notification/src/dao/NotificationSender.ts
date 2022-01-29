@@ -12,12 +12,17 @@ class NotificationSender {
     }
 
     async createTopic(name: string, displayName: string): Promise<CreateTopicResponse> {
-        return await this.sns.createTopic({
-            Name: name,
-            Attributes: {
-                DisplayName: displayName
-            }
-        }).promise()
+        try {
+            return await this.sns.createTopic({
+                Name: name,
+                Attributes: {
+                    DisplayName: displayName
+                }
+            }).promise()
+        } catch (e: any) {
+            console.log(JSON.stringify(e))
+            throw e
+        }
     }
 
     async deleteTopic(topicArn: string) {

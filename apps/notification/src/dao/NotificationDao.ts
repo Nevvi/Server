@@ -42,30 +42,8 @@ class NotificationDao {
         return result.Item as NotificationGroupDocument
     }
 
-    async getNotificationGroupByCode(referenceCode: number): Promise<NotificationGroupDocument> {
-        const result = await this.db.query({
-            TableName: this.table,
-            IndexName: "GSI1",
-            KeyConditionExpression: '#gsi1pk = :gsi1pk and begins_with(#gsi1sk, :gsi1sk)',
-            ExpressionAttributeNames:{
-                "#gsi1pk": "gsi1pk",
-                "#gsi1sk": 'gsi1sk'
-            },
-            ExpressionAttributeValues: {
-                ":gsi1pk": referenceCode.toString(),
-                ":gsi1sk": "GROUP^"
-            }
-        }).promise()
-
-        if (!result.Items?.length) {
-            throw new NotificationGroupDoesNotExistError(referenceCode.toString())
-        }
-
-        return result.Items[0] as NotificationGroupDocument
-    }
-
     // Queries for ALL information related to a group (group, subscribers, messages, etc.) in 1 query
-    async getNotificationGroupInfo(referenceCode: number): Promise<NotificationGroup> {
+    async getNotificationGroupInfo(groupId: string): Promise<NotificationGroup> {
         const result = await this.db.query({
             TableName: this.table,
             IndexName: "GSI1",
@@ -74,13 +52,13 @@ class NotificationDao {
                 "#gsi1pk": "gsi1pk",
             },
             ExpressionAttributeValues: {
-                ":gsi1pk": referenceCode.toString()
+                ":gsi1pk": groupId
             }
         }).promise()
 
         const groupRow = (result.Items || []).find(i => i.sortKey.includes("GROUP^"))
         if (!result.Items?.length || !groupRow) {
-            throw new NotificationGroupDoesNotExistError(referenceCode.toString())
+            throw new NotificationGroupDoesNotExistError(groupId)
         }
 
         const group = fromGroupDocument(groupRow as NotificationGroupDocument)

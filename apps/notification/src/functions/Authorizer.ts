@@ -9,6 +9,7 @@ class Authorizer extends AbstractAuthorizer {
     generatePermissions(authPolicy: typeof AuthPolicy, userId: string) {
         if (userId) {
             authPolicy.allowMethod(HttpVerb.POST, `/v1/users/${userId}/groups`)
+            authPolicy.allowMethod(HttpVerb.POST, `/v1/users/${userId}/groups/*/messages`)
             authPolicy.allowMethod(HttpVerb.GET, `/v1/users/${userId}/groups`)
             authPolicy.allowMethod(HttpVerb.GET, `/v1/users/${userId}/groups/*`)
         } else {

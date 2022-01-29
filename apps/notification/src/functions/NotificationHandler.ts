@@ -11,7 +11,7 @@ export const getGroup: Handler = async (event: any) => {
     try {
         console.log("Received request to get user notification group")
         const {userId, groupId} = event.pathParameters
-        const response = await notificationService.getNotificationGroup(userId, groupId)
+        const response = await notificationService.getNotificationGroupInfo(userId, groupId)
         return createResponse(200, response)
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)
@@ -41,6 +41,23 @@ export const createGroup: Handler = async (event: any) => {
 
         const response = await notificationService.createNotificationGroup(request)
         return createResponse(201, response)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
+export const sendMessage: Handler = async (event: any) => {
+    try {
+        console.log("Received request to send message to notification group")
+
+        // validate incoming request is good
+        const {userId, groupId} = event.pathParameters
+        const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
+        const {message} = body
+
+        const group = await notificationService.getNotificationGroup(userId, groupId)
+        await notificationService.sendMessage(group, message)
+        return createResponse(201, {message: "Message sent!"})
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)
     }

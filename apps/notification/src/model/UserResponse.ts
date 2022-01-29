@@ -34,7 +34,7 @@ class UserResponse {
         return Command.UNKNOWN
     }
 
-    getGroupCode(): number | undefined {
+    getGroupId(): string | undefined {
         if (!this.message) return undefined
 
         const parts = this.message.trim().toUpperCase().split(" ")
@@ -43,10 +43,7 @@ class UserResponse {
         if (parts.length < 2) return undefined
 
         // group code should always follow the command
-        const code = parseInt(parts[1])
-        if (isNaN(code)) return undefined
-
-        return code
+        return parts[1]
     }
 
     getMessageText(): string | undefined {

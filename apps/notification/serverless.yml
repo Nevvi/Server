@@ -119,6 +119,27 @@ functions:
           - dynamodb:Query
         Resource: ${self:custom.notificationTableArn}/index/GSI1
 
+  sendMessage:
+    handler: src/functions/NotificationHandler.sendMessage
+    events:
+      - http:
+          path: /v1/users/{userId}/groups/{groupId}/messages
+          method: post
+          authorizer:
+            name: authorizer
+            resultTtlInSeconds: 0
+            type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+        Resource: ${self:custom.notificationTableArn}
+      - Effect: Allow
+        Action:
+          - sns:Publish
+        Resource: "*"
+
   handleResponse:
     handler: src/functions/NotificationHandler.handleUserResponse
     events:
