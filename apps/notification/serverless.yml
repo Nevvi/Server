@@ -146,7 +146,7 @@ functions:
         Resource: "*"
 
   handleResponse:
-    handler: src/functions/NotificationHandler.handleUserResponse
+    handler: src/functions/UserResponseHandler.handleUserResponse
     events:
       - sns:
           arn: ${self:custom.userResponseTopicArn}

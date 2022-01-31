@@ -3,7 +3,6 @@
 import { Handler } from "aws-lambda";
 import {CreateGroupRequest} from "../model/request/CreateGroupRequest";
 import {NotificationService} from "../service/NotificationService";
-import {UserResponse} from "../model/UserResponse";
 
 const notificationService = new NotificationService()
 
@@ -61,23 +60,6 @@ export const sendMessage: Handler = async (event: any) => {
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)
     }
-}
-
-export const handleUserResponse: Handler = async (event: any) => {
-    const records = (event.Records || [])
-    console.log(`Received ${records.length} user response(s)`);
-    const responses = records.map((record: { Sns: any; }) => {
-        const message = JSON.parse(record.Sns.Message)
-        return new UserResponse(message.originationNumber, message.messageBody)
-    })
-
-    await Promise.all(responses.map((response: UserResponse) => {
-        try {
-            return notificationService.handleUserResponse(response)
-        } catch (e) {
-            console.log("Failed to process request", response, e)
-        }
-    }))
 }
 
 function createResponse(statusCode: number, body: object) {
