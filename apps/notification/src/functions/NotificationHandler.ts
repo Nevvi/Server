@@ -35,7 +35,7 @@ export const createGroup: Handler = async (event: any) => {
         // validate incoming request is good
         const {userId} = event.pathParameters
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
-        const request = new CreateGroupRequest(userId, body.name)
+        const request = new CreateGroupRequest(userId, body.name, body.expirationDate)
         request.validate()
 
         const response = await notificationService.createNotificationGroup(request)
