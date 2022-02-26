@@ -48,7 +48,7 @@ class NotificationService {
     }
 
     async createNotificationGroup(createGroupRequest: CreateGroupRequest): Promise<NotificationGroup> {
-        const notificationGroup = newNotificationGroup(createGroupRequest.userId, createGroupRequest.name)
+        const notificationGroup = newNotificationGroup(createGroupRequest.userId, createGroupRequest.name, createGroupRequest.expirationDate)
         const topic = await this.notificationSender.createTopic(notificationGroup.id, notificationGroup.name)
         notificationGroup.topicArn = topic.TopicArn
         const response = await this.notificationDao.createNotificationGroup(notificationGroup)
