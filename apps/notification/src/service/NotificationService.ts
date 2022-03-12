@@ -54,6 +54,18 @@ class NotificationService {
         const response = await this.notificationDao.createNotificationGroup(notificationGroup)
         return fromDocument(response)
     }
+
+    async deleteNotificationGroup(userId: string, groupId: string): Promise<NotificationGroup | null> {
+        const group = await this.getNotificationGroup(userId, groupId)
+        if (!group || group.status === 'DISABLED') {
+            console.log("Cannot delete group because it doesn't exist for user or is already disabled")
+            return null
+        }
+
+        group.status = 'DISABLED'
+        const response = await this.notificationDao.updateNotificationGroup(group)
+        return fromDocument(response)
+    }
 }
 
 export {NotificationService}

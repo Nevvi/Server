@@ -71,30 +71,29 @@ class UserResponseService extends NotificationService {
         const numSubscribers = group.subscribers.length
         const numMessages = group.messages.length
         const message = `Subscribed to this group: ${numSubscribers}\n` +
-            `Messages sent: ${numMessages}`;
+            `Messages sent: ${numMessages}\n` +
+            `Status: ${group.status}`;
 
         await this.notificationSender.sendMessage(phoneNumber, message)
     }
 
     async deleteUserGroup(phoneNumber: string, groupId: string) {
-        const group = await this.getUserGroup(phoneNumber, groupId)
-        if (!group) {
+        const user = await this.userDao.getUserByPhone(phoneNumber)
+        const success = await this.deleteNotificationGroup(user.userId, groupId)
+        if (!success) {
             return
         }
-
-        await this.notificationSender.deleteTopic(group.topicArn!)
-        // TODO - disable group in dynamo
+        await this.notificationSender.sendMessage(phoneNumber, `Successfully disabled group`)
     }
 
     async broadcastMessage(phoneNumber: string, groupId: string, message: string) {
         const group = await this.getUserGroup(phoneNumber, groupId)
-        if (!group) {
+        if (!group || group.status === 'DISABLED') {
             return
         }
 
         // publish message to the topic in the group and store it in dynamo
         await this.sendMessage(group, message);
-
         await this.notificationSender.sendMessage(phoneNumber, `Successfully sent message to ${group.name}`)
     }
 

@@ -10,15 +10,17 @@ class NotificationGroup {
     createDate: string
     expirationDate: string
     topicArn?: string
+    status: string
 
     subscribers: any
     messages: any
-    constructor(id: string, userId: string, name: string, createDate: string, expirationDate: string) {
+    constructor(id: string, userId: string, name: string, createDate: string, expirationDate: string, status: string) {
         this.id = id
         this.userId = userId
         this.name = name
         this.createDate = createDate
         this.expirationDate = expirationDate
+        this.status = status
 
         this.subscribers = []
         this.messages = []
@@ -32,7 +34,8 @@ function newNotificationGroup(userId: string, name: string, expirationDate: stri
         userId,
         name,
         new Date().toISOString(),
-        expirationDate
+        expirationDate,
+        "ACTIVE"
     )
 }
 
@@ -42,7 +45,8 @@ function fromDocument(document: NotificationGroupDocument) : NotificationGroup {
         document.userId,
         document.name,
         document.createDate,
-        document.expirationDate
+        document.expirationDate,
+        document.groupStatus
     )
     group.topicArn = document.topicArn
     return group

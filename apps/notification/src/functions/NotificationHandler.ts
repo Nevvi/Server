@@ -45,6 +45,20 @@ export const createGroup: Handler = async (event: any) => {
     }
 }
 
+export const deleteGroup: Handler = async (event: any) => {
+    try {
+        console.log("Received request to delete notification group")
+        const {userId, groupId} = event.pathParameters
+        const response = await notificationService.deleteNotificationGroup(userId, groupId)
+        if (!response) {
+            return createResponse(400, {message: "Failed to delete group"})
+        }
+        return createResponse(200, response)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
 export const sendMessage: Handler = async (event: any) => {
     try {
         console.log("Received request to send message to notification group")

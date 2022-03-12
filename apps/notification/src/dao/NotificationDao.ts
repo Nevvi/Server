@@ -104,6 +104,25 @@ class NotificationDao {
         return document
     }
 
+    async updateNotificationGroup(notificationGroup: NotificationGroup): Promise<NotificationGroupDocument> {
+        const document: NotificationGroupDocument = fromGroupModel(notificationGroup)
+
+        try {
+            await this.db.put({
+                TableName: this.table,
+                Item: document,
+                ConditionExpression: 'attribute_exists(gsi1pk) and attribute_exists(gsi1sk)'
+            }).promise()
+        } catch (e: any) {
+            if (e.code === 'ConditionalCheckFailedException') {
+                throw new NotificationGroupAlreadyExistsError(document.name)
+            }
+            throw e
+        }
+
+        return document
+    }
+
     async createNotificationGroupSubscriber(subscriber: NotificationGroupSubscriber): Promise<NotificationGroupSubscriberDocument> {
         const document: NotificationGroupSubscriberDocument = fromSubscriberModel(subscriber)
 

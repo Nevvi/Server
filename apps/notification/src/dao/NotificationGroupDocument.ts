@@ -16,7 +16,8 @@ class NotificationGroupDocument {
     topicArn: string
     createDate: string
     expirationDate: string
-    constructor(id: string, userId: string, name: string, topicArn: string, createDate: string, expirationDate: string) {
+    groupStatus: string
+    constructor(id: string, userId: string, name: string, topicArn: string, createDate: string, expirationDate: string, status: string) {
         // id is seeded from name so it will prevent duplicate names
         // need the userId to be in the primary to make updates and queries easier
         this.partitionKey = userId
@@ -28,7 +29,7 @@ class NotificationGroupDocument {
 
         // Used to expire group
         this.gsi2pk = 'GROUP'
-        this.gsi2sk = expirationDate
+        this.gsi2sk = `${status}^${expirationDate}`
 
         this.id = id
         this.userId = userId
@@ -36,6 +37,7 @@ class NotificationGroupDocument {
         this.topicArn = topicArn
         this.createDate = createDate
         this.expirationDate = expirationDate
+        this.groupStatus = status
     }
 }
 
@@ -46,7 +48,8 @@ function fromModel(model: NotificationGroup) : NotificationGroupDocument {
         model.name,
         model.topicArn!,
         model.createDate,
-        model.expirationDate
+        model.expirationDate,
+        model.status
     )
 }
 
