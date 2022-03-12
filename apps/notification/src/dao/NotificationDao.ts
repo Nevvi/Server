@@ -92,7 +92,7 @@ class NotificationDao {
             await this.db.put({
                 TableName: this.table,
                 Item: document,
-                ConditionExpression: 'attribute_not_exists(partitionKey) and attribute_not_exists(sortKey)'
+                ConditionExpression: 'attribute_not_exists(gsi1pk) and attribute_not_exists(gsi1sk)'
             }).promise()
         } catch (e: any) {
             if (e.code === 'ConditionalCheckFailedException') {

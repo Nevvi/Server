@@ -18,9 +18,11 @@ class NotificationGroupDocument {
     expirationDate: string
     constructor(id: string, userId: string, name: string, topicArn: string, createDate: string, expirationDate: string) {
         // id is seeded from name so it will prevent duplicate names
+        // need the userId to be in the primary to make updates and queries easier
         this.partitionKey = userId
         this.sortKey = `GROUP^${id}`
 
+        // id is seeded from name, so it will prevent duplicate names
         this.gsi1pk = id
         this.gsi1sk = `GROUP^${id}`
 
