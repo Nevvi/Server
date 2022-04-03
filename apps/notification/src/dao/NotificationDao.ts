@@ -15,6 +15,8 @@ import {fromDocument as fromSubscriberDocument, NotificationGroupSubscriber} fro
 import {fromModel as fromSubscriberModel, NotificationGroupSubscriberDocument} from "./NotificationGroupSubscriberDocument";
 import {fromDocument as fromNotificationDocument, Notification} from "../model/Notification";
 import {fromModel as fromNotificationModel, NotificationDocument} from "./NotificationDocument";
+import {fromDocument as fromNotificationAuditDocument, NotificationAudit} from "../model/NotificationAudit";
+import {fromModel as fromNotificationAuditModel, NotificationAuditDocument} from "./NotificationAuditDocument";
 
 const AWS = require('aws-sdk')
 
@@ -172,6 +174,18 @@ class NotificationDao {
         const document: NotificationDocument = fromNotificationModel(notification)
 
         // Notifications don't really have any uniqueness so no need to check
+        await this.db.put({
+            TableName: this.table,
+            Item: document,
+        }).promise()
+
+        return document
+    }
+
+    async createNotificationAudit(audit: NotificationAudit): Promise<NotificationAuditDocument> {
+        const document: NotificationAuditDocument = fromNotificationAuditModel(audit)
+
+        // Audits don't really have any uniqueness so no need to check
         await this.db.put({
             TableName: this.table,
             Item: document,

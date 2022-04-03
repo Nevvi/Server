@@ -1,14 +1,14 @@
 'use strict'
 
 enum Command {
-    HELP,
-    LIST,
-    INFO,
-    SEND,
-    DELETE,
-    SUBSCRIBE,
-    UNSUBSCRIBE,
-    UNKNOWN
+    HELP= "HELP",
+    LIST = "LIST",
+    INFO = "INFO",
+    SEND = "SEND",
+    DELETE = "DELETE",
+    SUBSCRIBE = "SUBSCRIBE",
+    UNSUBSCRIBE = "UNSUBSCRIBE",
+    UNKNOWN = "UNKNOWN"
 }
 
 class UserResponse {
