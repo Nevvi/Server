@@ -7,7 +7,9 @@ import {NotificationService} from "./NotificationService";
 import {NotificationGroup} from "../model/NotificationGroup";
 import {newNotificationAudit} from "../model/NotificationAudit";
 import {AuditResult} from "../model/audit/AuditResult";
-import {NotificationGroupDoesNotExistError} from "../error/Errors";
+
+import dayjs from "dayjs";
+import {RateLimitError} from "../error/Errors";
 
 class UserResponseService extends NotificationService {
     private userDao: UserDao;
@@ -16,9 +18,18 @@ class UserResponseService extends NotificationService {
         this.userDao = new UserDao()
     }
 
+    async safeHandleUserResponse(response: UserResponse) {
+        try {
+            await this.handleUserResponse(response)
+        } catch (e: any) {
+            console.log("Failed to process request", response, e)
+        }
+    }
+
     async handleUserResponse(response: UserResponse) {
         const command = response.getCommand()
         console.log(`Processing a ${command} command from ${response.originatingNumber}`)
+        await this.tryRateLimit(response.originatingNumber)
 
         let auditResult = AuditResult.SUCCESS
         if (command === Command.HELP) {
@@ -41,6 +52,18 @@ class UserResponseService extends NotificationService {
         const message = response.getMessageText() || "NONE"
         const audit = newNotificationAudit(response.originatingNumber, command, group, message, auditResult)
         await this.notificationDao.createNotificationAudit(audit)
+    }
+
+    async tryRateLimit(phoneNumber: string) {
+        const shortCutoff: string = dayjs().subtract(1, 'minute').toISOString()
+        let previousRequests = await this.notificationDao.getNotificationAudits(phoneNumber, shortCutoff)
+        if (previousRequests.length >= 5) {
+            throw new RateLimitError(phoneNumber, 1)
+        }
+
+        // TODO check these rate limits without incurring costs of db lookups even if rate limited
+        // TODO check for number of messages per hour?
+        // TODO alert on frequent rate limits
     }
 
     async sendHelpMessage(phoneNumber: string): Promise<AuditResult> {

@@ -38,11 +38,18 @@ class SubscriberDoesNotExistError extends HttpStatusCodeError {
     }
 }
 
+class RateLimitError extends Error {
+    constructor(phoneNumber: string, rateLimit: number) {
+        super(`${phoneNumber} has sent more than the configured number of messages in the past ${rateLimit} minute(s)`)
+    }
+}
+
 export {
     HttpStatusCodeError,
     InvalidRequestError,
     NotificationGroupDoesNotExistError,
     NotificationGroupAlreadyExistsError,
     NotificationGroupSubscriberAlreadyExistsError,
-    SubscriberDoesNotExistError
+    SubscriberDoesNotExistError,
+    RateLimitError
 }

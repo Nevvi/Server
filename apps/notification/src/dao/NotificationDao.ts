@@ -193,6 +193,24 @@ class NotificationDao {
 
         return document
     }
+
+    async getNotificationAudits(phoneNumber: string, since: string): Promise<NotificationAuditDocument[]> {
+        const result = await this.db.query({
+            TableName: this.table,
+            KeyConditionExpression: '#partitionKey = :partitionKey and #sortKey > :sortKey',
+            ExpressionAttributeNames:{
+                "#partitionKey": "partitionKey",
+                "#sortKey": 'sortKey'
+            },
+            ExpressionAttributeValues: {
+                ":partitionKey": phoneNumber,
+                ":sortKey": `AUDIT^${since}`
+            }
+        }).promise()
+
+        return (result.Items || []).map(i => i as NotificationAuditDocument);
+    }
+
 }
 
 export {NotificationDao}

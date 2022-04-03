@@ -1,6 +1,6 @@
 'use strict'
 
-import { Handler } from "aws-lambda";
+import {Handler} from "aws-lambda";
 import {UserResponse} from "../model/UserResponse";
 import {UserResponseService} from "../service/UserResponseService";
 
@@ -15,10 +15,6 @@ export const handleUserResponse: Handler = async (event: any) => {
     })
 
     await Promise.all(responses.map((response: UserResponse) => {
-        try {
-            return userResponseService.handleUserResponse(response)
-        } catch (e) {
-            console.log("Failed to process request", response, e)
-        }
+        return userResponseService.safeHandleUserResponse(response)
     }))
 }
