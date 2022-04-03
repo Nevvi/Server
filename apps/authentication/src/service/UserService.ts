@@ -4,7 +4,7 @@ import {UserDao} from '../dao/UserDao';
 import {UpdateRequest} from "../model/request/UpdateRequest";
 import {User} from "../model/User";
 import {AdminGetUserResponse, UserType} from "aws-sdk/clients/cognitoidentityserviceprovider";
-import {InvalidRequestError, UserNotFoundError} from "../error/Errors";
+import {InvalidRequestError, UserNotFoundError, UserPhoneNumberAlreadyExistsError} from "../error/Errors";
 
 class UserService {
     private userDao: UserDao;
@@ -29,6 +29,14 @@ class UserService {
     }
 
     async updateUser(userId: string, request: UpdateRequest): Promise<User> {
+        // Only one phone number can exist per user
+        if (request.phoneNumber !== undefined) {
+            const user = await this.userDao.getUserByPhone(request.phoneNumber)
+            if (user && this._mapToUserFromUserType(user).userId !== userId) {
+                throw new UserPhoneNumberAlreadyExistsError(request.phoneNumber)
+            }
+        }
+
         await this.userDao.updateUser(userId, request)
         return await this.getUser(userId)
     }
