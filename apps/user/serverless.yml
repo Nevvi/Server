@@ -49,7 +49,7 @@ functions:
     handler: src/functions/UserAuthorizer.authorize
 
   createUser:
-    handler: src/functions/UserHandler.create
+    handler: src/functions/UserHandler.createUser
     events:
       - http:
           path: /api/v1/users
