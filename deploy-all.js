@@ -12,6 +12,6 @@ shell.cd("apps");
 shell.ls().forEach(function (dir) {
     shell.cd(dir);
     shell.exec('npm install')
-    shell.exec('node ../../node_modules/serverless/bin/serverless.js deploy --stage ' + stage);
+    shell.exec('npx serverless deploy --stage ' + stage);
     shell.cd('..');
 });
