@@ -21,8 +21,8 @@
   "homepage": "https://github.com/Nevvi/Server#readme",
   "devDependencies": {
     "@types/aws-lambda": "^8.10.51",
-    "serverless-domain-manager": "~3.3.2",
-    "serverless-webpack": "^5.6.0",
+    "serverless-domain-manager": "^6.2.0",
+    "serverless-webpack": "^5.10.0",
     "ts-loader": "^9.2.6",
     "ts-node": "^10.4.0",
     "tslint": "^5.11.0",
@@ -35,7 +35,8 @@
     "axios": "^0.21.1",
     "fork-ts-checker-webpack-plugin": "^6.5.0",
     "joi": "^17.5.0",
-    "serverless-iam-roles-per-function": "^3.2.0-e97ab49",
+    "serverless": "^3.24.1",
+    "serverless-iam-roles-per-function": "^3.2.0",
     "serverless-prune-plugin": "^2.0.0",
     "webpack-node-externals": "^3.0.0"
   }

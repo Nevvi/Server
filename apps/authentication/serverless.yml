@@ -1,6 +1,6 @@
 service: authentication
 
-frameworkVersion: '2'
+frameworkVersion: '3'
 variablesResolutionMode: 20210326
 
 plugins:
@@ -9,42 +9,39 @@ plugins:
   - serverless-webpack
   - serverless-domain-manager
 
+params:
+  default:
+    apiUserPoolClient: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/authentication/id}
+    apiUserPoolClientSecret: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/authentication/secret}
+    apiUserPoolName: nevvi-development-api-users
+    basePath: ${self:provider.stage}-authentication
+    domainName: api.development.nevvi.net
+    oauthDomain: https://nevvi-development-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
+    publicUserPoolName: nevvi-development-public-users
+  development:
+    basePath: authentication
+  production:
+    apiUserPoolClient: ${ssm:/nevvi/cognito/nevvi-api-users/clients/authentication/id}
+    apiUserPoolClientSecret: ${ssm:/nevvi/cognito/nevvi-api-users/clients/authentication/secret}
+    apiUserPoolName: nevvi-api-users
+    basePath: authentication
+    domainName: api.nevvi.net
+    oauthDomain: https://nevvi-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
+    publicUserPoolName: nevvi-public-users
+
 custom:
   prune:
     automatic: true
     number: 2
-  oauthDomainMap:
-    default: https://nevvi-development-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
-    production: https://nevvi-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
-  domainNameMap:
-    default: api.development.nevvi.net
-    production: api.nevvi.net
-  basePathMap:
-    production: authentication
-    development: authentication
-    default: ${self:provider.stage}-authentication
   customDomain:
-    domainName: ${self:custom.domainNameMap.${self:provider.stage}, self:custom.domainNameMap.default}
-    basePath: ${self:custom.basePathMap.${self:provider.stage}, self:custom.basePathMap.default}
-  apiUserPoolNameMap:
-    default: nevvi-development-api-users
-    production: nevvi-api-users
-  publicUserPoolNameMap:
-    default: nevvi-development-public-users
-    production: nevvi-public-users
-  apiUserPoolClientMap:
-    default: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/authentication/id}
-    production: ${ssm:/nevvi/cognito/nevvi-api-users/clients/authentication/id}
-  apiUserPoolClientSecretMap:
-    default: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/authentication/secret}
-    production: ${ssm:/nevvi/cognito/nevvi-api-users/clients/authentication/secret}
-  publicUserPoolName: ${self:custom.publicUserPoolNameMap.${self:provider.stage}, self:custom.publicUserPoolNameMap.default}
+    domainName: ${param:domainName}
+    basePath: ${param:basePath}
+  publicUserPoolName: ${param:publicUserPoolName}
   publicUserPoolArn: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/arn}
   publicUserPoolId: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/id}
   publicUserPoolClientId: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/clients/authentication/id}
-  apiUserPoolName: ${self:custom.apiUserPoolNameMap.${self:provider.stage}, self:custom.apiUserPoolNameMap.default}
+  apiUserPoolName: ${param:apiUserPoolName}
   apiUserPoolArn: ${ssm:/nevvi/cognito/${self:custom.apiUserPoolName}/arn}
-
 
 provider:
   name: aws
@@ -58,12 +55,12 @@ provider:
     name: nevvi-serverless-deployment-bucket
   deploymentPrefix: ${self:provider.stage}
   environment:
-    OAUTH_DOMAIN_URL: ${self:custom.oauthDomainMap.${self:provider.stage}, self:custom.oauthDomainMap.default}
+    OAUTH_DOMAIN_URL: ${param:oauthDomain}
     PUBLIC_USER_POOL_CLIENT_ID: ${self:custom.publicUserPoolClientId}
     PUBLIC_USER_POOL_ID: ${self:custom.publicUserPoolId}
-    USER_API_URL: https://${self:custom.domainNameMap.${self:provider.stage}, self:custom.domainNameMap.default}/user
-    API_CLIENT_ID: ${self:custom.apiUserPoolClientMap.${self:provider.stage}, self:custom.apiUserPoolClientMap.default}
-    API_CLIENT_SECRET: ${self:custom.apiUserPoolClientSecretMap.${self:provider.stage}, self:custom.apiUserPoolClientSecretMap.default}
+    USER_API_URL: https://${param:domainName}/user
+    API_CLIENT_ID: ${param:apiUserPoolClient}
+    API_CLIENT_SECRET: ${param:apiUserPoolClientSecret}
     USER_API_SCOPES: user_api/user_api.all
 
 functions:
