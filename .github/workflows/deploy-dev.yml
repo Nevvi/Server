@@ -20,7 +20,9 @@ jobs:
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set default.region us-east-1
       - name: Initialize
-        run: npm install
+        run: |
+          npm install
+          npm install -g serverless
       - name: Initialize submodules
         run: cd shared/common && npm install
       - name: Deploy all apps
