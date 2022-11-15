@@ -52,7 +52,7 @@ functions:
     handler: src/functions/UserHandler.create
     events:
       - http:
-          path: /v1/users
+          path: /api/v1/users
           method: post
           authorizer:
             arn: ${self:custom.apiUserPoolArn}

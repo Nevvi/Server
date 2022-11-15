@@ -11,6 +11,7 @@ class UserService {
 
     async createUser(id: string, email: string) {
         try {
+            console.log("Creating user", id, email)
             return await this.userDao.createUser(id, email)
         } catch (e) {
             console.log(`Failed to create user`, e)

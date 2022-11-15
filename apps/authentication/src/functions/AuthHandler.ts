@@ -38,8 +38,11 @@ export const confirm: Handler = async (event: any) => {
         // Once user account has been confirmed we can create the user record in the database
         // Need to do this before returning because user will be logging in immediately after
         // this and requesting data
-        const user = await authenticationService.getUserByEmail(body.user)
+        console.log("User confirmed.. calling user service to create record", body.username)
+        const user = await authenticationService.getUserByEmail(body.username)
+        console.log("User in cognito", user)
         if (!user) {
+            console.log("Didn't find user with expected email")
             return createResponse(500, {})
         }
         await userService.createUser(user?.userId, user?.email)
