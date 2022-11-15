@@ -1,6 +1,6 @@
 service: user
 
-frameworkVersion: '2'
+frameworkVersion: '3'
 variablesResolutionMode: 20210326
 
 plugins:
@@ -9,29 +9,28 @@ plugins:
   - serverless-webpack
   - serverless-domain-manager
 
+
+params:
+  default:
+    apiUserPoolName: nevvi-development-api-users
+    basePath: ${self:provider.stage}-user
+    domainName: api.development.nevvi.net
+  development:
+    basePath: user
+  production:
+    apiUserPoolName: nevvi-api-users
+    basePath: user
+    domainName: api.nevvi.net
+
 custom:
   prune:
     automatic: true
     number: 2
-  domainNameMap:
-    default: api.development.nevvi.net
-    production: api.nevvi.net
-  basePathMap:
-    production: user
-    development: user
-    default: ${self:provider.stage}-user
   customDomain:
-    domainName: ${self:custom.domainNameMap.${self:provider.stage}, self:custom.domainNameMap.default}
-    basePath: ${self:custom.basePathMap.${self:provider.stage}, self:custom.basePathMap.default}
-  apiUserPoolNameMap:
-    default: nevvi-development-api-users
-    production: nevvi-api-users
-  publicUserPoolNameMap:
-    default: nevvi-development-public-users
-    production: nevvi-public-users
-  apiUserPoolName: ${self:custom.apiUserPoolNameMap.${self:provider.stage}, self:custom.apiUserPoolNameMap.default}
+    domainName: ${param:domainName}
+    basePath: ${param:basePath}
+  apiUserPoolName: ${param:apiUserPoolName}
   apiUserPoolArn: ${ssm:/nevvi/cognito/${self:custom.apiUserPoolName}/arn}
-
 
 provider:
   name: aws
@@ -44,8 +43,6 @@ provider:
   deploymentBucket:
     name: nevvi-serverless-deployment-bucket
   deploymentPrefix: ${self:provider.stage}
-  environment:
-    OAUTH_DOMAIN_URL: ${self:custom.oauthDomainMap.${self:provider.stage}, self:custom.oauthDomainMap.default}
 
 functions:
   userAuthorizer:
