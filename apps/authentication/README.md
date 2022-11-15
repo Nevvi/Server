@@ -1,1 +1,1 @@
-# Authenticatoin
+# Authentication

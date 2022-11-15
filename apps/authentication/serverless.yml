@@ -32,6 +32,12 @@ custom:
   publicUserPoolNameMap:
     default: nevvi-development-public-users
     production: nevvi-public-users
+  apiUserPoolClientMap:
+    default: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/authentication/id}
+    production: ${ssm:/nevvi/cognito/nevvi-api-users/clients/authentication/id}
+  apiUserPoolClientSecretMap:
+    default: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/authentication/secret}
+    production: ${ssm:/nevvi/cognito/nevvi-api-users/clients/authentication/secret}
   publicUserPoolName: ${self:custom.publicUserPoolNameMap.${self:provider.stage}, self:custom.publicUserPoolNameMap.default}
   publicUserPoolArn: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/arn}
   publicUserPoolId: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/id}
@@ -55,10 +61,14 @@ provider:
     OAUTH_DOMAIN_URL: ${self:custom.oauthDomainMap.${self:provider.stage}, self:custom.oauthDomainMap.default}
     PUBLIC_USER_POOL_CLIENT_ID: ${self:custom.publicUserPoolClientId}
     PUBLIC_USER_POOL_ID: ${self:custom.publicUserPoolId}
+    USER_API_URL: https://${self:custom.domainNameMap.${self:provider.stage}, self:custom.domainNameMap.default}/user
+    API_CLIENT_ID: ${self:custom.apiUserPoolClientMap.${self:provider.stage}, self:custom.apiUserPoolClientMap.default}
+    API_CLIENT_SECRET: ${self:custom.apiUserPoolClientSecretMap.${self:provider.stage}, self:custom.apiUserPoolClientSecretMap.default}
+    USER_API_SCOPES: user_api/user_api.all
 
 functions:
-  userAuthorizer:
-    handler: src/functions/UserAuthorizer.authorize
+  authorizer:
+    handler: src/functions/Authorizer.authorize
 
   register:
     handler: src/functions/AuthHandler.register
@@ -73,6 +83,11 @@ functions:
       - http:
           path: /v1/confirm
           method: post
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - cognito-idp:ListUsers
+        Resource: ${self:custom.publicUserPoolArn}
 
   login:
     handler: src/functions/AuthHandler.login
@@ -100,7 +115,7 @@ functions:
           path: /v1/users/{userId}/sendCode
           method: post
           authorizer:
-            name: userAuthorizer
+            name: authorizer
             resultTtlInSeconds: 0
             type: request
     iamRoleStatements:
@@ -116,7 +131,7 @@ functions:
           path: /v1/users/{userId}/confirmCode
           method: post
           authorizer:
-            name: userAuthorizer
+            name: authorizer
             resultTtlInSeconds: 0
             type: request
     iamRoleStatements:
@@ -132,7 +147,7 @@ functions:
           path: /v1/users/{userId}
           method: get
           authorizer:
-            name: userAuthorizer
+            name: authorizer
             resultTtlInSeconds: 0
             type: request
     iamRoleStatements:
@@ -148,7 +163,7 @@ functions:
           path: /v1/users/{userId}
           method: patch
           authorizer:
-            name: userAuthorizer
+            name: authorizer
             resultTtlInSeconds: 0
             type: request
     iamRoleStatements:

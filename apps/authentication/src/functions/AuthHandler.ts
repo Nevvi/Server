@@ -9,7 +9,10 @@ import {AuthenticationService} from '../service/AuthenticationService';
 import {ConfirmSignupRequest} from "../model/request/ConfirmSignupRequest";
 import {SendCodeRequest} from "../model/request/SendCodeRequest";
 import {ConfirmCodeRequest} from "../model/request/ConfirmCodeRequest";
+import {UserService} from "../service/UserService";
+
 const authenticationService = new AuthenticationService()
+const userService = new UserService()
 
 export const register: Handler = async (event: any) => {
     try {
@@ -31,6 +34,16 @@ export const confirm: Handler = async (event: any) => {
         const request = new ConfirmSignupRequest(body.username, body.confirmationCode)
         request.validate()
         const confirmResponse = await authenticationService.confirm(request)
+
+        // Once user account has been confirmed we can create the user record in the database
+        // Need to do this before returning because user will be logging in immediately after
+        // this and requesting data
+        const user = await authenticationService.getUserByEmail(body.user)
+        if (!user) {
+            return createResponse(500, {})
+        }
+        await userService.createUser(user?.userId, user?.email)
+
         return createResponse(200, confirmResponse)
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)
