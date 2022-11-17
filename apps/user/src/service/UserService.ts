@@ -6,6 +6,7 @@ import {RegisterRequest} from "../model/request/RegisterRequest";
 import {UpdateRequest} from "../model/request/UpdateRequest";
 import {UpdateContactRequest} from "../model/request/UpdateContactRequest";
 import {AuthenticationDao} from "../dao/AuthenticationDao";
+import {Address} from "../model/user/Address";
 
 class UserService {
     private userDao: UserDao;
@@ -28,6 +29,7 @@ class UserService {
         // Need to send new phone number over to auth service to get confirmed
         // once confirmed it will call back here so that we can keep track that it was confirmed
         if (request.phoneNumber && existingUser.phoneNumber !== request.phoneNumber) {
+            // TODO - also validate that phone number isn't already being used and confirmed
             await this.authenticationDao.updateUser(existingUser.id, request.phoneNumber)
         }
 
@@ -35,6 +37,7 @@ class UserService {
         existingUser.firstName = request.firstName ? request.firstName : existingUser.firstName
         existingUser.lastName = request.lastName ? request.lastName : existingUser.lastName
         existingUser.phoneNumber = request.phoneNumber ? request.phoneNumber : existingUser.phoneNumber
+        existingUser.address = request.address ? new Address(request.address) : existingUser.address
 
         return await this.userDao.updateUser(existingUser)
     }

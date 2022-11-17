@@ -1,5 +1,7 @@
 'use strict'
 
+import {Address} from "../../model/user/Address";
+
 module.exports = class {
     partitionKey: string;
     sortKey: string;
@@ -13,6 +15,7 @@ module.exports = class {
     emailConfirmed: boolean;
     phoneNumber: string;
     phoneNumberConfirmed: boolean;
+    address: Address;
     createDate: string;
     createBy: string;
     updateDate: string;
@@ -20,7 +23,7 @@ module.exports = class {
 
     constructor(body: object) {
         // @ts-ignore
-        const {id, firstName, lastName, phoneNumber, phoneNumberConfirmed, email, emailConfirmed, createDate, updateDate, updateBy, createBy} = body;
+        const {id, firstName, lastName, phoneNumber, phoneNumberConfirmed, email, emailConfirmed, address, createDate, updateDate, updateBy, createBy} = body;
 
         // dynamodb fields
         this.partitionKey = id
@@ -37,6 +40,7 @@ module.exports = class {
         this.emailConfirmed = emailConfirmed === true
         this.phoneNumber = phoneNumber
         this.phoneNumberConfirmed = phoneNumberConfirmed === true
+        this.address = address
 
         // audit fields
         this.createDate = createDate

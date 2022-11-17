@@ -1,5 +1,7 @@
 'use strict'
 
+import {Address} from "./Address";
+
 class User {
     id: any;
     firstName: any;
@@ -8,13 +10,14 @@ class User {
     emailConfirmed: boolean;
     phoneNumber: string;
     phoneNumberConfirmed: boolean;
+    address: Address;
     createDate: string;
     createBy: string;
     updateDate: string;
     updateBy: string;
     constructor(body: object) {
         // @ts-ignore
-        const {id, firstName, lastName, phoneNumber, phoneNumberConfirmed, email, emailConfirmed, createDate, updateDate, updateBy, createBy} = body;
+        const {id, firstName, lastName, phoneNumber, phoneNumberConfirmed, email, emailConfirmed, address, createDate, updateDate, updateBy, createBy} = body;
 
         // data fields
         this.id = id
@@ -24,6 +27,7 @@ class User {
         this.emailConfirmed = emailConfirmed === true
         this.phoneNumber = phoneNumber
         this.phoneNumberConfirmed = phoneNumberConfirmed === true
+        this.address = address ? address : new Address({})
 
         // audit fields
         this.createDate = createDate
