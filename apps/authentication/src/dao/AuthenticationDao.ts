@@ -56,9 +56,6 @@ class AuthenticationDao {
 
     async updateUser(username: string, request: UpdateRequest): Promise<AdminUpdateUserAttributesResponse> {
         const attributes = []
-        if (request.name) {
-            attributes.push({Name: "name", Value: request.name})
-        }
         if (request.phoneNumber) {
             attributes.push({Name: "phone_number", Value: request.phoneNumber})
         }

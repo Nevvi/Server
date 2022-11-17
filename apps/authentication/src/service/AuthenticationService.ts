@@ -4,13 +4,14 @@ import {AuthenticationDao} from "../dao/AuthenticationDao";
 import {RegisterRequest} from "../model/request/RegisterRequest";
 import {LoginRequest} from "../model/request/LoginRequest";
 import {ConfirmResponse, LoginResponse, LogoutResponse, RegisterResponse} from "../model/response/Response";
-import {InvalidRequestError} from "../error/Errors";
+import {InvalidRequestError, UserPhoneNumberAlreadyExistsError} from "../error/Errors";
 import {LogoutRequest} from "../model/request/LogoutRequest";
 import {AdminGetUserResponse, SignUpResponse, UserType} from "aws-sdk/clients/cognitoidentityserviceprovider";
 import {ConfirmSignupRequest} from "../model/request/ConfirmSignupRequest";
 import {ConfirmCodeRequest} from "../model/request/ConfirmCodeRequest";
 import {SendCodeRequest} from "../model/request/SendCodeRequest";
 import {User} from "../model/User";
+import {UpdateRequest} from "../model/request/UpdateRequest";
 
 class AuthenticationService {
     private authenticationDao: AuthenticationDao;
@@ -69,6 +70,19 @@ class AuthenticationService {
 
     async confirmCode(request: ConfirmCodeRequest) {
         return await this.authenticationDao.verifyCode(request)
+    }
+
+    async updateUser(userId: string, request: UpdateRequest): Promise<User> {
+        // Only one phone number can exist per user
+        if (request.phoneNumber !== undefined) {
+            const user = await this.authenticationDao.getUserByPhone(request.phoneNumber)
+            if (user && this._mapToUserFromUserType(user).userId !== userId) {
+                throw new UserPhoneNumberAlreadyExistsError(request.phoneNumber)
+            }
+        }
+
+        await this.authenticationDao.updateUser(userId, request)
+        return await this.getUser(userId)
     }
 
     _mapToUser(response: AdminGetUserResponse): User {

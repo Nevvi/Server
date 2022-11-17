@@ -10,6 +10,7 @@ import {ConfirmSignupRequest} from "../model/request/ConfirmSignupRequest";
 import {SendCodeRequest} from "../model/request/SendCodeRequest";
 import {ConfirmCodeRequest} from "../model/request/ConfirmCodeRequest";
 import {UserService} from "../service/UserService";
+import {UpdateRequest} from "../model/request/UpdateRequest";
 
 const authenticationService = new AuthenticationService()
 const userService = new UserService()
@@ -102,6 +103,24 @@ export const confirmCode: Handler = async (event: any) => {
         request.validate()
         const response = await authenticationService.confirmCode(request)
         return createResponse(200, response)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
+export const updateUser: Handler = async (event) => {
+    try{
+        console.log("Received request to update user")
+
+        // validate incoming request is good
+        const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
+        const request = new UpdateRequest(body.phoneNumber)
+        request.validate()
+
+        const {userId} = event.pathParameters
+        const updatedUser = await authenticationService.updateUser(userId, request)
+
+        return createResponse(200, updatedUser)
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)
     }

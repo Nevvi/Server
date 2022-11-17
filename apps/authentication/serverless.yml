@@ -137,20 +137,20 @@ functions:
           - cognito-idp:VerifyUserAttribute
         Resource: ${self:custom.publicUserPoolArn}
 
-#  updateUser:
-#    handler: src/functions/UserHandler.updateUser
-#    events:
-#      - http:
-#          path: /v1/users/{userId}
-#          method: patch
-#          authorizer:
-#            name: authorizer
-#            resultTtlInSeconds: 0
-#            type: request
-#    iamRoleStatements:
-#      - Effect: Allow
-#        Action:
-#          - cognito-idp:AdminGetUser
-#          - cognito-idp:ListUsers
-#          - cognito-idp:AdminUpdateUserAttributes
-#        Resource: ${self:custom.publicUserPoolArn}
+  updateUser:
+    handler: src/functions/AuthHandler.updateUser
+    events:
+      - http:
+          path: /api/v1/users/{userId}
+          method: patch
+          authorizer:
+            arn: ${self:custom.apiUserPoolArn}
+            scopes:
+              - user_api/user_api.all
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - cognito-idp:AdminGetUser
+          - cognito-idp:ListUsers
+          - cognito-idp:AdminUpdateUserAttributes
+        Resource: ${self:custom.publicUserPoolArn}

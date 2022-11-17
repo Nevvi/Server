@@ -4,7 +4,9 @@ module.exports = class {
     partitionKey: string;
     sortKey: string;
     gsi1pk: string;
+    gsi1sk: string;
     gsi2pk: string;
+    gsi2sk: string;
     firstName: string;
     lastName: string;
     email: string;
@@ -24,7 +26,9 @@ module.exports = class {
         this.partitionKey = id
         this.sortKey = 'USER'
         this.gsi1pk = email
+        this.gsi1sk = 'USER'
         this.gsi2pk = phoneNumber
+        this.gsi2sk = 'USER'
 
         // data fields
         this.firstName = firstName

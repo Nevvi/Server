@@ -9,16 +9,13 @@ const updateSchema = {
     emailConfirmed: Joi.forbidden(), // not allowed via this endpoint
     phoneNumber: Joi.string(), // not allowed via this endpoint
     phoneNumberConfirmed: Joi.forbidden(), // not allowed via this endpoint
-    name: Joi.string(),
 }
 
 class UpdateRequest extends UserRequest {
     phoneNumber: string;
-    name: string;
-    constructor(phoneNumber: string, name: string) {
+    constructor(phoneNumber: string) {
         super(updateSchema)
         this.phoneNumber = phoneNumber
-        this.name = name
     }
 }
 

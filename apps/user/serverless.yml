@@ -12,16 +12,22 @@ plugins:
 
 params:
   default:
+    apiUserPoolClient: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/user/id}
+    apiUserPoolClientSecret: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/user/secret}
     apiUserPoolName: nevvi-development-api-users
     basePath: ${self:provider.stage}-user
     domainName: api.development.nevvi.net
+    oauthDomain: https://nevvi-development-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
     userTableName: user-dev
   development:
     basePath: user
   production:
+    apiUserPoolClient: ${ssm:/nevvi/cognito/nevvi-api-users/clients/user/id}
+    apiUserPoolClientSecret: ${ssm:/nevvi/cognito/nevvi-api-users/clients/user/secret}
     apiUserPoolName: nevvi-api-users
     basePath: user
     domainName: api.nevvi.net
+    oauthDomain: https://nevvi-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
     userTableName: user
 
 custom:
@@ -49,6 +55,11 @@ provider:
   deploymentPrefix: ${self:provider.stage}
   environment:
     USER_TABLE: ${self:custom.userTableName}
+    OAUTH_DOMAIN_URL: ${param:oauthDomain}
+    AUTHENTICATION_API_URL: https://${param:domainName}/authentication
+    API_CLIENT_ID: ${param:apiUserPoolClient}
+    API_CLIENT_SECRET: ${param:apiUserPoolClientSecret}
+    USER_API_SCOPES: user_api/user_api.all
 
 functions:
   userAuthorizer:

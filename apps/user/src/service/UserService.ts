@@ -5,11 +5,14 @@ import {UserDao} from '../dao/UserDao';
 import {RegisterRequest} from "../model/request/RegisterRequest";
 import {UpdateRequest} from "../model/request/UpdateRequest";
 import {UpdateContactRequest} from "../model/request/UpdateContactRequest";
+import {AuthenticationDao} from "../dao/AuthenticationDao";
 
 class UserService {
     private userDao: UserDao;
+    private authenticationDao: AuthenticationDao;
     constructor() {
         this.userDao = new UserDao()
+        this.authenticationDao = new AuthenticationDao()
     }
 
     async getUser(userId: string): Promise<User | null> {
@@ -22,9 +25,16 @@ class UserService {
     }
 
     async updateUser(existingUser: User, request: UpdateRequest): Promise<User> {
+        // Need to send new phone number over to auth service to get confirmed
+        // once confirmed it will call back here so that we can keep track that it was confirmed
+        if (request.phoneNumber && existingUser.phoneNumber !== request.phoneNumber) {
+            await this.authenticationDao.updateUser(existingUser.id, request.phoneNumber)
+        }
+
         // TODO - make this a little more dynamic
         existingUser.firstName = request.firstName ? request.firstName : existingUser.firstName
         existingUser.lastName = request.lastName ? request.lastName : existingUser.lastName
+        existingUser.phoneNumber = request.phoneNumber ? request.phoneNumber : existingUser.phoneNumber
 
         return await this.userDao.updateUser(existingUser)
     }
