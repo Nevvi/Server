@@ -7,6 +7,8 @@ import {UpdateRequest} from "../model/request/UpdateRequest";
 import {UpdateContactRequest} from "../model/request/UpdateContactRequest";
 import {AuthenticationDao} from "../dao/AuthenticationDao";
 import {Address} from "../model/user/Address";
+import {SearchRequest} from "../model/request/SearchRequest";
+import {SearchResponse} from "../model/response/SearchResponse";
 
 class UserService {
     private userDao: UserDao;
@@ -23,6 +25,10 @@ class UserService {
     async createUser(request: RegisterRequest): Promise<User> {
         const user = new User(request)
         return await this.userDao.createUser(user)
+    }
+
+    async searchUsers(request: SearchRequest): Promise<SearchResponse> {
+        return await this.userDao.searchUsers(request)
     }
 
     async updateUser(existingUser: User, request: UpdateRequest): Promise<User> {

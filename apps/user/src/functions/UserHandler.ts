@@ -8,6 +8,7 @@ import {UpdateRequest} from '../model/request/UpdateRequest';
 import {UserService} from '../service/UserService';
 import {Handler} from "aws-lambda";
 import {UpdateContactRequest} from "../model/request/UpdateContactRequest";
+import {SearchRequest} from "../model/request/SearchRequest";
 const userService = new UserService()
 
 export const getUser: Handler = async (event) => {
@@ -73,6 +74,25 @@ export const updateUser: Handler = async (event) => {
         const updatedUser = await userService.updateUser(existingUser, request)
 
         return createResponse(200, updatedUser)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
+export const searchUsers: Handler = async (event) => {
+    try{
+        console.log("Received request to search for users")
+
+        // validate incoming request is good
+        const searchParams = typeof event.queryStringParameters === 'object' ?
+            event.queryStringParameters :
+            JSON.parse(event.queryStringParameters)
+
+        const request = new SearchRequest(searchParams.firstName, searchParams.lastName)
+        request.validate(searchParams)
+
+        const users = await userService.searchUsers(request)
+        return createResponse(200, users)
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)
     }

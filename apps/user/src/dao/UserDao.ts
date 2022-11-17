@@ -7,6 +7,8 @@ const UserDocument = require('./document/UserDocument.ts')
 
 // models
 import {User} from '../model/user/User';
+import {SearchRequest} from "../model/request/SearchRequest";
+import {SearchResponse} from "../model/response/SearchResponse";
 
 const {UserAlreadyExistsError, UserNotFoundError} = require('../error/Errors.ts')
 const AWS = require('aws-sdk')
@@ -14,6 +16,7 @@ const AWS = require('aws-sdk')
 class UserDao {
     private db: DocumentClient;
     private table: string;
+
     constructor() {
         this.db = new AWS.DynamoDB.DocumentClient({})
         this.table = process.env.USER_TABLE || ""
@@ -84,6 +87,34 @@ class UserDao {
         }
 
         return user
+    }
+
+    async searchUsers(request: SearchRequest): Promise<SearchResponse> {
+        const filters = {}
+        if (request.firstName) {
+            // @ts-ignore
+            filters['firstNameLower'] = {
+                ComparisonOperator: 'BEGINS_WITH',
+                AttributeValueList: [request.firstName.toLowerCase()]
+            }
+        }
+        if (request.lastName) {
+            // @ts-ignore
+            filters['lastNameLower'] = {
+                ComparisonOperator: 'BEGINS_WITH',
+                AttributeValueList: [request.lastName.toLowerCase()]
+            }
+        }
+
+        const response = await this.db.scan({
+            TableName: this.table,
+            ScanFilter: filters,
+            Select: 'ALL_ATTRIBUTES',
+            Limit: request.limit
+        }).promise()
+
+        const users = (response.Items || []).map(i => new User(i))
+        return new SearchResponse(users)
     }
 }
 

@@ -10,7 +10,9 @@ module.exports = class {
     gsi2pk: string;
     gsi2sk: string;
     firstName: string;
+    firstNameLower: string | null;
     lastName: string;
+    lastNameLower: string | null;
     email: string;
     emailConfirmed: boolean;
     phoneNumber: string;
@@ -35,7 +37,9 @@ module.exports = class {
 
         // data fields
         this.firstName = firstName
+        this.firstNameLower = firstName ? firstName.toLowerCase() : null
         this.lastName = lastName
+        this.lastNameLower = lastName ? lastName.toLowerCase() : null
         this.email = email
         this.emailConfirmed = emailConfirmed === true
         this.phoneNumber = phoneNumber

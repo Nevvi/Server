@@ -8,6 +8,7 @@ const {AuthPolicy, HttpVerb} = require('../../../../shared/common/authorization/
 class UserAuthorizer extends AbstractAuthorizer {
     generatePermissions(authPolicy: typeof AuthPolicy, userId: string) {
         if (userId) {
+            authPolicy.allowMethod(HttpVerb.GET, `/v1/users/search`)
             authPolicy.allowMethod(HttpVerb.GET, `/v1/users/${userId}`)
             authPolicy.allowMethod(HttpVerb.PATCH, `/v1/users/${userId}`)
         } else {

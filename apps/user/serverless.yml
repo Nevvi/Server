@@ -127,3 +127,18 @@ functions:
           - dynamodb:GetItem
           - dynamodb:PutItem
         Resource: ${self:custom.userTableArn}
+  searchUsers:
+    handler: src/functions/UserHandler.searchUsers
+    events:
+      - http:
+          path: /v1/users/search
+          method: get
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Scan
+        Resource: ${self:custom.userTableArn}
