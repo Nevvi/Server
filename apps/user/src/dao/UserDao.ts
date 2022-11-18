@@ -7,7 +7,6 @@ const UserDocument = require('./document/UserDocument.ts')
 
 // models
 import {User} from '../model/user/User';
-import {SearchRequest} from "../model/request/SearchRequest";
 import {SearchResponse} from "../model/response/SearchResponse";
 
 const {UserAlreadyExistsError, UserNotFoundError} = require('../error/Errors.ts')
@@ -43,6 +42,7 @@ class UserDao {
     }
 
     async getUserByEmail(email: string): Promise<User | null> {
+        console.log("Getting user for email", email)
         const result = await this.db.query({
             TableName: this.table,
             IndexName: 'GSI1',
@@ -71,6 +71,7 @@ class UserDao {
     }
 
     async getUserByPhone(phoneNumber: string): Promise<User | null> {
+        console.log("Getting user for phone", phoneNumber)
         const result = await this.db.query({
             TableName: this.table,
             IndexName: 'GSI2',
@@ -146,7 +147,7 @@ class UserDao {
         return user
     }
 
-    async searchUsers(name: string, limit: number): Promise<SearchResponse> {
+    async searchUsers(name: string, lastEvaluatedKey: string | undefined, limit: number): Promise<SearchResponse> {
         const filters = {}
         if (name) {
             // @ts-ignore
@@ -156,15 +157,39 @@ class UserDao {
             }
         }
 
-        const response = await this.db.scan({
-            TableName: this.table,
-            ScanFilter: filters,
-            Select: 'ALL_ATTRIBUTES',
-            Limit: limit
-        }).promise()
+        let matched: any[] = []
+        let lastKey = lastEvaluatedKey ?
+            JSON.parse(Buffer.from(lastEvaluatedKey, 'base64').toString('utf8')) :
+            undefined
 
-        const users = (response.Items || []).map(i => new User(i))
-        return new SearchResponse(users)
+        do {
+            const response: DocumentClient.ScanOutput = await this.db.scan({
+                TableName: this.table,
+                ScanFilter: filters,
+                Select: 'ALL_ATTRIBUTES',
+                ExclusiveStartKey: lastKey
+            }).promise()
+
+            lastKey = undefined
+            if (response.Items && response.Items.length > 0) {
+                const subset: DocumentClient.AttributeMap[] = response.Items.slice(0, limit - matched.length)
+                matched = matched.concat(subset)
+
+                // Had to trim the response to match the limit so let's set the last evaluated key to be
+                // the key we trimmed to unless we are at the very end
+                if (subset.length !== response.Items.length && response.LastEvaluatedKey) {
+                    lastKey = subset.slice(-1)[0]
+                    lastKey = { sortKey: subset.slice(-1)[0].sortKey, partitionKey: subset.slice(-1)[0].partitionKey }
+                }
+            }
+
+            // If we didn't already set the last key, set it to the end of the last search
+            lastKey = lastKey ? lastKey : response.LastEvaluatedKey
+        } while(matched.length < limit && lastKey)
+
+        const users = matched.map(i => new User(i))
+        const lastKeySerialized = lastKey ? Buffer.from(JSON.stringify(lastKey)).toString('base64') : undefined
+        return new SearchResponse(users, lastKeySerialized)
     }
 }
 

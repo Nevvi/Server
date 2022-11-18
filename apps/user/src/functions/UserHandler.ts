@@ -90,9 +90,10 @@ export const searchUsers: Handler = async (event) => {
 
         const request = new SearchRequest(
             searchParams.name,
-            decodeURIComponent(searchParams.email),
-            decodeURIComponent(searchParams.phoneNumber),
-            searchParams.limit)
+            searchParams.email,
+            searchParams.phoneNumber,
+            searchParams.limit,
+            searchParams.continuationKey)
 
         request.validate(searchParams)
 

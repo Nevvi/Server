@@ -38,7 +38,7 @@ class UserService {
             return new SearchResponse(user ? [user] : [])
         }
 
-        return await this.userDao.searchUsers(request.name, request.limit)
+        return await this.userDao.searchUsers(request.name, request.continuationKey, request.limit)
     }
 
     async updateUser(existingUser: User, request: UpdateRequest): Promise<User> {

@@ -10,7 +10,7 @@ class UserRequest {
     }
 
     validate(body?: object) {
-        const {error} = Joi.object().keys(this.validationSchema).validate(body ? body : this, {convert: false, stripUnknown: true})
+        const {error} = Joi.object().keys(this.validationSchema).validate(body ? body : this, {convert: true, stripUnknown: true})
         if (error) {
             throw new InvalidRequestError(error.message)
         }
