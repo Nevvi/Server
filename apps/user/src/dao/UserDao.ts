@@ -91,18 +91,11 @@ class UserDao {
 
     async searchUsers(request: SearchRequest): Promise<SearchResponse> {
         const filters = {}
-        if (request.firstName) {
+        if (request.name) {
             // @ts-ignore
-            filters['firstNameLower'] = {
-                ComparisonOperator: 'BEGINS_WITH',
-                AttributeValueList: [request.firstName.toLowerCase()]
-            }
-        }
-        if (request.lastName) {
-            // @ts-ignore
-            filters['lastNameLower'] = {
-                ComparisonOperator: 'BEGINS_WITH',
-                AttributeValueList: [request.lastName.toLowerCase()]
+            filters['nameLower'] = {
+                ComparisonOperator: 'CONTAINS',
+                AttributeValueList: [request.name.split(' ').filter(n => n).join('_').toLowerCase()]
             }
         }
 

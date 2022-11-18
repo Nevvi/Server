@@ -88,7 +88,7 @@ export const searchUsers: Handler = async (event) => {
             event.queryStringParameters :
             JSON.parse(event.queryStringParameters)
 
-        const request = new SearchRequest(searchParams.firstName, searchParams.lastName)
+        const request = new SearchRequest(searchParams.name, searchParams.limit)
         request.validate(searchParams)
 
         const users = await userService.searchUsers(request)

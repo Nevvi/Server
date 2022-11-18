@@ -4,21 +4,17 @@ const Joi = require('joi');
 import {UserRequest} from './UserRequest';
 
 const updateSchema = {
-    firstName: Joi.string(),
-    lastName: Joi.string(),
+    name: Joi.string().min(3),
+    limit: Joi.number()
 }
 
 class SearchRequest extends UserRequest {
-    firstName: string;
-    lastName: string;
+    name: string;
     limit: number;
-    constructor(firstName: string, lastName: string) {
+    constructor(name: string, limit: number = 10) {
         super(updateSchema)
-        this.firstName = firstName
-        this.lastName = lastName
-
-        // TODO - make this client driven
-        this.limit = 10;
+        this.name = name
+        this.limit = limit;
     }
 }
 
