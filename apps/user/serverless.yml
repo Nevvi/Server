@@ -142,3 +142,11 @@ functions:
         Action:
           - dynamodb:Scan
         Resource: ${self:custom.userTableArn}
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: ${self:custom.userTableArn}/index/GSI1
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: ${self:custom.userTableArn}/index/GSI2

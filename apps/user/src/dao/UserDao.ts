@@ -42,6 +42,63 @@ class UserDao {
         return user
     }
 
+    async getUserByEmail(email: string): Promise<User | null> {
+        const result = await this.db.query({
+            TableName: this.table,
+            IndexName: 'GSI1',
+            KeyConditionExpression: 'gsi1pk = :gsi1pk and gsi1sk = :gsi1sk',
+            FilterExpression: 'emailConfirmed = :emailConfirmed',
+            ExpressionAttributeValues: {
+                ':gsi1pk': email,
+                ':gsi1sk': 'USER',
+                ':emailConfirmed': true,
+            }
+        }).promise()
+
+        if (!result.Items?.length) {
+            return null
+        }
+
+        const document = result && result.Items[0]
+        const user = document ? new User(document) : null
+
+        // Map the id back into the user so that it doesn't get lost
+        if (user && document) {
+            user.id = document.partitionKey
+        }
+
+        return user
+    }
+
+    async getUserByPhone(phoneNumber: string): Promise<User | null> {
+        const result = await this.db.query({
+            TableName: this.table,
+            IndexName: 'GSI2',
+            KeyConditionExpression: 'gsi2pk = :gsi2pk and gsi2sk = :gsi2sk',
+            FilterExpression: 'phoneNumberConfirmed = :phoneNumberConfirmed',
+            ExpressionAttributeValues: {
+                ':gsi2pk': phoneNumber,
+                ':gsi2sk': 'USER',
+                ':phoneNumberConfirmed': true
+            }
+        }).promise()
+
+        if (!result.Items?.length) {
+            return null
+        }
+
+        const document = result && result.Items[0]
+        const user = document ? new User(document) : null
+
+        // Map the id back into the user so that it doesn't get lost
+        if (user && document) {
+            user.id = document.partitionKey
+        }
+
+        return user
+    }
+
+
     async createUser(user: User): Promise<User> {
         const now = new Date().toISOString()
         user.createDate = now
@@ -89,13 +146,13 @@ class UserDao {
         return user
     }
 
-    async searchUsers(request: SearchRequest): Promise<SearchResponse> {
+    async searchUsers(name: string, limit: number): Promise<SearchResponse> {
         const filters = {}
-        if (request.name) {
+        if (name) {
             // @ts-ignore
             filters['nameLower'] = {
                 ComparisonOperator: 'CONTAINS',
-                AttributeValueList: [request.name.split(' ').filter(n => n).join('_').toLowerCase()]
+                AttributeValueList: [name.split(' ').filter(n => n).join('_').toLowerCase()]
             }
         }
 
@@ -103,7 +160,7 @@ class UserDao {
             TableName: this.table,
             ScanFilter: filters,
             Select: 'ALL_ATTRIBUTES',
-            Limit: request.limit
+            Limit: limit
         }).promise()
 
         const users = (response.Items || []).map(i => new User(i))

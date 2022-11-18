@@ -24,11 +24,21 @@ class UserService {
 
     async createUser(request: RegisterRequest): Promise<User> {
         const user = new User(request)
+        user.emailConfirmed = true
         return await this.userDao.createUser(user)
     }
 
     async searchUsers(request: SearchRequest): Promise<SearchResponse> {
-        return await this.userDao.searchUsers(request)
+        // There should only be one user with a confirmed email or phone
+        if (request.email) {
+            const user = await this.userDao.getUserByEmail(request.email)
+            return new SearchResponse(user ? [user] : [])
+        } else if (request.phoneNumber) {
+            const user = await this.userDao.getUserByPhone(request.phoneNumber)
+            return new SearchResponse(user ? [user] : [])
+        }
+
+        return await this.userDao.searchUsers(request.name, request.limit)
     }
 
     async updateUser(existingUser: User, request: UpdateRequest): Promise<User> {
