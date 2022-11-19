@@ -33,6 +33,7 @@
   "dependencies": {
     "aws-sdk": "^2.1048.0",
     "axios": "^0.21.1",
+    "busboy": "^1.6.0",
     "fork-ts-checker-webpack-plugin": "^6.5.0",
     "joi": "^17.5.0",
     "serverless": "^3.24.1",

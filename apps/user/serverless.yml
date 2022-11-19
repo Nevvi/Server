@@ -18,6 +18,7 @@ params:
     basePath: ${self:provider.stage}-user
     domainName: api.development.nevvi.net
     oauthDomain: https://nevvi-development-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
+    userImagesBucketName: nevvi-user-images-dev
     userTableName: user-dev
   development:
     basePath: user
@@ -28,6 +29,7 @@ params:
     basePath: user
     domainName: api.nevvi.net
     oauthDomain: https://nevvi-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
+    userImagesBucketName: nevvi-user-images
     userTableName: user
 
 custom:
@@ -39,6 +41,8 @@ custom:
     basePath: ${param:basePath}
   apiUserPoolName: ${param:apiUserPoolName}
   apiUserPoolArn: ${ssm:/nevvi/cognito/${self:custom.apiUserPoolName}/arn}
+  userImagesBucketName: ${param:userImagesBucketName}
+  userImagesBucketArn: ${ssm:/nevvi/s3/${self:custom.userImagesBucketName}/arn}
   userTableName: ${param:userTableName}
   userTableArn: ${ssm:/nevvi/dynamodb/${self:custom.userTableName}/arn}
 
@@ -50,6 +54,12 @@ provider:
   region: ${opt:region, 'us-east-1'}
   apiName: user-${self:provider.stage}
   stackName: user-${self:provider.stage}
+  apiGateway:
+    binaryMediaTypes:
+      - 'multipart/form-data'
+      - 'image/png'
+      - 'image/jpeg'
+      - 'application/octet-stream'
   deploymentBucket:
     name: nevvi-serverless-deployment-bucket
   deploymentPrefix: ${self:provider.stage}
@@ -59,6 +69,7 @@ provider:
     AUTHENTICATION_API_URL: https://${param:domainName}/authentication
     API_CLIENT_ID: ${param:apiUserPoolClient}
     API_CLIENT_SECRET: ${param:apiUserPoolClientSecret}
+    IMAGE_BUCKET: ${self:custom.userImagesBucketName}
     USER_API_SCOPES: user_api/user_api.all
 
 functions:
@@ -122,6 +133,27 @@ functions:
             resultTtlInSeconds: 0
             type: request
     iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+        Resource: ${self:custom.userTableArn}
+  updateUserImage:
+    handler: src/functions/UserHandler.updateUserImage
+    events:
+      - http:
+          path: /v1/users/{userId}/image
+          method: post
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - s3:PutObject
+          - s3:PutObjectAcl
+        Resource: ${self:custom.userImagesBucketArn}/*
       - Effect: Allow
         Action:
           - dynamodb:GetItem

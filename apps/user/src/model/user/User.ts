@@ -11,13 +11,14 @@ class User {
     phoneNumber: string;
     phoneNumberConfirmed: boolean;
     address: Address;
+    profileImage: string;
     createDate: string;
     createBy: string;
     updateDate: string;
     updateBy: string;
     constructor(body: object) {
         // @ts-ignore
-        const {id, firstName, lastName, phoneNumber, phoneNumberConfirmed, email, emailConfirmed, address, createDate, updateDate, updateBy, createBy} = body;
+        const {id, firstName, lastName, phoneNumber, phoneNumberConfirmed, email, emailConfirmed, address, profileImage, createDate, updateDate, updateBy, createBy} = body;
 
         // data fields
         this.id = id
@@ -28,6 +29,7 @@ class User {
         this.phoneNumber = phoneNumber
         this.phoneNumberConfirmed = phoneNumberConfirmed === true
         this.address = address ? address : new Address({})
+        this.profileImage = profileImage
 
         // audit fields
         this.createDate = createDate

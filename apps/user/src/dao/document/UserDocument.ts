@@ -17,6 +17,7 @@ module.exports = class {
     phoneNumber: string;
     phoneNumberConfirmed: boolean;
     address: Address;
+    profileImage: string;
     createDate: string;
     createBy: string;
     updateDate: string;
@@ -24,7 +25,7 @@ module.exports = class {
 
     constructor(body: object) {
         // @ts-ignore
-        const {id, firstName, lastName, phoneNumber, phoneNumberConfirmed, email, emailConfirmed, address, createDate, updateDate, updateBy, createBy} = body;
+        const {id, firstName, lastName, phoneNumber, phoneNumberConfirmed, email, emailConfirmed, address, profileImage, createDate, updateDate, updateBy, createBy} = body;
 
         // dynamodb fields
         this.partitionKey = id
@@ -43,6 +44,7 @@ module.exports = class {
         this.phoneNumber = phoneNumber
         this.phoneNumberConfirmed = phoneNumberConfirmed === true
         this.address = address
+        this.profileImage = profileImage
 
         // audit fields
         this.createDate = createDate

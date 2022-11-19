@@ -9,6 +9,8 @@ import {UserService} from '../service/UserService';
 import {Handler} from "aws-lambda";
 import {UpdateContactRequest} from "../model/request/UpdateContactRequest";
 import {SearchRequest} from "../model/request/SearchRequest";
+import {getFile} from "../util/ImageUtil";
+import {S3} from "aws-sdk";
 const userService = new UserService()
 
 export const getUser: Handler = async (event) => {
@@ -73,6 +75,22 @@ export const updateUser: Handler = async (event) => {
         // update the info on that user
         const updatedUser = await userService.updateUser(existingUser, request)
 
+        return createResponse(200, updatedUser)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
+export const updateUserImage: Handler = async (event) => {
+    try{
+        console.log("Received request to update user image")
+
+        const {userId} = event.pathParameters
+        const fileInfo = await getFile(event)
+        console.log(fileInfo)
+
+        // @ts-ignore
+        const updatedUser = await userService.updateUserImage(userId, fileInfo.content, fileInfo.fileName.filename, fileInfo.fileName.mimeType)
         return createResponse(200, updatedUser)
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)

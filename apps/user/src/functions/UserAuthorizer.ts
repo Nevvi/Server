@@ -11,6 +11,8 @@ class UserAuthorizer extends AbstractAuthorizer {
             authPolicy.allowMethod(HttpVerb.GET, `/v1/users/search`)
             authPolicy.allowMethod(HttpVerb.GET, `/v1/users/${userId}`)
             authPolicy.allowMethod(HttpVerb.PATCH, `/v1/users/${userId}`)
+            authPolicy.allowMethod(HttpVerb.GET, `/v1/users/${userId}/image`)
+            authPolicy.allowMethod(HttpVerb.POST, `/v1/users/${userId}/image`)
         } else {
             authPolicy.denyAllMethods()
         }

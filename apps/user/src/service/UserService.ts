@@ -9,13 +9,18 @@ import {AuthenticationDao} from "../dao/AuthenticationDao";
 import {Address} from "../model/user/Address";
 import {SearchRequest} from "../model/request/SearchRequest";
 import {SearchResponse} from "../model/response/SearchResponse";
+import {ImageDao} from "../dao/ImageDao";
+import {InvalidRequestError, UserNotFoundError} from "../error/Errors";
+import {S3} from "aws-sdk";
 
 class UserService {
     private userDao: UserDao;
+    private imageDao: ImageDao;
     private authenticationDao: AuthenticationDao;
     constructor() {
         this.userDao = new UserDao()
         this.authenticationDao = new AuthenticationDao()
+        this.imageDao = new ImageDao()
     }
 
     async getUser(userId: string): Promise<User | null> {
@@ -67,6 +72,16 @@ class UserService {
         existingUser.phoneNumberConfirmed = request.phoneNumberConfirmed
 
         return await this.userDao.updateUser(existingUser)
+    }
+
+    async updateUserImage(userId: string, image: Buffer, imageName: string, contentType: string): Promise<User> {
+        const user = await this.getUser(userId)
+        if (!user) {
+            throw new UserNotFoundError(userId)
+        }
+
+        user.profileImage = await this.imageDao.uploadImage(userId, image, imageName, contentType)
+        return await this.userDao.updateUser(user)
     }
 }
 
