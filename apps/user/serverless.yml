@@ -16,6 +16,7 @@ params:
     apiUserPoolClientSecret: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/user/secret}
     apiUserPoolName: nevvi-development-api-users
     basePath: ${self:provider.stage}-user
+    defaultProfileImage: https://nevvi-user-images-dev.s3.amazonaws.com/Default_Profile_Picture.png
     domainName: api.development.nevvi.net
     oauthDomain: https://nevvi-development-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
     userImagesBucketName: nevvi-user-images-dev
@@ -27,6 +28,7 @@ params:
     apiUserPoolClientSecret: ${ssm:/nevvi/cognito/nevvi-api-users/clients/user/secret}
     apiUserPoolName: nevvi-api-users
     basePath: user
+    defaultProfileImage: https://nevvi-user-images.s3.amazonaws.com/Default_Profile_Picture.png
     domainName: api.nevvi.net
     oauthDomain: https://nevvi-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
     userImagesBucketName: nevvi-user-images
@@ -69,6 +71,7 @@ provider:
     AUTHENTICATION_API_URL: https://${param:domainName}/authentication
     API_CLIENT_ID: ${param:apiUserPoolClient}
     API_CLIENT_SECRET: ${param:apiUserPoolClientSecret}
+    DEFAULT_PROFILE_IMAGE: ${param:defaultProfileImage}
     IMAGE_BUCKET: ${self:custom.userImagesBucketName}
     USER_API_SCOPES: user_api/user_api.all
 

@@ -29,7 +29,7 @@ class User {
         this.phoneNumber = phoneNumber
         this.phoneNumberConfirmed = phoneNumberConfirmed === true
         this.address = address ? address : new Address({})
-        this.profileImage = profileImage
+        this.profileImage = profileImage ? profileImage : process.env.DEFAULT_PROFILE_IMAGE
 
         // audit fields
         this.createDate = createDate
