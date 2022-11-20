@@ -187,7 +187,11 @@ class UserDao {
             lastKey = lastKey ? lastKey : response.LastEvaluatedKey
         } while(matched.length < limit && lastKey)
 
-        const users = matched.map(i => new User(i))
+        const users = matched.map(i => {
+            const user = new User(i)
+            user.id = i.partitionKey
+            return user
+        })
         const lastKeySerialized = lastKey ? Buffer.from(JSON.stringify(lastKey)).toString('base64') : undefined
         return new SearchResponse(users, lastKeySerialized)
     }

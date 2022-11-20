@@ -10,17 +10,21 @@ import {Address} from "../model/user/Address";
 import {SearchRequest} from "../model/request/SearchRequest";
 import {SearchResponse} from "../model/response/SearchResponse";
 import {ImageDao} from "../dao/ImageDao";
-import {InvalidRequestError, UserNotFoundError} from "../error/Errors";
-import {S3} from "aws-sdk";
+import {ConnectionRequestExistsError, InvalidRequestError, UserNotFoundError} from "../error/Errors";
+import {RequestStatus} from "../model/connection/RequestStatus";
+import {ConnectionDao} from "../dao/ConnectionDao";
+import {ConnectionRequest} from "../model/connection/ConnectionRequest";
 
 class UserService {
     private userDao: UserDao;
     private imageDao: ImageDao;
+    private connectionDao: ConnectionDao;
     private authenticationDao: AuthenticationDao;
     constructor() {
         this.userDao = new UserDao()
         this.authenticationDao = new AuthenticationDao()
         this.imageDao = new ImageDao()
+        this.connectionDao = new ConnectionDao()
     }
 
     async getUser(userId: string): Promise<User | null> {
@@ -82,6 +86,57 @@ class UserService {
 
         user.profileImage = await this.imageDao.uploadImage(userId, image, imageName, contentType)
         return await this.userDao.updateUser(user)
+    }
+
+    async requestConnection(requestingUserId: string, requestedUserId: string): Promise<ConnectionRequest> {
+        if (requestingUserId === requestedUserId) {
+            throw new InvalidRequestError("User cannot request themself for connection")
+        }
+
+        const requestedUser = await this.getUser(requestedUserId)
+        if (!requestedUser) {
+            throw new UserNotFoundError(requestedUserId)
+        }
+
+        // if an existing request exists in any state then do nothing
+            // PENDING - one already exists, don't create another
+            // REJECTED - requestedUserId already rejected this user, do nothing
+            // APPROVED - these two are already connected
+        let existingRequest = await this.connectionDao.getConnectionRequest(requestingUserId, requestedUserId)
+        if (existingRequest) {
+            throw new ConnectionRequestExistsError()
+        }
+
+        // TODO - check if requested user has blocked the requesting user
+
+        // check if requested user has also requested the requesting user (treat as a confirm)
+        existingRequest = await this.connectionDao.getConnectionRequest(requestedUserId, requestingUserId)
+        if (existingRequest && existingRequest.status === RequestStatus.PENDING) {
+            console.log("Another open request exists between users. Treating as confirmation.")
+            return await this.confirmConnection(requestingUserId, requestedUserId)
+        }
+
+        // check if requested user has previously rejected request from requesting user (remove that previous rejection)
+        if (existingRequest && existingRequest.status === RequestStatus.REJECTED) {
+            console.log("User being requested was previously rejected by current requesting user. Removing that rejection.")
+            await this.connectionDao.deleteConnectionRequest(requestedUserId, requestingUserId)
+        }
+
+        return await this.connectionDao.createConnectionRequest(requestingUserId, requestedUserId)
+    }
+
+    async confirmConnection(userId: string, otherUserId: string): Promise<ConnectionRequest> {
+        // validate that connection request exists between users
+        // mark connection request as confirmed
+        // create official connection entry
+        // send notification to otherUserId
+        return new ConnectionRequest({})
+    }
+
+    async rejectConnection(userId: string, otherUserId: string) {
+        // validate that connection request exists between users
+        // mark connection request as rejected
+        // automatically block the user?
     }
 }
 

@@ -25,4 +25,13 @@ class UserAlreadyExistsError extends Error {
     }
 }
 
-export {InvalidRequestError, UserNotFoundError, UserAlreadyExistsError}
+class ConnectionRequestExistsError extends Error {
+    private statusCode: number;
+    constructor() {
+        super(`Connection request already exists to this user`)
+        this.statusCode = 409;
+    }
+}
+
+
+export {InvalidRequestError, UserNotFoundError, UserAlreadyExistsError, ConnectionRequestExistsError}

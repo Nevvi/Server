@@ -190,3 +190,22 @@ functions:
         Action:
           - dynamodb:Query
         Resource: ${self:custom.userTableArn}/index/GSI2
+
+  # Connection Requests
+  createConnectionRequest:
+    handler: src/functions/ConnectionHandler.requestConnection
+    events:
+      - http:
+          path: /v1/users/{userId}/connections/requests
+          method: post
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+          - dynamodb:DeleteItem
+        Resource: ${self:custom.userTableArn}
