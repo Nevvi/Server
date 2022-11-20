@@ -8,6 +8,7 @@ plugins:
   - serverless-iam-roles-per-function
   - serverless-webpack
   - serverless-domain-manager
+  - serverless-plugin-split-stacks
 
 
 params:
@@ -35,6 +36,10 @@ params:
     userTableName: user
 
 custom:
+  splitStacks:
+    perFunction: false
+    perType: true
+    perGroupFunction: false
   prune:
     automatic: true
     number: 2
