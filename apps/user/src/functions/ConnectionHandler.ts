@@ -5,11 +5,13 @@ import {UserNotFoundError} from '../error/Errors';
 import {UserService} from '../service/UserService';
 import {Handler} from "aws-lambda";
 import {RequestConnectionRequest} from "../model/request/RequestConnectionRequest";
+import {UpdateRequest} from "../model/request/UpdateRequest";
+import {ConfirmConnectionRequest} from "../model/request/ConfirmConnectionRequest";
 const userService = new UserService()
 
 export const requestConnection: Handler = async (event) => {
     try{
-        console.log("Received request to get user")
+        console.log("Received request to create connection request")
         const {userId} = event.pathParameters
         // validate incoming request is good
         const searchParams = typeof event.queryStringParameters === 'object' ?
@@ -21,6 +23,23 @@ export const requestConnection: Handler = async (event) => {
         const result = await userService.requestConnection(userId, request.userId)
 
         return createResponse(200, result)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
+export const confirmConnection: Handler = async (event) => {
+    try{
+        console.log("Received request to confirm connection request")
+        const {userId} = event.pathParameters
+
+        // validate incoming request is good
+        const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
+        const request = new ConfirmConnectionRequest(body.otherUserId)
+        request.validate(body)
+
+        const connectionRequest = await userService.confirmConnection(request.otherUserId, userId)
+        return createResponse(200, connectionRequest)
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)
     }

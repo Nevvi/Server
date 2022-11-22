@@ -10,7 +10,12 @@ import {Address} from "../model/user/Address";
 import {SearchRequest} from "../model/request/SearchRequest";
 import {SearchResponse} from "../model/response/SearchResponse";
 import {ImageDao} from "../dao/ImageDao";
-import {ConnectionRequestExistsError, InvalidRequestError, UserNotFoundError} from "../error/Errors";
+import {
+    ConnectionRequestDoesNotExistError,
+    ConnectionRequestExistsError,
+    InvalidRequestError,
+    UserNotFoundError
+} from "../error/Errors";
 import {RequestStatus} from "../model/connection/RequestStatus";
 import {ConnectionDao} from "../dao/ConnectionDao";
 import {ConnectionRequest} from "../model/connection/ConnectionRequest";
@@ -133,12 +138,24 @@ class UserService {
         return await this.connectionDao.createConnectionRequest(requestingUserId, requestedUserId, requestingUser.profileImage, requestText)
     }
 
-    async confirmConnection(userId: string, otherUserId: string): Promise<ConnectionRequest> {
+    async confirmConnection(requestingUserId: string, requestedUserId: string): Promise<ConnectionRequest> {
         // validate that connection request exists between users
+        const existingRequest = await this.connectionDao.getConnectionRequest(requestingUserId, requestedUserId)
+        if (!existingRequest) {
+            throw new ConnectionRequestDoesNotExistError()
+        }
+
+        if (existingRequest.status !== RequestStatus.PENDING) {
+            throw new InvalidRequestError("Request not in a pending state")
+        }
+
         // mark connection request as confirmed
-        // create official connection entry
-        // send notification to otherUserId
-        return new ConnectionRequest({})
+        existingRequest.status = RequestStatus.APPROVED
+        await this.connectionDao.updateConnectionRequest(existingRequest)
+
+        // TODO - create official connection entry
+        // TODO - send notification to otherUserId
+        return existingRequest
     }
 
     async rejectConnection(userId: string, otherUserId: string) {

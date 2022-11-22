@@ -7,8 +7,7 @@ import {DocumentClient} from "aws-sdk/clients/dynamodb";
 import {ConnectionRequest} from "../model/connection/ConnectionRequest";
 import {RequestStatus} from "../model/connection/RequestStatus";
 const ConnectionRequestDocument = require('./document/ConnectionRequestDocument.ts')
-import {ConnectionRequestExistsError} from "../error/Errors";
-import {User} from "../model/user/User";
+import {ConnectionRequestDoesNotExistError, ConnectionRequestExistsError} from "../error/Errors";
 
 const AWS = require('aws-sdk')
 
@@ -81,6 +80,28 @@ class ConnectionDao {
         }
 
         return new ConnectionRequest(document)
+    }
+
+    async updateConnectionRequest(request: ConnectionRequest): Promise<ConnectionRequest> {
+        request.updateDate = new Date().toISOString()
+        request.updateBy = 'HARDCODED_FOR_NOW'
+
+        const document = new ConnectionRequestDocument(request)
+
+        try {
+            await this.db.put({
+                TableName: this.table,
+                Item: document,
+                ConditionExpression: 'attribute_exists(partitionKey) and attribute_exists(sortKey)'
+            }).promise()
+        } catch (e: any) {
+            if (e.code === 'ConditionalCheckFailedException') {
+                throw new ConnectionRequestDoesNotExistError()
+            }
+            throw e
+        }
+
+        return request
     }
 
     async deleteConnectionRequest(requestingUserId: string, requestedUserId: string): Promise<boolean | null> {

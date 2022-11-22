@@ -210,6 +210,23 @@ functions:
           - dynamodb:DeleteItem
         Resource: ${self:custom.userTableArn}
 
+  confirmConnectionRequest:
+    handler: src/functions/ConnectionHandler.confirmConnection
+    events:
+      - http:
+          path: /v1/users/{userId}/connections/requests/confirm
+          method: post
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+        Resource: ${self:custom.userTableArn}
+
   getPendingRequests:
     handler: src/functions/ConnectionHandler.getOpenConnections
     events:
