@@ -209,3 +209,19 @@ functions:
           - dynamodb:PutItem
           - dynamodb:DeleteItem
         Resource: ${self:custom.userTableArn}
+
+  getPendingRequests:
+    handler: src/functions/ConnectionHandler.getOpenConnections
+    events:
+      - http:
+          path: /v1/users/{userId}/connections/requests/pending
+          method: get
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: ${self:custom.userTableArn}/index/GSI1

@@ -9,6 +9,8 @@ module.exports = class {
     gsi1sk: string;
     requestingUserId: string;
     requestedUserId: string;
+    requestText: string;
+    requesterImage: string;
     status: RequestStatus;
     createDate: string;
     createBy: string;
@@ -17,7 +19,7 @@ module.exports = class {
 
     constructor(body: object) {
         // @ts-ignore
-        const {requestingUserId, requestedUserId, status, createDate, updateDate, updateBy, createBy} = body;
+        const {requestingUserId, requestedUserId, requestText, requesterImage, status, createDate, updateDate, updateBy, createBy} = body;
 
         // dynamodb fields
         this.partitionKey = requestingUserId
@@ -28,6 +30,8 @@ module.exports = class {
         // data fields
         this.requestingUserId = requestingUserId
         this.requestedUserId = requestedUserId
+        this.requestText = requestText
+        this.requesterImage = requesterImage
         this.status = status
 
         // audit fields

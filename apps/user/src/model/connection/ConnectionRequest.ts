@@ -4,6 +4,8 @@ import {RequestStatus} from "./RequestStatus";
 class ConnectionRequest {
     requestingUserId: string;
     requestedUserId: string;
+    requestText: string;
+    requesterImage: string;
     status: RequestStatus;
     createDate: string;
     createBy: string;
@@ -11,11 +13,13 @@ class ConnectionRequest {
     updateBy: string;
     constructor(body: object) {
         // @ts-ignore
-        const {requestingUserId, requestedUserId, status, createDate, updateDate, updateBy, createBy} = body;
+        const {requestingUserId, requestedUserId, requestText, requesterImage, status, createDate, updateDate, updateBy, createBy} = body;
 
         // data fields
         this.requestingUserId = requestingUserId
         this.requestedUserId = requestedUserId
+        this.requestText = requestText
+        this.requesterImage = requesterImage || process.env.DEFAULT_PROFILE_IMAGE
         this.status = status
 
         // audit fields

@@ -8,6 +8,7 @@ import {ConnectionRequest} from "../model/connection/ConnectionRequest";
 import {RequestStatus} from "../model/connection/RequestStatus";
 const ConnectionRequestDocument = require('./document/ConnectionRequestDocument.ts')
 import {ConnectionRequestExistsError} from "../error/Errors";
+import {User} from "../model/user/User";
 
 const AWS = require('aws-sdk')
 
@@ -33,11 +34,32 @@ class ConnectionDao {
         return document ? new ConnectionRequest(document) : null
     }
 
-    async createConnectionRequest(requestingUserId: string, requestedUserId: string): Promise<ConnectionRequest> {
+    async getConnectionRequests(requestedUserId: string, status: RequestStatus): Promise<ConnectionRequest[]> {
+        const result = await this.db.query({
+            TableName: this.table,
+            IndexName: 'GSI1',
+            KeyConditionExpression: 'gsi1pk = :gsi1pk and begins_with(gsi1sk, :gsi1sk)',
+            FilterExpression: '#status = :status',
+            ExpressionAttributeNames: {
+                '#status': 'status',
+            },
+            ExpressionAttributeValues: {
+                ':gsi1pk': requestedUserId,
+                ':gsi1sk': 'CONNECTION_REQUEST^',
+                ':status': status
+            }
+        }).promise()
+
+        return (result.Items || []).map(i => new ConnectionRequest(i))
+    }
+
+    async createConnectionRequest(requestingUserId: string, requestedUserId: string, requesterImage: string, requestText: string): Promise<ConnectionRequest> {
         const now = new Date().toISOString()
         const document = new ConnectionRequestDocument({
             requestingUserId,
             requestedUserId,
+            requesterImage,
+            requestText,
             status: RequestStatus.PENDING,
             createDate: now,
             createBy: 'HARDCODED_FOR_NOW',

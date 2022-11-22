@@ -26,14 +26,15 @@ export const requestConnection: Handler = async (event) => {
     }
 }
 
-async function getUserById(userId: string) {
-    const user = await userService.getUser(userId)
-
-    if (!user) {
-        throw new UserNotFoundError(userId)
+export const getOpenConnections: Handler = async (event) => {
+    try{
+        console.log("Received request to get pending connections")
+        const {userId} = event.pathParameters
+        const result = await userService.getPendingConnections(userId)
+        return createResponse(200, result)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
     }
-
-    return user
 }
 
 function createResponse(statusCode: number, body: object) {

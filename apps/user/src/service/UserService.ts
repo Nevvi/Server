@@ -93,6 +93,13 @@ class UserService {
             throw new InvalidRequestError("User cannot request themself for connection")
         }
 
+        const requestingUser = await this.userDao.getUser(requestingUserId)
+        if (!requestingUser) {
+            throw new UserNotFoundError(requestingUserId)
+        } else if (!requestingUser.firstName) {
+            throw new InvalidRequestError("Need first name of user before requesting connection")
+        }
+
         const requestedUser = await this.getUser(requestedUserId)
         if (!requestedUser) {
             throw new UserNotFoundError(requestedUserId)
@@ -122,7 +129,8 @@ class UserService {
             await this.connectionDao.deleteConnectionRequest(requestedUserId, requestingUserId)
         }
 
-        return await this.connectionDao.createConnectionRequest(requestingUserId, requestedUserId)
+        const requestText = `${requestingUser.firstName} would like to connect!`
+        return await this.connectionDao.createConnectionRequest(requestingUserId, requestedUserId, requestingUser.profileImage, requestText)
     }
 
     async confirmConnection(userId: string, otherUserId: string): Promise<ConnectionRequest> {
@@ -137,6 +145,10 @@ class UserService {
         // validate that connection request exists between users
         // mark connection request as rejected
         // automatically block the user?
+    }
+
+    async getPendingConnections(userId: string): Promise<ConnectionRequest[]> {
+        return await this.connectionDao.getConnectionRequests(userId, RequestStatus.PENDING)
     }
 }
 
