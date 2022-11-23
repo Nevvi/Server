@@ -11,6 +11,7 @@ import {SearchRequest} from "../model/request/SearchRequest";
 import {SearchResponse} from "../model/response/SearchResponse";
 import {ImageDao} from "../dao/ImageDao";
 import {
+    AlreadyConnectedError, ConnectionDoesNotExistError,
     ConnectionRequestDoesNotExistError,
     ConnectionRequestExistsError,
     InvalidRequestError,
@@ -19,6 +20,7 @@ import {
 import {RequestStatus} from "../model/connection/RequestStatus";
 import {ConnectionDao} from "../dao/ConnectionDao";
 import {ConnectionRequest} from "../model/connection/ConnectionRequest";
+import {Connection} from "../model/connection/Connection";
 
 class UserService {
     private userDao: UserDao;
@@ -134,6 +136,12 @@ class UserService {
             await this.connectionDao.deleteConnectionRequest(requestedUserId, requestingUserId)
         }
 
+        // already connected!
+        if (existingRequest && existingRequest.status === RequestStatus.APPROVED) {
+            console.log("User being requested is already connected.")
+            throw new AlreadyConnectedError()
+        }
+
         const requestText = `${requestingUser.firstName} would like to connect!`
         return await this.connectionDao.createConnectionRequest(requestingUserId, requestedUserId, requestingUser.profileImage, requestText)
     }
@@ -149,12 +157,14 @@ class UserService {
             throw new InvalidRequestError("Request not in a pending state")
         }
 
-        // mark connection request as confirmed
+        // mark connection request as confirmed and create connections
         existingRequest.status = RequestStatus.APPROVED
-        await this.connectionDao.updateConnectionRequest(existingRequest)
+        await Promise.all([
+            this.connectionDao.updateConnectionRequest(existingRequest),
+            this.connectionDao.createConnection(requestingUserId, requestedUserId),
+            this.connectionDao.createConnection(requestedUserId, requestingUserId)
+        ])
 
-        // TODO - create official connection entry
-        // TODO - send notification to otherUserId
         return existingRequest
     }
 
@@ -166,6 +176,31 @@ class UserService {
 
     async getPendingConnections(userId: string): Promise<ConnectionRequest[]> {
         return await this.connectionDao.getConnectionRequests(userId, RequestStatus.PENDING)
+    }
+
+    async getConnections(userId: string) {
+        const connections = await this.connectionDao.getConnections(userId)
+
+        // Need to map over user information so that we can display it
+        // This could be a lot if the user has a lot of connections...
+        return await Promise.all(connections.map(c => {
+            console.log(`Getting mapped user information for user ${c.userId}`)
+            return this.getUser(c.userId)
+        }))
+    }
+
+    async getConnection(userId: string, otherUserId: string): Promise<User> {
+        const connection = await this.connectionDao.getConnection(userId, otherUserId)
+        if (!connection) {
+            throw new ConnectionDoesNotExistError()
+        }
+
+        const user = await this.getUser(connection.userId)
+        if (!user) {
+            throw new UserNotFoundError(connection.userId)
+        }
+
+        return user
     }
 }
 

@@ -228,7 +228,7 @@ functions:
         Resource: ${self:custom.userTableArn}
 
   getPendingRequests:
-    handler: src/functions/ConnectionHandler.getOpenConnections
+    handler: src/functions/ConnectionHandler.getOpenRequests
     events:
       - http:
           path: /v1/users/{userId}/connections/requests/pending
@@ -242,3 +242,36 @@ functions:
         Action:
           - dynamodb:Query
         Resource: ${self:custom.userTableArn}/index/GSI1
+
+  getConnections:
+    handler: src/functions/ConnectionHandler.getConnections
+    events:
+      - http:
+          path: /v1/users/{userId}/connections
+          method: get
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:Query
+        Resource: ${self:custom.userTableArn}
+
+  getConnection:
+    handler: src/functions/ConnectionHandler.getConnection
+    events:
+      - http:
+          path: /v1/users/{userId}/connections/{connectedUserId}
+          method: get
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+        Resource: ${self:custom.userTableArn}

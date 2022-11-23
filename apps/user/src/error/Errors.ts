@@ -36,11 +36,38 @@ class ConnectionRequestExistsError extends Error {
     }
 }
 
+class AlreadyConnectedError extends Error {
+    private statusCode: number;
+
+    constructor() {
+        super(`Users are already connected`)
+        this.statusCode = 409;
+    }
+}
+
 class ConnectionRequestDoesNotExistError extends Error {
     private statusCode: number;
 
     constructor() {
         super(`Connection request does not exist`)
+        this.statusCode = 404;
+    }
+}
+
+class ConnectionExistsError extends Error {
+    private statusCode: number;
+
+    constructor() {
+        super(`Connection already exists to this user`)
+        this.statusCode = 409;
+    }
+}
+
+class ConnectionDoesNotExistError extends Error {
+    private statusCode: number;
+
+    constructor() {
+        super(`Connection does not exist`)
         this.statusCode = 404;
     }
 }
@@ -51,5 +78,8 @@ export {
     UserNotFoundError,
     UserAlreadyExistsError,
     ConnectionRequestExistsError,
-    ConnectionRequestDoesNotExistError
+    ConnectionRequestDoesNotExistError,
+    AlreadyConnectedError,
+    ConnectionExistsError,
+    ConnectionDoesNotExistError
 }

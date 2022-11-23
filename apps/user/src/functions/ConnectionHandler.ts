@@ -45,11 +45,33 @@ export const confirmConnection: Handler = async (event) => {
     }
 }
 
-export const getOpenConnections: Handler = async (event) => {
+export const getOpenRequests: Handler = async (event) => {
     try{
         console.log("Received request to get pending connections")
         const {userId} = event.pathParameters
         const result = await userService.getPendingConnections(userId)
+        return createResponse(200, result)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
+export const getConnections: Handler = async (event) => {
+    try{
+        console.log("Received request to get connections")
+        const {userId} = event.pathParameters
+        const result = await userService.getConnections(userId)
+        return createResponse(200, result)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
+export const getConnection: Handler = async (event) => {
+    try{
+        console.log("Received request to get connection")
+        const {userId, connectedUserId} = event.pathParameters
+        const result = await userService.getConnection(userId, connectedUserId)
         return createResponse(200, result)
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)

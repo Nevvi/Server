@@ -6,8 +6,10 @@ import {DocumentClient} from "aws-sdk/clients/dynamodb";
 // models
 import {ConnectionRequest} from "../model/connection/ConnectionRequest";
 import {RequestStatus} from "../model/connection/RequestStatus";
+const ConnectionDocument = require('./document/ConnectionDocument.ts')
 const ConnectionRequestDocument = require('./document/ConnectionRequestDocument.ts')
-import {ConnectionRequestDoesNotExistError, ConnectionRequestExistsError} from "../error/Errors";
+import {ConnectionExistsError, ConnectionRequestDoesNotExistError, ConnectionRequestExistsError} from "../error/Errors";
+import {Connection} from "../model/connection/Connection";
 
 const AWS = require('aws-sdk')
 
@@ -114,6 +116,58 @@ class ConnectionDao {
         }).promise()
 
         return result && result.Attributes !== null
+    }
+
+    async createConnection(userId: string, connectedUserId: string): Promise<ConnectionRequest> {
+        const now = new Date().toISOString()
+        const document = new ConnectionDocument({
+            userId,
+            connectedUserId,
+            createDate: now,
+            createBy: 'HARDCODED_FOR_NOW',
+            updateDate: now,
+            updateBy: 'HARDCODED_FOR_NOW'
+        })
+
+        try {
+            await this.db.put({
+                TableName: this.table,
+                Item: document,
+                ConditionExpression: 'attribute_not_exists(partitionKey) and attribute_not_exists(sortKey)'
+            }).promise()
+        } catch (e: any) {
+            if (e.code === 'ConditionalCheckFailedException') {
+                throw new ConnectionExistsError()
+            }
+            throw e
+        }
+
+        return new ConnectionRequest(document)
+    }
+
+    async getConnections(userId: string): Promise<Connection[]> {
+        const result = await this.db.query({
+            TableName: this.table,
+            KeyConditionExpression: 'partitionKey = :partitionKey and begins_with(sortKey, :sortKey)',
+            ExpressionAttributeValues: {
+                ':partitionKey': userId,
+                ':sortKey': 'CONNECTION^'
+            }
+        }).promise()
+
+        return (result.Items || []).map(i => new Connection(i))
+    }
+
+    async getConnection(userId: string, connectedUserId: string): Promise<Connection | undefined> {
+        const result = await this.db.get({
+            TableName: this.table,
+            Key: {
+                partitionKey: userId,
+                sortKey: `CONNECTION^${connectedUserId}`
+            }
+        }).promise()
+
+        return result.Item && new Connection(result.Item)
     }
 }
 
