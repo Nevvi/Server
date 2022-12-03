@@ -45,6 +45,23 @@ export const confirmConnection: Handler = async (event) => {
     }
 }
 
+export const denyConnection: Handler = async (event) => {
+    try{
+        console.log("Received request to deny connection request")
+        const {userId} = event.pathParameters
+
+        // validate incoming request is good
+        const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
+        const request = new ConfirmConnectionRequest(body.otherUserId)
+        request.validate(body)
+
+        const connectionRequest = await userService.denyConnection(request.otherUserId, userId)
+        return createResponse(200, connectionRequest)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
 export const getOpenRequests: Handler = async (event) => {
     try{
         console.log("Received request to get pending connections")

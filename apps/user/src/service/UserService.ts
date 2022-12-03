@@ -127,7 +127,7 @@ class UserService {
         existingRequest = await this.connectionDao.getConnectionRequest(requestedUserId, requestingUserId)
         if (existingRequest && existingRequest.status === RequestStatus.PENDING) {
             console.log("Another open request exists between users. Treating as confirmation.")
-            return await this.confirmConnection(requestingUserId, requestedUserId)
+            return await this.confirmConnection(requestedUserId, requestingUserId)
         }
 
         // check if requested user has previously rejected request from requesting user (remove that previous rejection)
@@ -165,6 +165,25 @@ class UserService {
             this.connectionDao.createConnection(requestedUserId, requestingUserId)
         ])
 
+        return existingRequest
+    }
+
+    async denyConnection(requestingUserId: string, requestedUserId: string): Promise<ConnectionRequest> {
+        // validate that connection request exists between users
+        const existingRequest = await this.connectionDao.getConnectionRequest(requestingUserId, requestedUserId)
+        if (!existingRequest) {
+            throw new ConnectionRequestDoesNotExistError()
+        }
+
+        if (existingRequest.status !== RequestStatus.PENDING) {
+            throw new InvalidRequestError("Request not in a pending state")
+        }
+
+        // mark connection request as confirmed and create connections
+        existingRequest.status = RequestStatus.REJECTED
+
+        // TODO - mark user as blocked somehow?
+        await this.connectionDao.updateConnectionRequest(existingRequest)
         return existingRequest
     }
 
