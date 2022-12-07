@@ -20,7 +20,6 @@ import {
 import {RequestStatus} from "../model/connection/RequestStatus";
 import {ConnectionDao} from "../dao/ConnectionDao";
 import {ConnectionRequest} from "../model/connection/ConnectionRequest";
-import {Connection} from "../model/connection/Connection";
 
 class UserService {
     private userDao: UserDao;

@@ -10,7 +10,6 @@ import {Handler} from "aws-lambda";
 import {UpdateContactRequest} from "../model/request/UpdateContactRequest";
 import {SearchRequest} from "../model/request/SearchRequest";
 import {getFile} from "../util/ImageUtil";
-import {S3} from "aws-sdk";
 const userService = new UserService()
 
 export const getUser: Handler = async (event) => {
