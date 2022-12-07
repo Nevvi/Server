@@ -19,9 +19,9 @@ params:
     basePath: ${self:provider.stage}-user
     defaultProfileImage: https://nevvi-user-images-dev.s3.amazonaws.com/Default_Profile_Picture.png
     domainName: api.development.nevvi.net
+    mongoUri: ${ssm:/nevvi/mongo/nevvi-development/uri}
     oauthDomain: https://nevvi-development-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
     userImagesBucketName: nevvi-user-images-dev
-    userTableName: user-dev
   development:
     basePath: user
   production:
@@ -30,10 +30,10 @@ params:
     apiUserPoolName: nevvi-api-users
     basePath: user
     defaultProfileImage: https://nevvi-user-images.s3.amazonaws.com/Default_Profile_Picture.png
+    mongoUri: ${ssm:/nevvi/mongo/nevvi/uri}
     domainName: api.nevvi.net
     oauthDomain: https://nevvi-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
     userImagesBucketName: nevvi-user-images
-    userTableName: user
 
 custom:
   splitStacks:
@@ -50,8 +50,7 @@ custom:
   apiUserPoolArn: ${ssm:/nevvi/cognito/${self:custom.apiUserPoolName}/arn}
   userImagesBucketName: ${param:userImagesBucketName}
   userImagesBucketArn: ${ssm:/nevvi/s3/${self:custom.userImagesBucketName}/arn}
-  userTableName: ${param:userTableName}
-  userTableArn: ${ssm:/nevvi/dynamodb/${self:custom.userTableName}/arn}
+  mongoUri: ${param:mongoUri}
 
 provider:
   name: aws
@@ -71,7 +70,7 @@ provider:
     name: nevvi-serverless-deployment-bucket
   deploymentPrefix: ${self:provider.stage}
   environment:
-    USER_TABLE: ${self:custom.userTableName}
+    MONGO_URI: ${param:mongoUri}
     OAUTH_DOMAIN_URL: ${param:oauthDomain}
     AUTHENTICATION_API_URL: https://${param:domainName}/authentication
     API_CLIENT_ID: ${param:apiUserPoolClient}
@@ -94,11 +93,7 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:GetItem
-        Resource: ${self:custom.userTableArn}
+
   createUser:
     handler: src/functions/UserHandler.createUser
     events:
@@ -109,11 +104,7 @@ functions:
             arn: ${self:custom.apiUserPoolArn}
             scopes:
               - user_api/user_api.all
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:PutItem
-        Resource: ${self:custom.userTableArn}
+
   updateUserContact:
     handler: src/functions/UserHandler.updateUserContact
     events:
@@ -124,12 +115,6 @@ functions:
             arn: ${self:custom.apiUserPoolArn}
             scopes:
               - user_api/user_api.all
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:GetItem
-          - dynamodb:PutItem
-        Resource: ${self:custom.userTableArn}
   updateUser:
     handler: src/functions/UserHandler.updateUser
     events:
@@ -140,12 +125,6 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:GetItem
-          - dynamodb:PutItem
-        Resource: ${self:custom.userTableArn}
   updateUserImage:
     handler: src/functions/UserHandler.updateUserImage
     events:
@@ -162,11 +141,6 @@ functions:
           - s3:PutObject
           - s3:PutObjectAcl
         Resource: ${self:custom.userImagesBucketArn}/*
-      - Effect: Allow
-        Action:
-          - dynamodb:GetItem
-          - dynamodb:PutItem
-        Resource: ${self:custom.userTableArn}
   searchUsers:
     handler: src/functions/UserHandler.searchUsers
     events:
@@ -177,19 +151,6 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:Scan
-        Resource: ${self:custom.userTableArn}
-      - Effect: Allow
-        Action:
-          - dynamodb:Query
-        Resource: ${self:custom.userTableArn}/index/GSI1
-      - Effect: Allow
-        Action:
-          - dynamodb:Query
-        Resource: ${self:custom.userTableArn}/index/GSI2
 
   # Connection Requests
   createConnectionRequest:
@@ -202,13 +163,6 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:GetItem
-          - dynamodb:PutItem
-          - dynamodb:DeleteItem
-        Resource: ${self:custom.userTableArn}
 
   confirmConnectionRequest:
     handler: src/functions/ConnectionHandler.confirmConnection
@@ -220,12 +174,6 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:GetItem
-          - dynamodb:PutItem
-        Resource: ${self:custom.userTableArn}
 
   denyConnectionRequest:
     handler: src/functions/ConnectionHandler.denyConnection
@@ -237,12 +185,6 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:GetItem
-          - dynamodb:PutItem
-        Resource: ${self:custom.userTableArn}
 
   getPendingRequests:
     handler: src/functions/ConnectionHandler.getOpenRequests
@@ -254,11 +196,6 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:Query
-        Resource: ${self:custom.userTableArn}/index/GSI1
 
   getConnections:
     handler: src/functions/ConnectionHandler.getConnections
@@ -270,12 +207,6 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:GetItem
-          - dynamodb:Query
-        Resource: ${self:custom.userTableArn}
 
   getConnection:
     handler: src/functions/ConnectionHandler.getConnection
@@ -287,8 +218,3 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - dynamodb:GetItem
-        Resource: ${self:custom.userTableArn}

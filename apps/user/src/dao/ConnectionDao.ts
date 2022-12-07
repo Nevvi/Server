@@ -1,57 +1,46 @@
 'use strict'
 
-// documents
-import {DocumentClient} from "aws-sdk/clients/dynamodb";
+import {Db, MongoServerError} from "mongodb";
+
+const { MongoClient } = require('mongodb');
+const client = new MongoClient(process.env.MONGO_URI);
 
 // models
 import {ConnectionRequest} from "../model/connection/ConnectionRequest";
 import {RequestStatus} from "../model/connection/RequestStatus";
 const ConnectionDocument = require('./document/ConnectionDocument.ts')
 const ConnectionRequestDocument = require('./document/ConnectionRequestDocument.ts')
-import {ConnectionExistsError, ConnectionRequestDoesNotExistError, ConnectionRequestExistsError} from "../error/Errors";
+import {
+    ConnectionExistsError,
+    ConnectionRequestDoesNotExistError,
+    ConnectionRequestExistsError,
+} from "../error/Errors";
 import {Connection} from "../model/connection/Connection";
 
-const AWS = require('aws-sdk')
-
 class ConnectionDao {
-    private db: DocumentClient;
-    private table: string;
+    private db: Db;
+    private requestCollectionName: string;
+    private connectionCollectionName: string;
 
     constructor() {
-        this.db = new AWS.DynamoDB.DocumentClient({})
-        this.table = process.env.USER_TABLE || ""
+        this.db = client.db('nevvi')
+        this.requestCollectionName = 'connection_requests'
+        this.connectionCollectionName = 'connections'
     }
 
     async getConnectionRequest(requestingUserId: string, requestedUserId: string): Promise<ConnectionRequest | null> {
-        const result = await this.db.get({
-            TableName: this.table,
-            Key: {
-                partitionKey: requestingUserId,
-                sortKey: `CONNECTION_REQUEST^${requestedUserId}`
-            }
-        }).promise()
+        const result = await this.db.collection(this.requestCollectionName)
+            .findOne({requestingUserId: requestingUserId, requestedUserId: requestedUserId})
 
-        const document = result && result.Item
-        return document ? new ConnectionRequest(document) : null
+        return result ? new ConnectionRequest(result) : null
     }
 
     async getConnectionRequests(requestedUserId: string, status: RequestStatus): Promise<ConnectionRequest[]> {
-        const result = await this.db.query({
-            TableName: this.table,
-            IndexName: 'GSI1',
-            KeyConditionExpression: 'gsi1pk = :gsi1pk and begins_with(gsi1sk, :gsi1sk)',
-            FilterExpression: '#status = :status',
-            ExpressionAttributeNames: {
-                '#status': 'status',
-            },
-            ExpressionAttributeValues: {
-                ':gsi1pk': requestedUserId,
-                ':gsi1sk': 'CONNECTION_REQUEST^',
-                ':status': status
-            }
-        }).promise()
+        const results = await this.db.collection(this.requestCollectionName)
+            .find({ requestedUserId: requestedUserId, status: status })
+            .toArray()
 
-        return (result.Items || []).map(i => new ConnectionRequest(i))
+        return (results || []).map(i => new ConnectionRequest(i))
     }
 
     async createConnectionRequest(requestingUserId: string, requestedUserId: string, requesterImage: string, requestText: string): Promise<ConnectionRequest> {
@@ -69,13 +58,10 @@ class ConnectionDao {
         })
 
         try {
-            await this.db.put({
-                TableName: this.table,
-                Item: document,
-                ConditionExpression: 'attribute_not_exists(partitionKey) and attribute_not_exists(sortKey)'
-            }).promise()
+            // TODO - unique index on requested and requesting user
+            await this.db.collection(this.requestCollectionName).insertOne(document)
         } catch (e: any) {
-            if (e.code === 'ConditionalCheckFailedException') {
+            if (e instanceof MongoServerError) {
                 throw new ConnectionRequestExistsError()
             }
             throw e
@@ -91,13 +77,10 @@ class ConnectionDao {
         const document = new ConnectionRequestDocument(request)
 
         try {
-            await this.db.put({
-                TableName: this.table,
-                Item: document,
-                ConditionExpression: 'attribute_exists(partitionKey) and attribute_exists(sortKey)'
-            }).promise()
+            await this.db.collection(this.requestCollectionName)
+                .replaceOne({requestingUserId: request.requestingUserId, requestedUserId: request.requestedUserId}, document)
         } catch (e: any) {
-            if (e.code === 'ConditionalCheckFailedException') {
+            if (e instanceof MongoServerError) {
                 throw new ConnectionRequestDoesNotExistError()
             }
             throw e
@@ -107,15 +90,10 @@ class ConnectionDao {
     }
 
     async deleteConnectionRequest(requestingUserId: string, requestedUserId: string): Promise<boolean | null> {
-        const result = await this.db.delete({
-            TableName: this.table,
-            Key: {
-                partitionKey: requestingUserId,
-                sortKey: `CONNECTION_REQUEST^${requestedUserId}`
-            }
-        }).promise()
+        const result = await this.db.collection(this.requestCollectionName)
+            .deleteOne({requestingUserId: requestingUserId, requestedUserId: requestedUserId})
 
-        return result && result.Attributes !== null
+        return result.deletedCount == 1
     }
 
     async createConnection(userId: string, connectedUserId: string): Promise<ConnectionRequest> {
@@ -130,13 +108,10 @@ class ConnectionDao {
         })
 
         try {
-            await this.db.put({
-                TableName: this.table,
-                Item: document,
-                ConditionExpression: 'attribute_not_exists(partitionKey) and attribute_not_exists(sortKey)'
-            }).promise()
+            // TODO - unique index on userId + connectedUserId
+            await this.db.collection(this.connectionCollectionName).insertOne(document)
         } catch (e: any) {
-            if (e.code === 'ConditionalCheckFailedException') {
+            if (e instanceof MongoServerError) {
                 throw new ConnectionExistsError()
             }
             throw e
@@ -146,28 +121,18 @@ class ConnectionDao {
     }
 
     async getConnections(userId: string): Promise<Connection[]> {
-        const result = await this.db.query({
-            TableName: this.table,
-            KeyConditionExpression: 'partitionKey = :partitionKey and begins_with(sortKey, :sortKey)',
-            ExpressionAttributeValues: {
-                ':partitionKey': userId,
-                ':sortKey': 'CONNECTION^'
-            }
-        }).promise()
+        const results = await this.db.collection(this.connectionCollectionName)
+            .find({ userId: userId })
+            .toArray()
 
-        return (result.Items || []).map(i => new Connection(i))
+        return (results || []).map(i => new Connection(i))
     }
 
     async getConnection(userId: string, connectedUserId: string): Promise<Connection | undefined> {
-        const result = await this.db.get({
-            TableName: this.table,
-            Key: {
-                partitionKey: userId,
-                sortKey: `CONNECTION^${connectedUserId}`
-            }
-        }).promise()
+        const result = await this.db.collection(this.connectionCollectionName)
+            .findOne({userId: userId, connectedUserId: connectedUserId})
 
-        return result.Item && new Connection(result.Item)
+        return result ? new Connection(result) : undefined
     }
 }
 

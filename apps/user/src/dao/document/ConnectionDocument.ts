@@ -1,8 +1,7 @@
 'use strict'
 
 module.exports = class {
-    partitionKey: string;
-    sortKey: string;
+    userId: string;
     connectedUserId: string;
     createDate: string;
     createBy: string;
@@ -13,9 +12,7 @@ module.exports = class {
         // @ts-ignore
         const {userId, connectedUserId, createDate, updateDate, updateBy, createBy} = body;
 
-        // dynamodb fields
-        this.partitionKey = userId
-        this.sortKey =  `CONNECTION^${connectedUserId}`
+        this.userId = userId
 
         // data fields
         this.connectedUserId = connectedUserId

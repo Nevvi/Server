@@ -3,12 +3,7 @@
 import {Address} from "../../model/user/Address";
 
 module.exports = class {
-    partitionKey: string;
-    sortKey: string;
-    gsi1pk: string;
-    gsi1sk: string;
-    gsi2pk: string;
-    gsi2sk: string;
+    _id: string;
     firstName: string;
     lastName: string;
     nameLower: string | null;
@@ -28,12 +23,7 @@ module.exports = class {
         const {id, firstName, lastName, phoneNumber, phoneNumberConfirmed, email, emailConfirmed, address, profileImage, createDate, updateDate, updateBy, createBy} = body;
 
         // dynamodb fields
-        this.partitionKey = id
-        this.sortKey = 'USER'
-        this.gsi1pk = email
-        this.gsi1sk = 'USER'
-        this.gsi2pk = phoneNumber
-        this.gsi2sk = 'USER'
+        this._id = id
 
         // data fields
         this.firstName = firstName

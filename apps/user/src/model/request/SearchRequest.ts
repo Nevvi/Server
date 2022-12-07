@@ -8,7 +8,7 @@ const searchSchema = {
     email: Joi.string().email(),
     phoneNumber: Joi.string(),
     limit: Joi.number(),
-    continuationKey: Joi.string()
+    skip: Joi.number()
 }
 
 class SearchRequest extends UserRequest {
@@ -16,14 +16,14 @@ class SearchRequest extends UserRequest {
     email: string;
     phoneNumber: string;
     limit: number;
-    continuationKey: string | undefined;
-    constructor(name: string, email: string, phoneNumber: string, limit: number = 10, continuationKey: string | undefined) {
+    skip: number;
+    constructor(name: string, email: string, phoneNumber: string, limit: number = 10, skip: number = 0) {
         super(searchSchema)
         this.name = name
         this.email = email
         this.phoneNumber = phoneNumber
         this.limit = limit;
-        this.continuationKey = continuationKey;
+        this.skip = skip;
     }
 }
 

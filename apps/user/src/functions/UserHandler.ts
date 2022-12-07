@@ -109,8 +109,8 @@ export const searchUsers: Handler = async (event) => {
             searchParams.name,
             searchParams.email,
             searchParams.phoneNumber,
-            searchParams.limit,
-            searchParams.continuationKey)
+            searchParams.limit ? parseInt(searchParams.limit) : undefined,
+            searchParams.skip ? parseInt(searchParams.skip) : undefined)
 
         request.validate(searchParams)
 
