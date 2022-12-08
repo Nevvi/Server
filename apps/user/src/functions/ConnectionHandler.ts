@@ -1,26 +1,22 @@
 'use strict';
 
-import {UserNotFoundError} from '../error/Errors';
 
 import {UserService} from '../service/UserService';
 import {Handler} from "aws-lambda";
 import {RequestConnectionRequest} from "../model/request/RequestConnectionRequest";
-import {UpdateRequest} from "../model/request/UpdateRequest";
 import {ConfirmConnectionRequest} from "../model/request/ConfirmConnectionRequest";
+import {DenyConnectionRequest} from "../model/request/DenyConnectionRequest";
 const userService = new UserService()
 
 export const requestConnection: Handler = async (event) => {
     try{
         console.log("Received request to create connection request")
         const {userId} = event.pathParameters
-        // validate incoming request is good
-        const searchParams = typeof event.queryStringParameters === 'object' ?
-            event.queryStringParameters :
-            JSON.parse(event.queryStringParameters)
+        const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
 
-        const request = new RequestConnectionRequest(searchParams.userId)
-        request.validate(searchParams)
-        const result = await userService.requestConnection(userId, request.userId)
+        const request = new RequestConnectionRequest(userId, body.otherUserId, body.permissionGroupName)
+        request.validate()
+        const result = await userService.requestConnection(request)
 
         return createResponse(200, result)
     } catch (e: any) {
@@ -35,10 +31,10 @@ export const confirmConnection: Handler = async (event) => {
 
         // validate incoming request is good
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
-        const request = new ConfirmConnectionRequest(body.otherUserId)
-        request.validate(body)
+        const request = new ConfirmConnectionRequest(body.otherUserId, userId, body.permissionGroupName)
+        request.validate()
 
-        const connectionRequest = await userService.confirmConnection(request.otherUserId, userId)
+        const connectionRequest = await userService.confirmConnection(request)
         return createResponse(200, connectionRequest)
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)
@@ -52,10 +48,10 @@ export const denyConnection: Handler = async (event) => {
 
         // validate incoming request is good
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
-        const request = new ConfirmConnectionRequest(body.otherUserId)
-        request.validate(body)
+        const request = new DenyConnectionRequest(userId, body.otherUserId)
+        request.validate()
 
-        const connectionRequest = await userService.denyConnection(request.otherUserId, userId)
+        const connectionRequest = await userService.denyConnection(request)
         return createResponse(200, connectionRequest)
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)

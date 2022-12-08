@@ -43,13 +43,14 @@ class ConnectionDao {
         return (results || []).map(i => new ConnectionRequest(i))
     }
 
-    async createConnectionRequest(requestingUserId: string, requestedUserId: string, requesterImage: string, requestText: string): Promise<ConnectionRequest> {
+    async createConnectionRequest(requestingUserId: string, requestedUserId: string, requesterImage: string, requestText: string, permissionGroupName: string): Promise<ConnectionRequest> {
         const now = new Date().toISOString()
         const document = new ConnectionRequestDocument({
             requestingUserId,
             requestedUserId,
             requesterImage,
             requestText,
+            requestingPermissionGroupName: permissionGroupName,
             status: RequestStatus.PENDING,
             createDate: now,
             createBy: 'HARDCODED_FOR_NOW',
@@ -58,7 +59,6 @@ class ConnectionDao {
         })
 
         try {
-            // TODO - unique index on requested and requesting user
             await this.db.collection(this.requestCollectionName).insertOne(document)
         } catch (e: any) {
             if (e instanceof MongoServerError) {
@@ -96,11 +96,12 @@ class ConnectionDao {
         return result.deletedCount == 1
     }
 
-    async createConnection(userId: string, connectedUserId: string): Promise<ConnectionRequest> {
+    async createConnection(userId: string, connectedUserId: string, permissionGroupName: string): Promise<ConnectionRequest> {
         const now = new Date().toISOString()
         const document = new ConnectionDocument({
             userId,
             connectedUserId,
+            permissionGroupName,
             createDate: now,
             createBy: 'HARDCODED_FOR_NOW',
             updateDate: now,
@@ -108,7 +109,6 @@ class ConnectionDao {
         })
 
         try {
-            // TODO - unique index on userId + connectedUserId
             await this.db.collection(this.connectionCollectionName).insertOne(document)
         } catch (e: any) {
             if (e instanceof MongoServerError) {

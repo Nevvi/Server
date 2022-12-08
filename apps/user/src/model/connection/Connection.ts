@@ -5,16 +5,18 @@ class Connection {
     firstName: string | undefined;
     lastName: string | undefined;
     profileImage: string | undefined;
+    permissionGroupName: string;
     createDate: string;
     createBy: string;
     updateDate: string;
     updateBy: string;
     constructor(body: object) {
         // @ts-ignore
-        const {connectedUserId, createDate, updateDate, updateBy, createBy} = body;
+        const {connectedUserId, permissionGroupName, createDate, updateDate, updateBy, createBy} = body;
 
         // data fields
         this.userId = connectedUserId
+        this.permissionGroupName = permissionGroupName || "ALL"
 
         // audit fields
         this.createDate = createDate

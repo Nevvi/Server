@@ -4,14 +4,20 @@ const Joi = require('joi');
 import {UserRequest} from './UserRequest';
 
 const addConnectionSchema = {
-    otherUserId: Joi.string().uuid().required()
+    requestingUserId: Joi.string().uuid().required(),
+    requestedUserId: Joi.string().uuid().required(),
+    permissionGroupName: Joi.string().required()
 }
 
 class ConfirmConnectionRequest extends UserRequest {
-    otherUserId: string;
-    constructor(otherUserId: string) {
+    requestingUserId: string;
+    requestedUserId: string;
+    permissionGroupName: string;
+    constructor(requestingUserId: string, requestedUserId: string, permissionGroupName: string) {
         super(addConnectionSchema)
-        this.otherUserId = otherUserId
+        this.requestingUserId = requestingUserId
+        this.requestedUserId = requestedUserId
+        this.permissionGroupName = permissionGroupName
     }
 }
 

@@ -3,6 +3,7 @@
 module.exports = class {
     userId: string;
     connectedUserId: string;
+    permissionGroupName: string;
     createDate: string;
     createBy: string;
     updateDate: string;
@@ -10,12 +11,11 @@ module.exports = class {
 
     constructor(body: object) {
         // @ts-ignore
-        const {userId, connectedUserId, createDate, updateDate, updateBy, createBy} = body;
+        const {userId, connectedUserId, permissionGroupName, createDate, updateDate, updateBy, createBy} = body;
 
         this.userId = userId
-
-        // data fields
         this.connectedUserId = connectedUserId
+        this.permissionGroupName = permissionGroupName
 
 
         // audit fields

@@ -20,6 +20,11 @@ import {
 import {RequestStatus} from "../model/connection/RequestStatus";
 import {ConnectionDao} from "../dao/ConnectionDao";
 import {ConnectionRequest} from "../model/connection/ConnectionRequest";
+import {ConfirmConnectionRequest} from "../model/request/ConfirmConnectionRequest";
+import {RequestConnectionRequest} from "../model/request/RequestConnectionRequest";
+import {DenyConnectionRequest} from "../model/request/DenyConnectionRequest";
+import {SlimUserResponse} from "../model/response/SlimUserResponse";
+import {UserConnectionResponse} from "../model/response/UserConnectionResponse";
 
 class UserService {
     private userDao: UserDao;
@@ -94,7 +99,9 @@ class UserService {
         return await this.userDao.updateUser(user)
     }
 
-    async requestConnection(requestingUserId: string, requestedUserId: string): Promise<ConnectionRequest> {
+    async requestConnection(request: RequestConnectionRequest): Promise<ConnectionRequest> {
+        const {requestingUserId, requestedUserId, permissionGroupName} = request
+
         if (requestingUserId === requestedUserId) {
             throw new InvalidRequestError("User cannot request themself for connection")
         }
@@ -126,7 +133,8 @@ class UserService {
         existingRequest = await this.connectionDao.getConnectionRequest(requestedUserId, requestingUserId)
         if (existingRequest && existingRequest.status === RequestStatus.PENDING) {
             console.log("Another open request exists between users. Treating as confirmation.")
-            return await this.confirmConnection(requestedUserId, requestingUserId)
+            const confirmRequest = new ConfirmConnectionRequest(requestedUserId, requestingUserId, permissionGroupName)
+            return await this.confirmConnection(confirmRequest)
         }
 
         // check if requested user has previously rejected request from requesting user (remove that previous rejection)
@@ -142,10 +150,12 @@ class UserService {
         }
 
         const requestText = `${requestingUser.firstName} would like to connect!`
-        return await this.connectionDao.createConnectionRequest(requestingUserId, requestedUserId, requestingUser.profileImage, requestText)
+        return await this.connectionDao.createConnectionRequest(requestingUserId, requestedUserId, requestingUser.profileImage, requestText, permissionGroupName)
     }
 
-    async confirmConnection(requestingUserId: string, requestedUserId: string): Promise<ConnectionRequest> {
+    async confirmConnection(request: ConfirmConnectionRequest): Promise<ConnectionRequest> {
+        const {requestingUserId, requestedUserId, permissionGroupName} = request
+
         // validate that connection request exists between users
         const existingRequest = await this.connectionDao.getConnectionRequest(requestingUserId, requestedUserId)
         if (!existingRequest) {
@@ -160,14 +170,17 @@ class UserService {
         existingRequest.status = RequestStatus.APPROVED
         await Promise.all([
             this.connectionDao.updateConnectionRequest(existingRequest),
-            this.connectionDao.createConnection(requestingUserId, requestedUserId),
-            this.connectionDao.createConnection(requestedUserId, requestingUserId)
+            this.connectionDao.createConnection(requestingUserId, requestedUserId, existingRequest.requestingPermissionGroupName),
+            this.connectionDao.createConnection(requestedUserId, requestingUserId, permissionGroupName)
         ])
 
         return existingRequest
     }
 
-    async denyConnection(requestingUserId: string, requestedUserId: string): Promise<ConnectionRequest> {
+    async denyConnection(request: DenyConnectionRequest): Promise<ConnectionRequest> {
+        const requestedUserId = request.userId
+        const requestingUserId = request.otherUserId
+
         // validate that connection request exists between users
         const existingRequest = await this.connectionDao.getConnectionRequest(requestingUserId, requestedUserId)
         if (!existingRequest) {
@@ -201,24 +214,43 @@ class UserService {
 
         // Need to map over user information so that we can display it
         // This could be a lot if the user has a lot of connections...
-        return await Promise.all(connections.map(c => {
+        const users = await Promise.all(connections.map(c => {
             console.log(`Getting mapped user information for user ${c.userId}`)
             return this.getUser(c.userId)
         }))
+
+        return users.map(user => new SlimUserResponse({...user}))
     }
 
-    async getConnection(userId: string, otherUserId: string): Promise<User> {
-        const connection = await this.connectionDao.getConnection(userId, otherUserId)
+    async getConnection(userId: string, otherUserId: string): Promise<UserConnectionResponse> {
+        // get the reverse connection so that we know what permission group we belong to
+        const connection = await this.connectionDao.getConnection(otherUserId, userId)
         if (!connection) {
             throw new ConnectionDoesNotExistError()
         }
 
-        const user = await this.getUser(connection.userId)
+        const user = await this.getUser(otherUserId)
         if (!user) {
-            throw new UserNotFoundError(connection.userId)
+            throw new UserNotFoundError(otherUserId)
         }
 
-        return user
+        const permissionGroup = user.permissionGroups.find(pg => pg.name === connection.permissionGroupName)
+
+        // No permission group details exist... return all (shouldn't happen)
+        if (!permissionGroup || connection.permissionGroupName === "ALL") {
+            console.log(`No permission group found with name ${connection.permissionGroupName} for user ${user.id}`)
+            return user
+        }
+
+        // Filter attributes down to only the ones specified in the permission group
+        const userObj = user.toPlainObj()
+        let body = {}
+        permissionGroup.getFields().forEach(field => {
+            // @ts-ignore
+            body[field] = userObj[field]
+        })
+
+        return new UserConnectionResponse(body)
     }
 }
 
