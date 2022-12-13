@@ -1,6 +1,7 @@
 'use strict'
 
 import {Address} from "../../model/user/Address";
+import {PermissionGroup} from "../../model/user/PermissionGroup";
 
 module.exports = class {
     _id: string;
@@ -12,6 +13,7 @@ module.exports = class {
     phoneNumber: string;
     phoneNumberConfirmed: boolean;
     address: Address;
+    permissionGroups: PermissionGroup[];
     profileImage: string;
     createDate: string;
     createBy: string;
@@ -20,7 +22,7 @@ module.exports = class {
 
     constructor(body: object) {
         // @ts-ignore
-        const {id, firstName, lastName, phoneNumber, phoneNumberConfirmed, email, emailConfirmed, address, profileImage, createDate, updateDate, updateBy, createBy} = body;
+        const {id, firstName, lastName, phoneNumber, phoneNumberConfirmed, email, emailConfirmed, address, permissionGroups, profileImage, createDate, updateDate, updateBy, createBy} = body;
 
         // dynamodb fields
         this._id = id
@@ -35,6 +37,7 @@ module.exports = class {
         this.phoneNumberConfirmed = phoneNumberConfirmed === true
         this.address = address
         this.profileImage = profileImage
+        this.permissionGroups = permissionGroups
 
         // audit fields
         this.createDate = createDate

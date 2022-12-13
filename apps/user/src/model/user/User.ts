@@ -3,6 +3,8 @@
 import {Address} from "./Address";
 import {PermissionGroup} from "./PermissionGroup";
 
+const DEFAULT_PERMISSION_GROUPS = [new PermissionGroup({name: "ALL", fields: []})]
+
 class User {
     id: any;
     firstName: any;
@@ -32,7 +34,7 @@ class User {
         this.phoneNumberConfirmed = phoneNumberConfirmed === true
         this.address = address ? new Address({...address}) : new Address({})
         this.profileImage = profileImage ? profileImage : process.env.DEFAULT_PROFILE_IMAGE
-        this.permissionGroups = permissionGroups ? permissionGroups.map((pg: object) => new PermissionGroup({...pg})) : []
+        this.permissionGroups = permissionGroups ? permissionGroups.map((pg: object) => new PermissionGroup({...pg})) : DEFAULT_PERMISSION_GROUPS
 
         // audit fields
         this.createDate = createDate

@@ -18,7 +18,11 @@ const updateSchema = {
         city: Joi.string(),
         state: Joi.string(),
         zipCode: Joi.number()
-    })
+    }),
+    permissionGroups: Joi.array().items(Joi.object().keys({
+        name: Joi.string().required(),
+        fields: Joi.array().items(Joi.string()).required()
+    }))
 }
 
 class UpdateRequest extends UserRequest {
@@ -26,12 +30,14 @@ class UpdateRequest extends UserRequest {
     lastName: string;
     phoneNumber: string;
     address: object;
-    constructor(firstName: string, lastName: string, phoneNumber: string, address: object) {
+    permissionGroups: object[];
+    constructor(firstName: string, lastName: string, phoneNumber: string, address: object, permissionGroups: object[]) {
         super(updateSchema)
         this.firstName = firstName
         this.lastName = lastName
         this.phoneNumber = phoneNumber
         this.address = address
+        this.permissionGroups = permissionGroups
     }
 }
 

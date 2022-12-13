@@ -25,6 +25,7 @@ import {RequestConnectionRequest} from "../model/request/RequestConnectionReques
 import {DenyConnectionRequest} from "../model/request/DenyConnectionRequest";
 import {SlimUserResponse} from "../model/response/SlimUserResponse";
 import {UserConnectionResponse} from "../model/response/UserConnectionResponse";
+import {PermissionGroup} from "../model/user/PermissionGroup";
 
 class UserService {
     private userDao: UserDao;
@@ -74,6 +75,9 @@ class UserService {
         existingUser.lastName = request.lastName ? request.lastName : existingUser.lastName
         existingUser.phoneNumber = request.phoneNumber ? request.phoneNumber : existingUser.phoneNumber
         existingUser.address = request.address ? new Address(request.address) : existingUser.address
+        existingUser.permissionGroups = request.permissionGroups ?
+            request.permissionGroups.map((pg: object) => new PermissionGroup({...pg})) :
+            existingUser.permissionGroups
 
         return await this.userDao.updateUser(existingUser)
     }

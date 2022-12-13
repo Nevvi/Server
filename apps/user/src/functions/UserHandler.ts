@@ -64,8 +64,8 @@ export const updateUser: Handler = async (event) => {
 
         // validate incoming request is good
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
-        const request = new UpdateRequest(body.firstName, body.lastName, body.phoneNumber, body.address)
-        request.validate(body)
+        const request = new UpdateRequest(body.firstName, body.lastName, body.phoneNumber, body.address, body.permissionGroups)
+        request.validate()
 
         // validate user exists with that username
         const {userId} = event.pathParameters
