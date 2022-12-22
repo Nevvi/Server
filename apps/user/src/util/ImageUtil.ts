@@ -18,7 +18,6 @@ export function getFile(event: any) {
         busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
             file.on('data', (data: any) => {
                 result.content = data;
-                console.log("got data... " + data.length + ' bytes');
             });
 
             file.on('end', () => {

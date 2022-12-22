@@ -1,6 +1,6 @@
 'use strict'
 
-class SlimUserResponse {
+class SlimUser {
     id: any;
     firstName: any;
     lastName: any;
@@ -17,4 +17,4 @@ class SlimUserResponse {
     }
 }
 
-export {SlimUserResponse}
+export {SlimUser}

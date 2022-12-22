@@ -86,7 +86,6 @@ export const updateUserImage: Handler = async (event) => {
 
         const {userId} = event.pathParameters
         const fileInfo = await getFile(event)
-        console.log(fileInfo)
 
         // @ts-ignore
         const updatedUser = await userService.updateUserImage(userId, fileInfo.content, fileInfo.fileName.filename, fileInfo.fileName.mimeType)
@@ -100,10 +99,8 @@ export const searchUsers: Handler = async (event) => {
     try{
         console.log("Received request to search for users")
 
-        // validate incoming request is good
-        const searchParams = typeof event.queryStringParameters === 'object' ?
-            event.queryStringParameters :
-            JSON.parse(event.queryStringParameters)
+        const queryParams = (event.queryStringParameters || {})
+        const searchParams = typeof queryParams === 'object' ? queryParams : JSON.parse(queryParams)
 
         const request = new SearchRequest(
             searchParams.name,

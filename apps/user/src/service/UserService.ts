@@ -23,15 +23,17 @@ import {ConnectionRequest} from "../model/connection/ConnectionRequest";
 import {ConfirmConnectionRequest} from "../model/request/ConfirmConnectionRequest";
 import {RequestConnectionRequest} from "../model/request/RequestConnectionRequest";
 import {DenyConnectionRequest} from "../model/request/DenyConnectionRequest";
-import {SlimUserResponse} from "../model/response/SlimUserResponse";
+import {SlimUser} from "../model/user/SlimUser";
 import {UserConnectionResponse} from "../model/response/UserConnectionResponse";
 import {PermissionGroup} from "../model/user/PermissionGroup";
+import {SearchConnectionsRequest} from "../model/request/SearchConnectionsRequest";
 
 class UserService {
     private userDao: UserDao;
     private imageDao: ImageDao;
     private connectionDao: ConnectionDao;
     private authenticationDao: AuthenticationDao;
+
     constructor() {
         this.userDao = new UserDao()
         this.authenticationDao = new AuthenticationDao()
@@ -53,13 +55,19 @@ class UserService {
         // There should only be one user with a confirmed email or phone
         if (request.email) {
             const user = await this.userDao.getUserByEmail(request.email)
-            return new SearchResponse(user ? [user] : [])
+            return new SearchResponse(user ? [user] : [], user ? 1 : 0)
         } else if (request.phoneNumber) {
             const user = await this.userDao.getUserByPhone(request.phoneNumber)
-            return new SearchResponse(user ? [user] : [])
+            return new SearchResponse(user ? [user] : [], user ? 1 : 0)
         }
 
-        return await this.userDao.searchUsers(request.name, request.skip, request.limit)
+        const [users, userCount] = await Promise.all([
+            this.userDao.searchUsers(request.name, request.skip, request.limit),
+            this.userDao.searchUserCount(request.name)
+        ])
+
+        const slimUsers = users.map(u => new SlimUser(u))
+        return new SearchResponse(slimUsers, userCount)
     }
 
     async updateUser(existingUser: User, request: UpdateRequest): Promise<User> {
@@ -123,9 +131,9 @@ class UserService {
         }
 
         // if an existing request exists in any state then do nothing
-            // PENDING - one already exists, don't create another
-            // REJECTED - requestedUserId already rejected this user, do nothing
-            // APPROVED - these two are already connected
+        // PENDING - one already exists, don't create another
+        // REJECTED - requestedUserId already rejected this user, do nothing
+        // APPROVED - these two are already connected
         let existingRequest = await this.connectionDao.getConnectionRequest(requestingUserId, requestedUserId)
         if (existingRequest) {
             throw new ConnectionRequestExistsError()
@@ -213,17 +221,14 @@ class UserService {
         return await this.connectionDao.getConnectionRequests(userId, RequestStatus.PENDING)
     }
 
-    async getConnections(userId: string) {
-        const connections = await this.connectionDao.getConnections(userId)
+    async getConnections(request: SearchConnectionsRequest): Promise<SearchResponse> {
+        const {userId, name, limit, skip} = request
+        const [users, connectionCount] = await Promise.all([
+            this.connectionDao.getConnections(userId, name, limit, skip),
+            this.connectionDao.getConnectionCount(userId, name)
+        ])
 
-        // Need to map over user information so that we can display it
-        // This could be a lot if the user has a lot of connections...
-        const users = await Promise.all(connections.map(c => {
-            console.log(`Getting mapped user information for user ${c.userId}`)
-            return this.getUser(c.userId)
-        }))
-
-        return users.map(user => new SlimUserResponse({...user}))
+        return new SearchResponse(users, connectionCount)
     }
 
     async getConnection(userId: string, otherUserId: string): Promise<UserConnectionResponse> {

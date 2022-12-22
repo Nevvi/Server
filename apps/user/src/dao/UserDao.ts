@@ -102,7 +102,7 @@ class UserDao {
         return user
     }
 
-    async searchUsers(name: string, skip: number, limit: number): Promise<SearchResponse> {
+    async searchUsers(name: string, skip: number, limit: number): Promise<User[]> {
         const search = name.split(' ').filter(n => n).join('_').toLowerCase()
 
         const results = await this.db.collection("users")
@@ -111,13 +111,18 @@ class UserDao {
             .limit(limit)
             .toArray()
 
-        const users = results.map(i => {
+        return results.map(i => {
             const user = new User(i)
             user.id = i._id
             return user
         })
+    }
 
-        return new SearchResponse(users, undefined)
+    async searchUserCount(name: string): Promise<number> {
+        const search = name.split(' ').filter(n => n).join('_').toLowerCase()
+
+        return await this.db.collection("users")
+            .countDocuments({ nameLower: {$regex : search} });
     }
 }
 

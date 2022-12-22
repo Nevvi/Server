@@ -6,10 +6,12 @@ import {Handler} from "aws-lambda";
 import {RequestConnectionRequest} from "../model/request/RequestConnectionRequest";
 import {ConfirmConnectionRequest} from "../model/request/ConfirmConnectionRequest";
 import {DenyConnectionRequest} from "../model/request/DenyConnectionRequest";
+import {SearchConnectionsRequest} from "../model/request/SearchConnectionsRequest";
+
 const userService = new UserService()
 
 export const requestConnection: Handler = async (event) => {
-    try{
+    try {
         console.log("Received request to create connection request")
         const {userId} = event.pathParameters
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
@@ -25,7 +27,7 @@ export const requestConnection: Handler = async (event) => {
 }
 
 export const confirmConnection: Handler = async (event) => {
-    try{
+    try {
         console.log("Received request to confirm connection request")
         const {userId} = event.pathParameters
 
@@ -42,7 +44,7 @@ export const confirmConnection: Handler = async (event) => {
 }
 
 export const denyConnection: Handler = async (event) => {
-    try{
+    try {
         console.log("Received request to deny connection request")
         const {userId} = event.pathParameters
 
@@ -59,7 +61,7 @@ export const denyConnection: Handler = async (event) => {
 }
 
 export const getOpenRequests: Handler = async (event) => {
-    try{
+    try {
         console.log("Received request to get pending connections")
         const {userId} = event.pathParameters
         const result = await userService.getPendingConnections(userId)
@@ -70,10 +72,20 @@ export const getOpenRequests: Handler = async (event) => {
 }
 
 export const getConnections: Handler = async (event) => {
-    try{
+    try {
         console.log("Received request to get connections")
         const {userId} = event.pathParameters
-        const result = await userService.getConnections(userId)
+
+        const queryParams = (event.queryStringParameters || {})
+        const searchParams = typeof queryParams === 'object' ? queryParams : JSON.parse(queryParams)
+        const name = searchParams.name
+        const limit = searchParams.limit ? parseInt(searchParams.limit) : undefined;
+        const skip = searchParams.skip ? parseInt(searchParams.skip) : undefined
+
+        const request = new SearchConnectionsRequest(userId, name, limit, skip)
+        request.validate()
+
+        const result = await userService.getConnections(request)
         return createResponse(200, result)
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)
@@ -81,7 +93,7 @@ export const getConnections: Handler = async (event) => {
 }
 
 export const getConnection: Handler = async (event) => {
-    try{
+    try {
         console.log("Received request to get connection")
         const {userId, connectedUserId} = event.pathParameters
         const result = await userService.getConnection(userId, connectedUserId)

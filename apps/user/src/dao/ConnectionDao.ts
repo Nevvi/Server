@@ -8,6 +8,7 @@ const client = new MongoClient(process.env.MONGO_URI);
 // models
 import {ConnectionRequest} from "../model/connection/ConnectionRequest";
 import {RequestStatus} from "../model/connection/RequestStatus";
+const UserDocument = require('./document/UserDocument.ts')
 const ConnectionDocument = require('./document/ConnectionDocument.ts')
 const ConnectionRequestDocument = require('./document/ConnectionRequestDocument.ts')
 import {
@@ -16,6 +17,7 @@ import {
     ConnectionRequestExistsError,
 } from "../error/Errors";
 import {Connection} from "../model/connection/Connection";
+import {SlimUser} from "../model/user/SlimUser";
 
 class ConnectionDao {
     private db: Db;
@@ -120,13 +122,85 @@ class ConnectionDao {
         return new ConnectionRequest(document)
     }
 
-    async getConnections(userId: string): Promise<Connection[]> {
+    async getConnections(userId: string, name: string | undefined, limit: number, skip: number): Promise<SlimUser[]> {
+        const pipeline: any = [
+            {
+                '$match': {
+                    'userId': userId
+                }
+            }, {
+                '$lookup': {
+                    'from': 'users',
+                    'localField': 'connectedUserId',
+                    'foreignField': '_id',
+                    'as': 'connectedUser'
+                }
+            }
+        ]
+
+        if (name) {
+            const search = name.split(' ').filter(n => n).join('_').toLowerCase()
+            pipeline.push({
+                '$match': {
+                    'connectedUser.nameLower':  {$regex : search}
+                }
+            })
+        }
+
         const results = await this.db.collection(this.connectionCollectionName)
-            .find({ userId: userId })
+            .aggregate(pipeline)
+            .skip(skip)
+            .limit(limit)
             .toArray()
 
-        return (results || []).map(i => new Connection(i))
+        // Return the user that we mapped over so that we don't need to grab all that info again 1 by 1...
+        // kinda weird to return users from the connection dao though
+        return (results || [])
+            .filter(i => i["connectedUser"] && i["connectedUser"].length === 1)
+            .map(i => {
+                const user = new SlimUser(new UserDocument(i["connectedUser"][0]))
+                user.id = i["connectedUser"][0]._id
+                return user
+            })
     }
+
+    async getConnectionCount(userId: string, name: string | undefined): Promise<number> {
+        const pipeline: any = [
+            {
+                '$match': {
+                    'userId': userId
+                }
+            }, {
+                '$lookup': {
+                    'from': 'users',
+                    'localField': 'connectedUserId',
+                    'foreignField': '_id',
+                    'as': 'connectedUser'
+                }
+            }
+        ]
+
+        if (name) {
+            const search = name.split(' ').filter(n => n).join('_').toLowerCase()
+            pipeline.push({
+                '$match': {
+                    'connectedUser.nameLower':  {$regex : search}
+                }
+            })
+        }
+
+        pipeline.push({
+            '$count': 'connectionCount'
+        })
+
+        const result = await this.db.collection(this.connectionCollectionName)
+            .aggregate(pipeline)
+            .next();
+
+        // @ts-ignore
+        return result && result['connectionCount'] || 0
+    }
+
 
     async getConnection(userId: string, connectedUserId: string): Promise<Connection | undefined> {
         const result = await this.db.collection(this.connectionCollectionName)
