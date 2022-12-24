@@ -3,7 +3,10 @@
 'use strict'
 
 const Joi = require('joi');
+const JoiDate = require('@hapi/joi-date')
 import {UserRequest} from './UserRequest';
+
+const ExtendedJoi = Joi.extend(JoiDate)
 
 const updateSchema = {
     id: Joi.forbidden(), // can't change this
@@ -22,7 +25,8 @@ const updateSchema = {
     permissionGroups: Joi.array().items(Joi.object().keys({
         name: Joi.string().required(),
         fields: Joi.array().items(Joi.string()).required()
-    }))
+    })),
+    birthday: ExtendedJoi.date().format('YYYY-MM-DD').raw()
 }
 
 class UpdateRequest extends UserRequest {
@@ -31,13 +35,15 @@ class UpdateRequest extends UserRequest {
     phoneNumber: string;
     address: object;
     permissionGroups: object[];
-    constructor(firstName: string, lastName: string, phoneNumber: string, address: object, permissionGroups: object[]) {
+    birthday: string;
+    constructor(firstName: string, lastName: string, phoneNumber: string, address: object, permissionGroups: object[], birthday: string) {
         super(updateSchema)
         this.firstName = firstName
         this.lastName = lastName
         this.phoneNumber = phoneNumber
         this.address = address
         this.permissionGroups = permissionGroups
+        this.birthday = birthday
     }
 }
 

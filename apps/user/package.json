@@ -31,6 +31,7 @@
     "webpack": "^5.65.0"
   },
   "dependencies": {
+    "@hapi/joi-date": "^2.0.1",
     "aws-sdk": "^2.1048.0",
     "axios": "^0.21.1",
     "busboy": "^1.6.0",

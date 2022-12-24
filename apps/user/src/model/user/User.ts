@@ -15,6 +15,7 @@ class User {
     phoneNumberConfirmed: boolean;
     address: Address;
     profileImage: string;
+    birthday: string;
     permissionGroups: PermissionGroup[];
     createDate: string;
     createBy: string;
@@ -22,7 +23,7 @@ class User {
     updateBy: string;
     constructor(body: object) {
         // @ts-ignore
-        const {id, firstName, lastName, phoneNumber, phoneNumberConfirmed, email, emailConfirmed, address, permissionGroups, profileImage, createDate, updateDate, updateBy, createBy} = body;
+        const {id, firstName, lastName, phoneNumber, phoneNumberConfirmed, email, emailConfirmed, address, permissionGroups, profileImage, birthday, createDate, updateDate, updateBy, createBy} = body;
 
         // data fields
         this.id = id
@@ -30,6 +31,7 @@ class User {
         this.lastName = lastName
         this.email = email
         this.emailConfirmed = emailConfirmed === true
+        this.birthday = birthday
         this.phoneNumber = phoneNumber
         this.phoneNumberConfirmed = phoneNumberConfirmed === true
         this.address = address ? new Address({...address}) : new Address({})
