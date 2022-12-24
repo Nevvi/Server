@@ -18,6 +18,7 @@ import {
 } from "../error/Errors";
 import {Connection} from "../model/connection/Connection";
 import {SlimUser} from "../model/user/SlimUser";
+import {SearchResponse} from "../model/response/SearchResponse";
 
 class ConnectionDao {
     private db: Db;
@@ -122,49 +123,7 @@ class ConnectionDao {
         return new ConnectionRequest(document)
     }
 
-    async getConnections(userId: string, name: string | undefined, limit: number, skip: number): Promise<SlimUser[]> {
-        const pipeline: any = [
-            {
-                '$match': {
-                    'userId': userId
-                }
-            }, {
-                '$lookup': {
-                    'from': 'users',
-                    'localField': 'connectedUserId',
-                    'foreignField': '_id',
-                    'as': 'connectedUser'
-                }
-            }
-        ]
-
-        if (name) {
-            const search = name.split(' ').filter(n => n).join('_').toLowerCase()
-            pipeline.push({
-                '$match': {
-                    'connectedUser.nameLower':  {$regex : search}
-                }
-            })
-        }
-
-        const results = await this.db.collection(this.connectionCollectionName)
-            .aggregate(pipeline)
-            .skip(skip)
-            .limit(limit)
-            .toArray()
-
-        // Return the user that we mapped over so that we don't need to grab all that info again 1 by 1...
-        // kinda weird to return users from the connection dao though
-        return (results || [])
-            .filter(i => i["connectedUser"] && i["connectedUser"].length === 1)
-            .map(i => {
-                const user = new SlimUser(new UserDocument(i["connectedUser"][0]))
-                user.id = i["connectedUser"][0]._id
-                return user
-            })
-    }
-
-    async getConnectionCount(userId: string, name: string | undefined): Promise<number> {
+    async getConnections(userId: string, name: string | undefined, limit: number, skip: number): Promise<SearchResponse> {
         const pipeline: any = [
             {
                 '$match': {
@@ -190,17 +149,43 @@ class ConnectionDao {
         }
 
         pipeline.push({
-            '$count': 'connectionCount'
+            '$facet': {
+                'connections': [
+                    {
+                        '$skip': skip
+                    },
+                    {
+                        '$limit': limit
+                    }
+                ],
+                'connectionCount': [
+                    {
+                        '$count': 'connectionCount'
+                    }
+                ]
+            }
         })
 
         const result = await this.db.collection(this.connectionCollectionName)
             .aggregate(pipeline)
-            .next();
+            .next()
 
-        // @ts-ignore
-        return result && result['connectionCount'] || 0
+        // Return the user that we mapped over so that we don't need to grab all that info again 1 by 1...
+        // Also return the total count before pagination was applied
+        const userResults: any[] = (result?.connections || [])
+        const users = userResults
+            .filter(i => i["connectedUser"] && i["connectedUser"].length === 1)
+            .map(i => {
+                const user = new SlimUser(new UserDocument(i["connectedUser"][0]))
+                user.id = i["connectedUser"][0]._id
+                return user
+            })
+
+        // connectionCount comes back nested
+        const userCount = result?.connectionCount[0].connectionCount || 0
+
+        return new SearchResponse(users, userCount)
     }
-
 
     async getConnection(userId: string, connectedUserId: string): Promise<Connection | undefined> {
         const result = await this.db.collection(this.connectionCollectionName)

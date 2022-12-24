@@ -223,12 +223,7 @@ class UserService {
 
     async getConnections(request: SearchConnectionsRequest): Promise<SearchResponse> {
         const {userId, name, limit, skip} = request
-        const [users, connectionCount] = await Promise.all([
-            this.connectionDao.getConnections(userId, name, limit, skip),
-            this.connectionDao.getConnectionCount(userId, name)
-        ])
-
-        return new SearchResponse(users, connectionCount)
+        return await this.connectionDao.getConnections(userId, name, limit, skip)
     }
 
     async getConnection(userId: string, otherUserId: string): Promise<UserConnectionResponse> {
