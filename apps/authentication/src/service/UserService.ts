@@ -18,6 +18,16 @@ class UserService {
             throw e
         }
     }
+
+    async confirmUserPhoneNumber(id: string) {
+        try {
+            console.log("Confirming user phone number", id)
+            return await this.userDao.confirmUserPhoneNumber(id)
+        } catch (e) {
+            console.log(`Failed to confirm user phone number`, e)
+            throw e
+        }
+    }
 }
 
 export {UserService}

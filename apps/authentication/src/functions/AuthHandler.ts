@@ -101,8 +101,12 @@ export const confirmCode: Handler = async (event: any) => {
         const accessToken = event.headers.AccessToken || event.headers.accesstoken
         const request = new ConfirmCodeRequest(accessToken, attribute, code)
         request.validate()
-        const response = await authenticationService.confirmCode(request)
-        return createResponse(200, response)
+
+        // If we successfully validate the phone number we need to update the user
+        const userId = await authenticationService.confirmCode(request)
+        await userService.confirmUserPhoneNumber(userId)
+
+        return createResponse(200, {"message": "Success"})
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)
     }

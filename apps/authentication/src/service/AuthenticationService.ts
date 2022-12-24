@@ -68,8 +68,10 @@ class AuthenticationService {
         return await this.authenticationDao.sendVerificationCode(request)
     }
 
-    async confirmCode(request: ConfirmCodeRequest) {
-        return await this.authenticationDao.verifyCode(request)
+    async confirmCode(request: ConfirmCodeRequest): Promise<string> {
+        await this.authenticationDao.verifyCode(request)
+        const user = await this.authenticationDao.getUserByToken(request.accessToken)
+        return user?.Username
     }
 
     async updateUser(userId: string, request: UpdateRequest): Promise<User> {

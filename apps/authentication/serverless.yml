@@ -135,6 +135,7 @@ functions:
       - Effect: Allow
         Action:
           - cognito-idp:VerifyUserAttribute
+          - cognito-idp:GetUser
         Resource: ${self:custom.publicUserPoolArn}
 
   updateUser:

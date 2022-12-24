@@ -93,10 +93,10 @@ class UserService {
     async updateUserContact(existingUser: User, request: UpdateContactRequest): Promise<User> {
         // TODO - validate this new email or phone number doesn't already exist
         existingUser.email = request.email ? request.email : existingUser.email
-        existingUser.emailConfirmed = request.emailConfirmed
+        existingUser.emailConfirmed = request.emailConfirmed !== undefined ? request.emailConfirmed : existingUser.emailConfirmed
 
         existingUser.phoneNumber = request.phoneNumber ? request.phoneNumber : existingUser.phoneNumber
-        existingUser.phoneNumberConfirmed = request.phoneNumberConfirmed
+        existingUser.phoneNumberConfirmed = request.phoneNumberConfirmed !== undefined ? request.phoneNumberConfirmed : existingUser.phoneNumberConfirmed
 
         return await this.userDao.updateUser(existingUser)
     }

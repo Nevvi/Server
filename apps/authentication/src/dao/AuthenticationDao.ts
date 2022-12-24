@@ -6,7 +6,7 @@ import {RegisterRequest} from "../model/request/RegisterRequest";
 import {LogoutRequest} from "../model/request/LogoutRequest";
 import {
     AdminGetUserResponse, AdminUpdateUserAttributesResponse,
-    ConfirmSignUpResponse, GetUserAttributeVerificationCodeResponse,
+    ConfirmSignUpResponse, GetUserAttributeVerificationCodeResponse, GetUserResponse,
     GlobalSignOutResponse, InitiateAuthResponse,
     SignUpResponse, UserType, VerifyUserAttributeResponse
 } from "aws-sdk/clients/cognitoidentityserviceprovider";
@@ -33,6 +33,12 @@ class AuthenticationDao {
         return await this.cognito.adminGetUser({
             Username: userId,
             UserPoolId: this.userPoolId
+        }).promise()
+    }
+
+    async getUserByToken(accessToken: string): Promise<GetUserResponse> {
+        return await this.cognito.getUser({
+            AccessToken: accessToken
         }).promise()
     }
 
