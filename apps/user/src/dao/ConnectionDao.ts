@@ -182,7 +182,10 @@ class ConnectionDao {
             })
 
         // connectionCount comes back nested
-        const userCount = result?.connectionCount[0].connectionCount || 0
+        let userCount = 0
+        if (result && result.connectionCount && result.connectionCount.length === 1) {
+            userCount = result.connectionCount[0].connectionCount || 0
+        }
 
         return new SearchResponse(users, userCount)
     }

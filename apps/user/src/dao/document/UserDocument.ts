@@ -12,6 +12,7 @@ module.exports = class {
     emailConfirmed: boolean;
     phoneNumber: string;
     phoneNumberConfirmed: boolean;
+    onboardingCompleted: boolean;
     address: Address;
     permissionGroups: PermissionGroup[];
     profileImage: string;
@@ -23,7 +24,7 @@ module.exports = class {
 
     constructor(body: object) {
         // @ts-ignore
-        const {id, firstName, lastName, phoneNumber, phoneNumberConfirmed, email, emailConfirmed, address, permissionGroups, profileImage, birthday, createDate, updateDate, updateBy, createBy} = body;
+        const {id, firstName, lastName, phoneNumber, phoneNumberConfirmed, email, emailConfirmed, onboardingCompleted, address, permissionGroups, profileImage, birthday, createDate, updateDate, updateBy, createBy} = body;
 
         // dynamodb fields
         this._id = id
@@ -36,6 +37,7 @@ module.exports = class {
         this.emailConfirmed = emailConfirmed === true
         this.phoneNumber = phoneNumber
         this.phoneNumberConfirmed = phoneNumberConfirmed === true
+        this.onboardingCompleted = onboardingCompleted
         this.address = address
         this.birthday = birthday
         this.profileImage = profileImage

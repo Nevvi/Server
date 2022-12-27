@@ -70,7 +70,8 @@ export const updateUser: Handler = async (event) => {
             body.phoneNumber,
             body.address,
             body.permissionGroups,
-            body.birthday
+            body.birthday,
+            body.onboardingCompleted
         )
         request.validate()
 

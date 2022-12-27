@@ -10,9 +10,10 @@ class UserConnectionResponse {
     phoneNumber: string;
     address: Address;
     profileImage: string;
+    birthday: string;
     constructor(body: object) {
         // @ts-ignore
-        const {id, firstName, lastName, phoneNumber, email, address, profileImage} = body;
+        const {id, firstName, lastName, phoneNumber, email, address, profileImage, birthday} = body;
 
         // data fields
         this.id = id
@@ -22,6 +23,7 @@ class UserConnectionResponse {
         this.phoneNumber = phoneNumber
         this.address = address ? address : new Address({})
         this.profileImage = profileImage ? profileImage : process.env.DEFAULT_PROFILE_IMAGE
+        this.birthday = birthday
     }
 }
 

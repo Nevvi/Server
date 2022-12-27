@@ -26,7 +26,8 @@ const updateSchema = {
         name: Joi.string().required(),
         fields: Joi.array().items(Joi.string()).required()
     })),
-    birthday: ExtendedJoi.date().format('YYYY-MM-DD').raw()
+    birthday: ExtendedJoi.date().format('YYYY-MM-DD').raw(),
+    onboardingCompleted: Joi.boolean()
 }
 
 class UpdateRequest extends UserRequest {
@@ -36,7 +37,8 @@ class UpdateRequest extends UserRequest {
     address: object;
     permissionGroups: object[];
     birthday: string;
-    constructor(firstName: string, lastName: string, phoneNumber: string, address: object, permissionGroups: object[], birthday: string) {
+    onboardingCompleted: boolean;
+    constructor(firstName: string, lastName: string, phoneNumber: string, address: object, permissionGroups: object[], birthday: string, onboardingCompleted: boolean) {
         super(updateSchema)
         this.firstName = firstName
         this.lastName = lastName
@@ -44,6 +46,7 @@ class UpdateRequest extends UserRequest {
         this.address = address
         this.permissionGroups = permissionGroups
         this.birthday = birthday
+        this.onboardingCompleted = onboardingCompleted
     }
 }
 

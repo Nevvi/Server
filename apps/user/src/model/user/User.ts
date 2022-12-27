@@ -13,6 +13,7 @@ class User {
     emailConfirmed: boolean;
     phoneNumber: string;
     phoneNumberConfirmed: boolean;
+    onboardingCompleted: boolean;
     address: Address;
     profileImage: string;
     birthday: string;
@@ -23,7 +24,7 @@ class User {
     updateBy: string;
     constructor(body: object) {
         // @ts-ignore
-        const {id, firstName, lastName, phoneNumber, phoneNumberConfirmed, email, emailConfirmed, address, permissionGroups, profileImage, birthday, createDate, updateDate, updateBy, createBy} = body;
+        const {id, firstName, lastName, phoneNumber, phoneNumberConfirmed, onboardingCompleted, email, emailConfirmed, address, permissionGroups, profileImage, birthday, createDate, updateDate, updateBy, createBy} = body;
 
         // data fields
         this.id = id
@@ -34,6 +35,7 @@ class User {
         this.birthday = birthday
         this.phoneNumber = phoneNumber
         this.phoneNumberConfirmed = phoneNumberConfirmed === true
+        this.onboardingCompleted = onboardingCompleted === undefined ? true : onboardingCompleted
         this.address = address ? new Address({...address}) : new Address({})
         this.profileImage = profileImage ? profileImage : process.env.DEFAULT_PROFILE_IMAGE
         this.permissionGroups = permissionGroups ? permissionGroups.map((pg: object) => new PermissionGroup({...pg})) : DEFAULT_PERMISSION_GROUPS

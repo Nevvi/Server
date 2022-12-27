@@ -48,6 +48,7 @@ class UserService {
     async createUser(request: RegisterRequest): Promise<User> {
         const user = new User(request)
         user.emailConfirmed = true
+        user.onboardingCompleted = false
         return await this.userDao.createUser(user)
     }
 
@@ -83,6 +84,7 @@ class UserService {
         existingUser.lastName = request.lastName ? request.lastName : existingUser.lastName
         existingUser.phoneNumber = request.phoneNumber ? request.phoneNumber : existingUser.phoneNumber
         existingUser.birthday = request.birthday ? request.birthday : existingUser.birthday
+        existingUser.onboardingCompleted = request.onboardingCompleted ? request.onboardingCompleted : existingUser.onboardingCompleted
         existingUser.address = request.address ? new Address(request.address) : existingUser.address
         existingUser.permissionGroups = request.permissionGroups ?
             request.permissionGroups.map((pg: object) => new PermissionGroup({...pg})) :
