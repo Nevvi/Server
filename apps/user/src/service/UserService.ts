@@ -11,7 +11,8 @@ import {SearchRequest} from "../model/request/SearchRequest";
 import {SearchResponse} from "../model/response/SearchResponse";
 import {ImageDao} from "../dao/ImageDao";
 import {
-    AlreadyConnectedError, ConnectionDoesNotExistError,
+    AlreadyConnectedError,
+    ConnectionDoesNotExistError,
     ConnectionRequestDoesNotExistError,
     ConnectionRequestExistsError,
     InvalidRequestError,
@@ -142,26 +143,18 @@ class UserService {
             throw new ConnectionRequestExistsError()
         }
 
-        // TODO - check if requested user has blocked the requesting user
-
         // check if requested user has also requested the requesting user (treat as a confirm)
         existingRequest = await this.connectionDao.getConnectionRequest(requestedUserId, requestingUserId)
-        if (existingRequest && existingRequest.status === RequestStatus.PENDING) {
-            console.log("Another open request exists between users. Treating as confirmation.")
-            const confirmRequest = new ConfirmConnectionRequest(requestedUserId, requestingUserId, permissionGroupName)
-            return await this.confirmConnection(confirmRequest)
-        }
-
-        // check if requested user has previously rejected request from requesting user (remove that previous rejection)
-        if (existingRequest && existingRequest.status === RequestStatus.REJECTED) {
-            console.log("User being requested was previously rejected by current requesting user. Removing that rejection.")
-            await this.connectionDao.deleteConnectionRequest(requestedUserId, requestingUserId)
-        }
-
         // already connected!
         if (existingRequest && existingRequest.status === RequestStatus.APPROVED) {
             console.log("User being requested is already connected.")
             throw new AlreadyConnectedError()
+        } else if (existingRequest) {
+            // even if previous request was a rejection, a request by the "rejector" can be treated as approving
+            // the original request that they previously rejected
+            console.log("Another non-approved request exists between users. Treating as confirmation.")
+            const confirmRequest = new ConfirmConnectionRequest(requestedUserId, requestingUserId, permissionGroupName)
+            return await this.confirmConnection(confirmRequest)
         }
 
         const requestText = `${requestingUser.firstName} would like to connect!`
@@ -177,8 +170,8 @@ class UserService {
             throw new ConnectionRequestDoesNotExistError()
         }
 
-        if (existingRequest.status !== RequestStatus.PENDING) {
-            throw new InvalidRequestError("Request not in a pending state")
+        if (existingRequest.status === RequestStatus.APPROVED) {
+            throw new InvalidRequestError("Request already approved")
         }
 
         // mark connection request as confirmed and create connections
@@ -209,19 +202,17 @@ class UserService {
         // mark connection request as confirmed and create connections
         existingRequest.status = RequestStatus.REJECTED
 
-        // TODO - mark user as blocked somehow?
         await this.connectionDao.updateConnectionRequest(existingRequest)
         return existingRequest
     }
 
-    async rejectConnection(userId: string, otherUserId: string) {
-        // validate that connection request exists between users
-        // mark connection request as rejected
-        // automatically block the user?
-    }
-
     async getPendingConnections(userId: string): Promise<ConnectionRequest[]> {
         return await this.connectionDao.getConnectionRequests(userId, RequestStatus.PENDING)
+    }
+
+    async getRejectedConnections(userId: string): Promise<SlimUser[]> {
+        // Get the users that requested `userId` but `userId` rejected
+        return await this.connectionDao.getRejectedUsers(userId)
     }
 
     async getConnections(request: SearchConnectionsRequest): Promise<SearchResponse> {

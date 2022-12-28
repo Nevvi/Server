@@ -71,6 +71,17 @@ export const getOpenRequests: Handler = async (event) => {
     }
 }
 
+export const getRejectedUsers: Handler = async (event) => {
+    try {
+        console.log("Received request to get rejected users")
+        const {userId} = event.pathParameters
+        const result = await userService.getRejectedConnections(userId)
+        return createResponse(200, result)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
 export const getConnections: Handler = async (event) => {
     try {
         console.log("Received request to get connections")

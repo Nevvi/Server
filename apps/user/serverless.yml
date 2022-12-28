@@ -197,6 +197,17 @@ functions:
             resultTtlInSeconds: 0
             type: request
 
+  getRejectedRequests:
+    handler: src/functions/ConnectionHandler.getRejectedUsers
+    events:
+      - http:
+          path: /v1/users/{userId}/connections/rejected
+          method: get
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+
   getConnections:
     handler: src/functions/ConnectionHandler.getConnections
     events:

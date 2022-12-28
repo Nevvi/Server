@@ -46,6 +46,37 @@ class ConnectionDao {
         return (results || []).map(i => new ConnectionRequest(i))
     }
 
+    async getRejectedUsers(userId: string): Promise<SlimUser[]> {
+        const pipeline: any = [
+            {
+                '$match': {
+                    'requestedUserId': userId,
+                    'status': RequestStatus.REJECTED
+                }
+            }, {
+                '$lookup': {
+                    'from': 'users',
+                    'localField': 'requestingUserId',
+                    'foreignField': '_id',
+                    'as': 'rejectedUser'
+                }
+            }
+        ]
+
+        const results = await this.db.collection(this.requestCollectionName)
+            .aggregate(pipeline)
+            .toArray()
+
+        // Return the user that we mapped over so that we don't need to grab all that info again 1 by 1...
+        return results
+            .filter(i => i["rejectedUser"] && i["rejectedUser"].length === 1)
+            .map(i => {
+                const user = new SlimUser(new UserDocument(i["rejectedUser"][0]))
+                user.id = i["rejectedUser"][0]._id
+                return user
+            })
+    }
+
     async createConnectionRequest(requestingUserId: string, requestedUserId: string, requesterImage: string, requestText: string, permissionGroupName: string): Promise<ConnectionRequest> {
         const now = new Date().toISOString()
         const document = new ConnectionRequestDocument({
