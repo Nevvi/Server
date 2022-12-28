@@ -11,9 +11,10 @@ class UserConnectionResponse {
     address: Address;
     profileImage: string;
     birthday: string;
-    constructor(body: object) {
+    permissionGroup: string;
+    constructor(user: object, permissionGroup: string) {
         // @ts-ignore
-        const {id, firstName, lastName, phoneNumber, email, address, profileImage, birthday} = body;
+        const {id, firstName, lastName, phoneNumber, email, address, profileImage, birthday} = user;
 
         // data fields
         this.id = id
@@ -24,6 +25,7 @@ class UserConnectionResponse {
         this.address = address ? address : new Address({})
         this.profileImage = profileImage ? profileImage : process.env.DEFAULT_PROFILE_IMAGE
         this.birthday = birthday
+        this.permissionGroup = permissionGroup
     }
 }
 

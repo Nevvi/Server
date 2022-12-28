@@ -7,6 +7,7 @@ import {RequestConnectionRequest} from "../model/request/RequestConnectionReques
 import {ConfirmConnectionRequest} from "../model/request/ConfirmConnectionRequest";
 import {DenyConnectionRequest} from "../model/request/DenyConnectionRequest";
 import {SearchConnectionsRequest} from "../model/request/SearchConnectionsRequest";
+import {UpdateConnectionRequest} from "../model/request/UpdateConnectionRequest";
 
 const userService = new UserService()
 
@@ -108,6 +109,23 @@ export const getConnection: Handler = async (event) => {
         console.log("Received request to get connection")
         const {userId, connectedUserId} = event.pathParameters
         const result = await userService.getConnection(userId, connectedUserId)
+        return createResponse(200, result)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
+export const updateConnection: Handler = async (event) => {
+    try {
+        console.log("Received request to update connection")
+        const {userId, connectedUserId} = event.pathParameters
+
+        // validate incoming request is good
+        const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
+        const request = new UpdateConnectionRequest(userId, connectedUserId, body.permissionGroupName)
+        request.validate()
+
+        const result = await userService.updateConnection(request)
         return createResponse(200, result)
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)

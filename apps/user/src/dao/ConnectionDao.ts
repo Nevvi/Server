@@ -227,6 +227,16 @@ class ConnectionDao {
 
         return result ? new Connection(result) : undefined
     }
+
+    async updateConnection(userId: string, connectedUserId: string, permissionGroup: string): Promise<boolean> {
+        const result = await this.db.collection(this.connectionCollectionName)
+            .updateOne(
+                {userId: userId, connectedUserId: connectedUserId},
+                {$set: {permissionGroupName: permissionGroup}},
+            )
+
+        return result && result.modifiedCount === 1
+    }
 }
 
 export {ConnectionDao}

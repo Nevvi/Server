@@ -229,3 +229,14 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
+
+  updateConnection:
+    handler: src/functions/ConnectionHandler.updateConnection
+    events:
+      - http:
+          path: /v1/users/{userId}/connections/{connectedUserId}
+          method: patch
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request

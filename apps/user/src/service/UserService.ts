@@ -28,6 +28,7 @@ import {SlimUser} from "../model/user/SlimUser";
 import {UserConnectionResponse} from "../model/response/UserConnectionResponse";
 import {PermissionGroup} from "../model/user/PermissionGroup";
 import {SearchConnectionsRequest} from "../model/request/SearchConnectionsRequest";
+import {UpdateConnectionRequest} from "../model/request/UpdateConnectionRequest";
 
 class UserService {
     private userDao: UserDao;
@@ -222,22 +223,28 @@ class UserService {
 
     async getConnection(userId: string, otherUserId: string): Promise<UserConnectionResponse> {
         // get the reverse connection so that we know what permission group we belong to
-        const connection = await this.connectionDao.getConnection(otherUserId, userId)
-        if (!connection) {
+        const [connectionToMe, connectionToThem] = await Promise.all([
+            this.connectionDao.getConnection(otherUserId, userId),
+            this.connectionDao.getConnection(userId, otherUserId)
+        ])
+
+        if (!connectionToMe || !connectionToThem) {
             throw new ConnectionDoesNotExistError()
         }
+
+        const theirPermissionGroup = connectionToThem.permissionGroupName || "ALL"
 
         const user = await this.getUser(otherUserId)
         if (!user) {
             throw new UserNotFoundError(otherUserId)
         }
 
-        const permissionGroup = user.permissionGroups.find(pg => pg.name === connection.permissionGroupName)
+        const permissionGroup = user.permissionGroups.find(pg => pg.name === connectionToMe.permissionGroupName)
 
         // No permission group details exist... return all (shouldn't happen)
-        if (!permissionGroup || connection.permissionGroupName === "ALL") {
-            console.log(`No permission group found with name ${connection.permissionGroupName} for user ${user.id}`)
-            return user
+        if (!permissionGroup || connectionToMe.permissionGroupName === "ALL") {
+            console.log(`No permission group found with name ${connectionToMe.permissionGroupName} for user ${user.id}`)
+            return new UserConnectionResponse(user, theirPermissionGroup)
         }
 
         // Filter attributes down to only the ones specified in the permission group
@@ -248,7 +255,17 @@ class UserService {
             body[field] = userObj[field]
         })
 
-        return new UserConnectionResponse(body)
+        // Return the permission group that user put other user in so they can update if they want
+        return new UserConnectionResponse(body, theirPermissionGroup)
+    }
+
+    async updateConnection(request: UpdateConnectionRequest): Promise<UserConnectionResponse> {
+        const success = await this.connectionDao.updateConnection(request.userId, request.otherUserId, request.permissionGroupName)
+        if (!success) {
+            throw new ConnectionDoesNotExistError()
+        }
+
+        return await this.getConnection(request.userId, request.otherUserId)
     }
 }
 

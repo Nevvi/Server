@@ -16,6 +16,7 @@ class UserAuthorizer extends AbstractAuthorizer {
             authPolicy.allowMethod(HttpVerb.GET, `/v1/users/${userId}/connections`)
             authPolicy.allowMethod(HttpVerb.GET, `/v1/users/${userId}/connections/rejected`)
             authPolicy.allowMethod(HttpVerb.GET, `/v1/users/${userId}/connections/*`)
+            authPolicy.allowMethod(HttpVerb.PATCH, `/v1/users/${userId}/connections/*`)
             authPolicy.allowMethod(HttpVerb.GET, `/v1/users/${userId}/connections/requests/pending`)
             authPolicy.allowMethod(HttpVerb.POST, `/v1/users/${userId}/connections/requests`)
             authPolicy.allowMethod(HttpVerb.POST, `/v1/users/${userId}/connections/requests/confirm`)
