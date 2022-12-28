@@ -18,13 +18,32 @@ class User {
     profileImage: string;
     birthday: string;
     permissionGroups: PermissionGroup[];
+    blockedUsers: string[];
     createDate: string;
     createBy: string;
     updateDate: string;
     updateBy: string;
-    constructor(body: object) {
-        // @ts-ignore
-        const {id, firstName, lastName, phoneNumber, phoneNumberConfirmed, onboardingCompleted, email, emailConfirmed, address, permissionGroups, profileImage, birthday, createDate, updateDate, updateBy, createBy} = body;
+
+    constructor(body: any) {
+        const {
+            id,
+            firstName,
+            lastName,
+            phoneNumber,
+            phoneNumberConfirmed,
+            onboardingCompleted,
+            email,
+            emailConfirmed,
+            address,
+            permissionGroups,
+            blockedUsers,
+            profileImage,
+            birthday,
+            createDate,
+            updateDate,
+            updateBy,
+            createBy
+        } = body;
 
         // data fields
         this.id = id
@@ -39,6 +58,7 @@ class User {
         this.address = address ? new Address({...address}) : new Address({})
         this.profileImage = profileImage ? profileImage : process.env.DEFAULT_PROFILE_IMAGE
         this.permissionGroups = permissionGroups ? permissionGroups.map((pg: object) => new PermissionGroup({...pg})) : DEFAULT_PERMISSION_GROUPS
+        this.blockedUsers = blockedUsers || []
 
         // audit fields
         this.createDate = createDate
@@ -49,6 +69,18 @@ class User {
 
     toPlainObj(): object {
         return Object.assign({}, this);
+    }
+
+    addBlockedUser(userId: string) {
+        const blockedUsers = new Set(this.blockedUsers)
+        blockedUsers.add(userId)
+        this.blockedUsers = Array.from(blockedUsers)
+    }
+
+    removeBlockedUser(userId: string) {
+        const blockedUsers = new Set(this.blockedUsers)
+        blockedUsers.delete(userId)
+        this.blockedUsers = Array.from(blockedUsers)
     }
 }
 

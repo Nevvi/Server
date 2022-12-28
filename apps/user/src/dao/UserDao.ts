@@ -11,6 +11,8 @@ const UserDocument = require('./document/UserDocument.ts')
 // models
 import {User} from '../model/user/User';
 import {SearchResponse} from "../model/response/SearchResponse";
+import {SlimUser} from "../model/user/SlimUser";
+import {RequestStatus} from "../model/connection/RequestStatus";
 
 const {UserAlreadyExistsError, UserNotFoundError} = require('../error/Errors.ts')
 
@@ -123,6 +125,43 @@ class UserDao {
 
         return await this.db.collection("users")
             .countDocuments({ nameLower: {$regex : search} });
+    }
+
+    async getBlockedUsers(userId: string): Promise<SlimUser[]> {
+        const pipeline: any = [
+            {
+                '$match': {
+                    '_id': userId
+                }
+            },
+            {
+                '$unwind': {
+                    'path': '$blockedUsers',
+                    'preserveNullAndEmptyArrays': false
+                }
+            },
+            {
+                '$lookup': {
+                    'from': 'users',
+                    'localField': 'blockedUsers',
+                    'foreignField': '_id',
+                    'as': 'blockedUser'
+                }
+            }
+        ]
+
+        const results = await this.db.collection(this.collectionName)
+            .aggregate(pipeline)
+            .toArray()
+
+        // Return the user that we mapped over so that we don't need to grab all that info again 1 by 1...
+        return results
+            .filter(i => i["blockedUser"] && i["blockedUser"].length === 1)
+            .map(i => {
+                const user = new SlimUser(new UserDocument(i["blockedUser"][0]))
+                user.id = i["blockedUser"][0]._id
+                return user
+            })
     }
 }
 

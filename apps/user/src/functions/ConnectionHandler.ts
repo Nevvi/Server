@@ -8,6 +8,7 @@ import {ConfirmConnectionRequest} from "../model/request/ConfirmConnectionReques
 import {DenyConnectionRequest} from "../model/request/DenyConnectionRequest";
 import {SearchConnectionsRequest} from "../model/request/SearchConnectionsRequest";
 import {UpdateConnectionRequest} from "../model/request/UpdateConnectionRequest";
+import {BlockConnectionRequest} from "../model/request/BlockConnectionRequest";
 
 const userService = new UserService()
 
@@ -76,7 +77,7 @@ export const getRejectedUsers: Handler = async (event) => {
     try {
         console.log("Received request to get rejected users")
         const {userId} = event.pathParameters
-        const result = await userService.getRejectedConnections(userId)
+        const result = await userService.getBlockedUsers(userId)
         return createResponse(200, result)
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)
@@ -127,6 +128,22 @@ export const updateConnection: Handler = async (event) => {
 
         const result = await userService.updateConnection(request)
         return createResponse(200, result)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
+export const blockConnection: Handler = async (event) => {
+    try {
+        console.log("Received request to block connection")
+        const {userId, connectedUserId} = event.pathParameters
+
+        // validate incoming request is good
+        const request = new BlockConnectionRequest(userId, connectedUserId)
+        request.validate()
+
+        const result = await userService.blockConnection(request)
+        return createResponse(200, {success: result})
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)
     }

@@ -240,3 +240,14 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
+
+  blockConnection:
+    handler: src/functions/ConnectionHandler.blockConnection
+    events:
+      - http:
+          path: /v1/users/{userId}/connections/{connectedUserId}
+          method: delete
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request

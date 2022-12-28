@@ -29,6 +29,7 @@ import {UserConnectionResponse} from "../model/response/UserConnectionResponse";
 import {PermissionGroup} from "../model/user/PermissionGroup";
 import {SearchConnectionsRequest} from "../model/request/SearchConnectionsRequest";
 import {UpdateConnectionRequest} from "../model/request/UpdateConnectionRequest";
+import {BlockConnectionRequest} from "../model/request/BlockConnectionRequest";
 
 class UserService {
     private userDao: UserDao;
@@ -135,6 +136,21 @@ class UserService {
             throw new UserNotFoundError(requestedUserId)
         }
 
+        // If the requested user blocked this user then send back a generic error message
+        if (requestedUser.blockedUsers.includes(requestingUserId)) {
+            throw new ConnectionRequestExistsError()
+        }
+
+        // If this user previous blocked that user we need to remove them from the list of blocked users
+        // and any previously rejected requests
+        if (requestingUser.blockedUsers.includes(requestedUserId)) {
+            requestingUser.removeBlockedUser(requestedUserId)
+            await Promise.all([
+                this.userDao.updateUser(requestingUser),
+                this.connectionDao.deleteConnectionRequest(requestingUserId, requestedUserId)
+            ])
+        }
+
         // if an existing request exists in any state then do nothing
         // PENDING - one already exists, don't create another
         // REJECTED - requestedUserId already rejected this user, do nothing
@@ -150,16 +166,15 @@ class UserService {
         if (existingRequest && existingRequest.status === RequestStatus.APPROVED) {
             console.log("User being requested is already connected.")
             throw new AlreadyConnectedError()
-        } else if (existingRequest) {
-            // even if previous request was a rejection, a request by the "rejector" can be treated as approving
-            // the original request that they previously rejected
-            console.log("Another non-approved request exists between users. Treating as confirmation.")
+        } else if (existingRequest && existingRequest.status === RequestStatus.PENDING) {
+            console.log("Another pending request exists between users. Treating as confirmation.")
             const confirmRequest = new ConfirmConnectionRequest(requestedUserId, requestingUserId, permissionGroupName)
             return await this.confirmConnection(confirmRequest)
         }
 
         const requestText = `${requestingUser.firstName} would like to connect!`
-        return await this.connectionDao.createConnectionRequest(requestingUserId, requestedUserId, requestingUser.profileImage, requestText, permissionGroupName)
+        return await this.connectionDao.createConnectionRequest(requestingUserId,
+            requestedUserId, requestingUser.profileImage, requestText, permissionGroupName)
     }
 
     async confirmConnection(request: ConfirmConnectionRequest): Promise<ConnectionRequest> {
@@ -171,8 +186,8 @@ class UserService {
             throw new ConnectionRequestDoesNotExistError()
         }
 
-        if (existingRequest.status === RequestStatus.APPROVED) {
-            throw new InvalidRequestError("Request already approved")
+        if (existingRequest.status !== RequestStatus.PENDING) {
+            throw new InvalidRequestError("Request not in a pending state")
         }
 
         // mark connection request as confirmed and create connections
@@ -203,7 +218,15 @@ class UserService {
         // mark connection request as confirmed and create connections
         existingRequest.status = RequestStatus.REJECTED
 
-        await this.connectionDao.updateConnectionRequest(existingRequest)
+        // by denying a request it implicitly blocks that user
+        const user = await this.userDao.getUser(request.userId)
+        user!!.addBlockedUser(requestingUserId)
+
+        await Promise.all([
+            this.connectionDao.updateConnectionRequest(existingRequest),
+            this.userDao.updateUser(user!!)
+        ])
+
         return existingRequest
     }
 
@@ -211,9 +234,8 @@ class UserService {
         return await this.connectionDao.getConnectionRequests(userId, RequestStatus.PENDING)
     }
 
-    async getRejectedConnections(userId: string): Promise<SlimUser[]> {
-        // Get the users that requested `userId` but `userId` rejected
-        return await this.connectionDao.getRejectedUsers(userId)
+    async getBlockedUsers(userId: string): Promise<SlimUser[]> {
+        return await this.userDao.getBlockedUsers(userId)
     }
 
     async getConnections(request: SearchConnectionsRequest): Promise<SearchResponse> {
@@ -266,6 +288,30 @@ class UserService {
         }
 
         return await this.getConnection(request.userId, request.otherUserId)
+    }
+
+    async blockConnection(request: BlockConnectionRequest): Promise<boolean> {
+        let connectionRequest = await this.connectionDao.getConnectionRequest(request.userId, request.otherUserId)
+        if (!connectionRequest) {
+            connectionRequest = await this.connectionDao.getConnectionRequest(request.otherUserId, request.userId)
+        }
+        if (!connectionRequest) {
+            throw new ConnectionDoesNotExistError()
+        }
+
+        const user = await this.userDao.getUser(request.userId)
+        user!!.addBlockedUser(request.otherUserId)
+
+        // Delete the connections and connection requests, update the blocked users for this user
+        const [successOne, successTwo, successThree] = await Promise.all([
+            this.connectionDao.deleteConnection(request.userId, request.otherUserId),
+            this.connectionDao.deleteConnection(request.otherUserId, request.userId),
+            this.connectionDao.deleteConnectionRequest(connectionRequest.requestingUserId, connectionRequest.requestedUserId),
+            this.connectionDao.deleteConnectionRequest(connectionRequest.requestedUserId, connectionRequest.requestingUserId),
+            this.userDao.updateUser(user!!)
+        ])
+
+        return successOne && successTwo && successThree
     }
 }
 

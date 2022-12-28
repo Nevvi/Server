@@ -15,6 +15,7 @@ module.exports = class {
     onboardingCompleted: boolean;
     address: Address;
     permissionGroups: PermissionGroup[];
+    blockedUsers: string[];
     profileImage: string;
     birthday: string;
     createDate: string;
@@ -22,9 +23,26 @@ module.exports = class {
     updateDate: string;
     updateBy: string;
 
-    constructor(body: object) {
-        // @ts-ignore
-        const {id, firstName, lastName, phoneNumber, phoneNumberConfirmed, email, emailConfirmed, onboardingCompleted, address, permissionGroups, profileImage, birthday, createDate, updateDate, updateBy, createBy} = body;
+    constructor(body: any) {
+        const {
+            id,
+            firstName,
+            lastName,
+            phoneNumber,
+            phoneNumberConfirmed,
+            email,
+            emailConfirmed,
+            onboardingCompleted,
+            address,
+            permissionGroups,
+            blockedUsers,
+            profileImage,
+            birthday,
+            createDate,
+            updateDate,
+            updateBy,
+            createBy
+        } = body;
 
         // dynamodb fields
         this._id = id
@@ -42,6 +60,7 @@ module.exports = class {
         this.birthday = birthday
         this.profileImage = profileImage
         this.permissionGroups = permissionGroups
+        this.blockedUsers = blockedUsers
 
         // audit fields
         this.createDate = createDate
