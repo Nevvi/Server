@@ -104,11 +104,20 @@ class UserDao {
         return user
     }
 
-    async searchUsers(name: string, skip: number, limit: number): Promise<User[]> {
+    async searchUsers(userId: string, name: string, skip: number, limit: number): Promise<User[]> {
+        const user = await this.getUser(userId)
+        if (!user) {
+            return []
+        }
+
         const search = name.split(' ').filter(n => n).join('_').toLowerCase()
 
         const results = await this.db.collection("users")
-            .find({ nameLower: {$regex : search} })
+            .find({
+                nameLower: { $regex : search},
+                _id: { $nin: [userId, ...user.blockedUsers] }, // don't show user themselves or users they blocked
+                blockedUsers: { $nin: [userId] } // don't show user people that blocked them
+            })
             .skip(skip)
             .limit(limit)
             .toArray()
@@ -120,11 +129,20 @@ class UserDao {
         })
     }
 
-    async searchUserCount(name: string): Promise<number> {
+    async searchUserCount(userId: string, name: string): Promise<number> {
+        const user = await this.getUser(userId)
+        if (!user) {
+            return 0
+        }
+
         const search = name.split(' ').filter(n => n).join('_').toLowerCase()
 
         return await this.db.collection("users")
-            .countDocuments({ nameLower: {$regex : search} });
+            .countDocuments({
+                nameLower: { $regex : search},
+                _id: { $nin: [userId, ...user.blockedUsers] }, // don't show user themselves or users they blocked
+                blockedUsers: { $nin: [userId] } // don't show user people that blocked them
+            });
     }
 
     async getBlockedUsers(userId: string): Promise<SlimUser[]> {

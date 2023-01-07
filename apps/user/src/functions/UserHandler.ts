@@ -90,8 +90,6 @@ export const updateUser: Handler = async (event) => {
 
 export const updateUserImage: Handler = async (event) => {
     try{
-        console.log("Received request to update user image")
-
         const {userId} = event.pathParameters
         const fileInfo = await getFile(event)
 
@@ -99,6 +97,7 @@ export const updateUserImage: Handler = async (event) => {
         const updatedUser = await userService.updateUserImage(userId, fileInfo.content, fileInfo.fileName.filename, fileInfo.fileName.mimeType)
         return createResponse(200, updatedUser)
     } catch (e: any) {
+        console.log("Caught error", e)
         return createResponse(e.statusCode, e.message)
     }
 }
@@ -109,6 +108,7 @@ export const searchUsers: Handler = async (event) => {
 
         const queryParams = (event.queryStringParameters || {})
         const searchParams = typeof queryParams === 'object' ? queryParams : JSON.parse(queryParams)
+        const userId = event.requestContext.authorizer.userId
 
         const request = new SearchRequest(
             searchParams.name,
@@ -119,7 +119,7 @@ export const searchUsers: Handler = async (event) => {
 
         request.validate(searchParams)
 
-        const users = await userService.searchUsers(request)
+        const users = await userService.searchUsers(userId, request)
         return createResponse(200, users)
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)

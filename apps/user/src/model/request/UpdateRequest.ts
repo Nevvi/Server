@@ -18,6 +18,7 @@ const updateSchema = {
     lastName: Joi.string(),
     address: Joi.object().keys({
         street: Joi.string(),
+        unit: Joi.string().allow(""),
         city: Joi.string(),
         state: Joi.string(),
         zipCode: Joi.number()

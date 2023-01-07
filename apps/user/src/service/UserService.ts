@@ -55,7 +55,7 @@ class UserService {
         return await this.userDao.createUser(user)
     }
 
-    async searchUsers(request: SearchRequest): Promise<SearchResponse> {
+    async searchUsers(userId: string, request: SearchRequest): Promise<SearchResponse> {
         // There should only be one user with a confirmed email or phone
         if (request.email) {
             const user = await this.userDao.getUserByEmail(request.email)
@@ -66,8 +66,8 @@ class UserService {
         }
 
         const [users, userCount] = await Promise.all([
-            this.userDao.searchUsers(request.name, request.skip, request.limit),
-            this.userDao.searchUserCount(request.name)
+            this.userDao.searchUsers(userId, request.name, request.skip, request.limit),
+            this.userDao.searchUserCount(userId, request.name)
         ])
 
         const slimUsers = users.map(u => new SlimUser(u))
