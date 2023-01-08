@@ -59,10 +59,10 @@ class UserService {
         // There should only be one user with a confirmed email or phone
         if (request.email) {
             const user = await this.userDao.getUserByEmail(request.email)
-            return new SearchResponse(user ? [user] : [], user ? 1 : 0)
+            return new SearchResponse(user ? [new SlimUser(user)] : [], user ? 1 : 0)
         } else if (request.phoneNumber) {
             const user = await this.userDao.getUserByPhone(request.phoneNumber)
-            return new SearchResponse(user ? [user] : [], user ? 1 : 0)
+            return new SearchResponse(user ? [new SlimUser(user)] : [], user ? 1 : 0)
         }
 
         const [users, userCount] = await Promise.all([
@@ -70,8 +70,7 @@ class UserService {
             this.userDao.searchUserCount(userId, request.name)
         ])
 
-        const slimUsers = users.map(u => new SlimUser(u))
-        return new SearchResponse(slimUsers, userCount)
+        return new SearchResponse(users, userCount)
     }
 
     async updateUser(existingUser: User, request: UpdateRequest): Promise<User> {

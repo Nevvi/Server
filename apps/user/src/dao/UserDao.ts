@@ -104,7 +104,7 @@ class UserDao {
         return user
     }
 
-    async searchUsers(userId: string, name: string, skip: number, limit: number): Promise<User[]> {
+    async searchUsers(userId: string, name: string, skip: number, limit: number): Promise<SlimUser[]> {
         const user = await this.getUser(userId)
         if (!user) {
             return []
@@ -112,19 +112,64 @@ class UserDao {
 
         const search = name.split(' ').filter(n => n).join('_').toLowerCase()
 
-        const results = await this.db.collection("users")
-            .find({
-                nameLower: { $regex : search},
-                _id: { $nin: [userId, ...user.blockedUsers] }, // don't show user themselves or users they blocked
-                blockedUsers: { $nin: [userId] } // don't show user people that blocked them
-            })
-            .skip(skip)
-            .limit(limit)
+        const pipeline = [
+            {
+                '$match': {
+                    'nameLower': {
+                        '$regex': search
+                    },
+                    '_id': {
+                        '$nin': [userId, ...user.blockedUsers]
+                    },
+                    'blockedUsers': {
+                        '$nin': [userId]
+                    }
+                }
+            },
+            {
+                '$skip': skip
+            },
+            {
+                '$limit': limit
+            },
+            {
+                '$lookup': {
+                    'from': 'connections',
+                    'let': {
+                        'searchedUserId': '$_id'
+                    },
+                    'pipeline': [
+                        {
+                            '$match': {
+                                '$expr': {
+                                    '$and': [
+                                        {
+                                            '$eq': [
+                                                '$connectedUserId', '$$searchedUserId'
+                                            ]
+                                        }, {
+                                            '$eq': [
+                                                '$userId', userId
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    'as': 'connectedUser'
+                }
+            }
+        ]
+
+        const results = await this.db.collection(this.collectionName)
+            .aggregate(pipeline)
             .toArray()
 
         return results.map(i => {
-            const user = new User(i)
+            const user = new SlimUser(new User(i))
             user.id = i._id
+            user.connected = i["connectedUser"] && i["connectedUser"].length === 1
             return user
         })
     }
@@ -137,7 +182,7 @@ class UserDao {
 
         const search = name.split(' ').filter(n => n).join('_').toLowerCase()
 
-        return await this.db.collection("users")
+        return await this.db.collection(this.collectionName)
             .countDocuments({
                 nameLower: { $regex : search},
                 _id: { $nin: [userId, ...user.blockedUsers] }, // don't show user themselves or users they blocked
