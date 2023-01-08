@@ -30,11 +30,15 @@ import {PermissionGroup} from "../model/user/PermissionGroup";
 import {SearchConnectionsRequest} from "../model/request/SearchConnectionsRequest";
 import {UpdateConnectionRequest} from "../model/request/UpdateConnectionRequest";
 import {BlockConnectionRequest} from "../model/request/BlockConnectionRequest";
+import {CreateGroupRequest} from "../model/request/CreateGroupRequest";
+import {ConnectionGroup} from "../model/connection/ConnectionGroup";
+import {ConnectionGroupDao} from "../dao/ConnectionGroupDao";
 
 class UserService {
     private userDao: UserDao;
     private imageDao: ImageDao;
     private connectionDao: ConnectionDao;
+    private connectionGroupDao: ConnectionGroupDao;
     private authenticationDao: AuthenticationDao;
 
     constructor() {
@@ -42,6 +46,7 @@ class UserService {
         this.authenticationDao = new AuthenticationDao()
         this.imageDao = new ImageDao()
         this.connectionDao = new ConnectionDao()
+        this.connectionGroupDao = new ConnectionGroupDao()
     }
 
     async getUser(userId: string): Promise<User | null> {
@@ -311,6 +316,18 @@ class UserService {
         ])
 
         return successOne && successTwo && successThree
+    }
+
+    async createGroup(request: CreateGroupRequest): Promise<ConnectionGroup> {
+        return await this.connectionGroupDao.createConnectionGroup(request.userId, request.name)
+    }
+
+    async getConnectionGroups(userId: string): Promise<ConnectionGroup[]> {
+        return await this.connectionGroupDao.getConnectionGroups(userId)
+    }
+
+    async deleteConnectionGroup(userId: string, groupId: string): Promise<boolean> {
+        return await this.connectionGroupDao.deleteConnectionGroup(userId, groupId)
     }
 }
 

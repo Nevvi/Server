@@ -251,3 +251,37 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
+
+  # Connection Groups
+  createConnectionGroup:
+    handler: src/functions/ConnectionGroupHandler.createGroup
+    events:
+      - http:
+          path: /v1/users/{userId}/connection-groups
+          method: post
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+
+  getConnectionGroups:
+    handler: src/functions/ConnectionGroupHandler.getGroups
+    events:
+      - http:
+          path: /v1/users/{userId}/connection-groups
+          method: get
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+
+  deleteConnectionGroup:
+    handler: src/functions/ConnectionGroupHandler.deleteGroup
+    events:
+      - http:
+          path: /v1/users/{userId}/connection-groups/{groupId}
+          method: delete
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request

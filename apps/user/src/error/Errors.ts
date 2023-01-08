@@ -72,6 +72,15 @@ class ConnectionDoesNotExistError extends Error {
     }
 }
 
+class ConnectionGroupExistsError extends Error {
+    private statusCode: number;
+
+    constructor(name: string) {
+        super(`Group already exists for this user with this name: ${name}`)
+        this.statusCode = 409;
+    }
+}
+
 
 export {
     InvalidRequestError,
@@ -81,5 +90,6 @@ export {
     ConnectionRequestDoesNotExistError,
     AlreadyConnectedError,
     ConnectionExistsError,
-    ConnectionDoesNotExistError
+    ConnectionDoesNotExistError,
+    ConnectionGroupExistsError
 }
