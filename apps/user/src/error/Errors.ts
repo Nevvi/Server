@@ -81,6 +81,33 @@ class ConnectionGroupExistsError extends Error {
     }
 }
 
+class GroupDoesNotExistError extends Error {
+    private statusCode: number;
+
+    constructor(id: string) {
+        super(`Group does not exist for this user with this id: ${id}`)
+        this.statusCode = 404;
+    }
+}
+
+class UserAlreadyInGroupError extends Error {
+    private statusCode: number;
+
+    constructor() {
+        super(`User already a member of this group`)
+        this.statusCode = 400;
+    }
+}
+
+class UserNotInGroupError extends Error {
+    private statusCode: number;
+
+    constructor() {
+        super(`User not a member of this group`)
+        this.statusCode = 400;
+    }
+}
+
 
 export {
     InvalidRequestError,
@@ -91,5 +118,8 @@ export {
     AlreadyConnectedError,
     ConnectionExistsError,
     ConnectionDoesNotExistError,
-    ConnectionGroupExistsError
+    ConnectionGroupExistsError,
+    GroupDoesNotExistError,
+    UserAlreadyInGroupError,
+    UserNotInGroupError
 }

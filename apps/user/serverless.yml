@@ -78,6 +78,7 @@ provider:
     DEFAULT_PROFILE_IMAGE: ${param:defaultProfileImage}
     IMAGE_BUCKET: ${self:custom.userImagesBucketName}
     USER_API_SCOPES: user_api/user_api.all
+    EMAIL_FROM_ARN: arn:aws:ses:us-east-1:275527036335:identity/nevvi.net
 
 functions:
   userAuthorizer:
@@ -280,6 +281,44 @@ functions:
     events:
       - http:
           path: /v1/users/{userId}/connection-groups/{groupId}
+          method: delete
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+
+  exportConnectionGroup:
+    handler: src/functions/ConnectionGroupHandler.exportGroup
+    events:
+      - http:
+          path: /v1/users/{userId}/connection-groups/{groupId}/export
+          method: post
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - ses:SendRawEmail
+        Resource: arn:aws:ses:us-east-1:275527036335:identity/nevvi.net
+
+  addToConnectionGroup:
+    handler: src/functions/ConnectionGroupHandler.addConnection
+    events:
+      - http:
+          path: /v1/users/{userId}/connection-groups/{groupId}/connections
+          method: post
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+
+  removeFromConnectionGroup:
+    handler: src/functions/ConnectionGroupHandler.removeConnection
+    events:
+      - http:
+          path: /v1/users/{userId}/connection-groups/{groupId}/connections
           method: delete
           authorizer:
             name: userAuthorizer

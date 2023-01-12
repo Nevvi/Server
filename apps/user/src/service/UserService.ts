@@ -14,9 +14,9 @@ import {
     AlreadyConnectedError,
     ConnectionDoesNotExistError,
     ConnectionRequestDoesNotExistError,
-    ConnectionRequestExistsError,
-    InvalidRequestError,
-    UserNotFoundError
+    ConnectionRequestExistsError, GroupDoesNotExistError,
+    InvalidRequestError, UserAlreadyInGroupError,
+    UserNotFoundError, UserNotInGroupError
 } from "../error/Errors";
 import {RequestStatus} from "../model/connection/RequestStatus";
 import {ConnectionDao} from "../dao/ConnectionDao";
@@ -33,6 +33,9 @@ import {BlockConnectionRequest} from "../model/request/BlockConnectionRequest";
 import {CreateGroupRequest} from "../model/request/CreateGroupRequest";
 import {ConnectionGroup} from "../model/connection/ConnectionGroup";
 import {ConnectionGroupDao} from "../dao/ConnectionGroupDao";
+import {AddConnectionToGroupRequest} from "../model/request/AddConnectionToGroupRequest";
+import {RemoveConnectionFromGroupRequest} from "../model/request/RemoveConnectionFromGroupRequest";
+import {ExportService} from "./ExportService";
 
 class UserService {
     private userDao: UserDao;
@@ -40,6 +43,7 @@ class UserService {
     private connectionDao: ConnectionDao;
     private connectionGroupDao: ConnectionGroupDao;
     private authenticationDao: AuthenticationDao;
+    private exportService: ExportService
 
     constructor() {
         this.userDao = new UserDao()
@@ -47,6 +51,7 @@ class UserService {
         this.imageDao = new ImageDao()
         this.connectionDao = new ConnectionDao()
         this.connectionGroupDao = new ConnectionGroupDao()
+        this.exportService = new ExportService()
     }
 
     async getUser(userId: string): Promise<User | null> {
@@ -307,6 +312,7 @@ class UserService {
         user!!.addBlockedUser(request.otherUserId)
 
         // Delete the connections and connection requests, update the blocked users for this user
+        // TODO Remove blocked user from any connection groups they might be in
         const [successOne, successTwo, successThree] = await Promise.all([
             this.connectionDao.deleteConnection(request.userId, request.otherUserId),
             this.connectionDao.deleteConnection(request.otherUserId, request.userId),
@@ -328,6 +334,85 @@ class UserService {
 
     async deleteConnectionGroup(userId: string, groupId: string): Promise<boolean> {
         return await this.connectionGroupDao.deleteConnectionGroup(userId, groupId)
+    }
+
+    async exportGroup(userId: string, groupId: string): Promise<boolean> {
+        const group = await this.connectionGroupDao.getConnectionGroup(userId, groupId)
+
+        // Make sure the group exists and the user is in the group
+        if (!group) {
+            throw new GroupDoesNotExistError(groupId)
+        }
+        if (!group.connections.length) {
+            throw new InvalidRequestError("Cannot export an empty group")
+        }
+
+        let connections: UserConnectionResponse[] = []
+
+        // Now get all the connection data... could take a bit
+        const maxRunningTasks = 10
+        for (let i = 0; i < group.connections.length; i += maxRunningTasks) {
+            const connectionIdChunk = group.connections.slice(i, i + maxRunningTasks);
+            const connectionsChunk = await Promise.all(connectionIdChunk.map(connectionId => {
+                return this.getConnection(userId, connectionId)
+            }))
+            connections.push(...connectionsChunk)
+        }
+
+        const user = await this.getUser(userId)
+        await this.exportService.sendExport(group.name, user!, connections)
+
+        return true
+    }
+
+    async addConnectionToGroup(request: AddConnectionToGroupRequest): Promise<ConnectionGroup> {
+        const [connection, group] = await Promise.all([
+            this.getConnection(request.userId, request.connectedUserId),
+            this.connectionGroupDao.getConnectionGroup(request.userId, request.groupId)
+        ])
+
+        // Make sure these users are even connected
+        if (!connection) {
+            throw new ConnectionDoesNotExistError()
+        }
+
+        // Also make sure the group exists and the user isn't already in the group
+        if (!group) {
+            throw new GroupDoesNotExistError(request.groupId)
+        }
+        if (group.connections.includes(request.connectedUserId)) {
+            throw new UserAlreadyInGroupError()
+        }
+
+        const success = await this.connectionGroupDao.addUserToGroup(request.userId, request.groupId, request.connectedUserId)
+
+        // instead of making another db call just add to the list manually and return
+        if (success) {
+            group.connections.push(request.connectedUserId)
+        }
+
+        return group
+    }
+
+    async removeConnectionFromGroup(request: RemoveConnectionFromGroupRequest): Promise<ConnectionGroup> {
+        const group = await this.connectionGroupDao.getConnectionGroup(request.userId, request.groupId)
+
+        // Make sure the group exists and the user is in the group
+        if (!group) {
+            throw new GroupDoesNotExistError(request.groupId)
+        }
+        if (!group.connections.includes(request.connectedUserId)) {
+            throw new UserNotInGroupError()
+        }
+
+        const success = await this.connectionGroupDao.removeUserFromGroup(request.userId, request.groupId, request.connectedUserId)
+
+        // instead of making another db call just remove from the list manually and return
+        if (success) {
+            group.connections = group.connections.filter(c => c !== request.connectedUserId)
+        }
+
+        return group
     }
 }
 

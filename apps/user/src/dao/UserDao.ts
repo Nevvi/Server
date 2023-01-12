@@ -10,9 +10,7 @@ const UserDocument = require('./document/UserDocument.ts')
 
 // models
 import {User} from '../model/user/User';
-import {SearchResponse} from "../model/response/SearchResponse";
 import {SlimUser} from "../model/user/SlimUser";
-import {RequestStatus} from "../model/connection/RequestStatus";
 
 const {UserAlreadyExistsError, UserNotFoundError} = require('../error/Errors.ts')
 

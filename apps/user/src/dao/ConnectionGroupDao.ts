@@ -49,6 +49,20 @@ class ConnectionGroupDao {
         return group
     }
 
+    async getConnectionGroup(userId: string, groupId: string): Promise<ConnectionGroup | null> {
+        const result = await this.db.collection(this.collectionName)
+            .findOne({ userId: userId, _id: groupId })
+
+        if (!result) {
+            return null
+        }
+
+        const group = new ConnectionGroup(result)
+        // @ts-ignore
+        group.id = i._id
+        return group
+    }
+
     async getConnectionGroups(userId: string): Promise<ConnectionGroup[]> {
         const results = await this.db.collection(this.collectionName)
             .find({ userId: userId })
@@ -67,6 +81,26 @@ class ConnectionGroupDao {
             .deleteOne({ userId: userId, _id: groupId })
 
         return result.deletedCount === 1
+    }
+
+    async addUserToGroup(userId: string, groupId: string, connectedUserId: string): Promise<boolean> {
+        const result = await this.db.collection(this.collectionName)
+            .updateOne(
+                { userId: userId, _id: groupId },
+                { $push: { connections: connectedUserId }}
+            )
+
+        return result.modifiedCount === 1
+    }
+
+    async removeUserFromGroup(userId: string, groupId: string, connectedUserId: string): Promise<boolean> {
+        const result = await this.db.collection(this.collectionName)
+            .updateOne(
+                { userId: userId, _id: groupId },
+                { $pull: { connections: connectedUserId }}
+            )
+
+        return result.modifiedCount === 1
     }
 }
 
