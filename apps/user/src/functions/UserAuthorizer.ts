@@ -29,6 +29,7 @@ class UserAuthorizer extends AbstractAuthorizer {
             authPolicy.allowMethod(HttpVerb.GET, `/v1/users/${userId}/connection-groups`)
             authPolicy.allowMethod(HttpVerb.DELETE, `/v1/users/${userId}/connection-groups/*`)
             authPolicy.allowMethod(HttpVerb.POST, `/v1/users/${userId}/connection-groups/*/export`)
+            authPolicy.allowMethod(HttpVerb.GET, `/v1/users/${userId}/connection-groups/*/connections`)
             authPolicy.allowMethod(HttpVerb.POST, `/v1/users/${userId}/connection-groups/*/connections`)
             authPolicy.allowMethod(HttpVerb.DELETE, `/v1/users/${userId}/connection-groups/*/connections`)
         } else {

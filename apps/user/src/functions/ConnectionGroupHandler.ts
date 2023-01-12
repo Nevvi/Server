@@ -6,6 +6,7 @@ import {Handler} from "aws-lambda";
 import {CreateGroupRequest} from "../model/request/CreateGroupRequest";
 import {AddConnectionToGroupRequest} from "../model/request/AddConnectionToGroupRequest";
 import {RemoveConnectionFromGroupRequest} from "../model/request/RemoveConnectionFromGroupRequest";
+import {SearchConnectionsRequest} from "../model/request/SearchConnectionsRequest";
 
 const userService = new UserService()
 
@@ -59,6 +60,28 @@ export const exportGroup: Handler = async (event) => {
         await userService.exportGroup(userId, groupId)
 
         return createResponse(200, {})
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
+export const getConnections: Handler = async (event) => {
+    try {
+        console.log("Received request to get connections in group")
+        const {userId, groupId} = event.pathParameters
+
+        const queryParams = (event.queryStringParameters || {})
+        const searchParams = typeof queryParams === 'object' ? queryParams : JSON.parse(queryParams)
+        const name = searchParams.name
+        const limit = searchParams.limit ? parseInt(searchParams.limit) : undefined;
+        const skip = searchParams.skip ? parseInt(searchParams.skip) : undefined
+
+        const request = new SearchConnectionsRequest(userId, name, limit, skip)
+        request.validate()
+
+        const result = await userService.searchGroupConnections(groupId, request)
+
+        return createResponse(200, result)
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)
     }

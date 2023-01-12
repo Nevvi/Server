@@ -337,14 +337,30 @@ class UserService {
     }
 
     async exportGroup(userId: string, groupId: string): Promise<boolean> {
+        const [connections, group] = await Promise.all([
+            this.getGroupConnections(userId, groupId),
+            this.connectionGroupDao.getConnectionGroup(userId, groupId)
+        ])
+
+        if (!group) {
+            throw new GroupDoesNotExistError(groupId)
+        }
+        if (!connections.length) {
+            throw new InvalidRequestError("Cannot export an empty group")
+        }
+
+        const user = await this.getUser(userId)
+        await this.exportService.sendExport(group.name, user!, connections)
+
+        return true
+    }
+
+    async getGroupConnections(userId: string, groupId: string): Promise<UserConnectionResponse[]> {
         const group = await this.connectionGroupDao.getConnectionGroup(userId, groupId)
 
         // Make sure the group exists and the user is in the group
         if (!group) {
             throw new GroupDoesNotExistError(groupId)
-        }
-        if (!group.connections.length) {
-            throw new InvalidRequestError("Cannot export an empty group")
         }
 
         let connections: UserConnectionResponse[] = []
@@ -359,10 +375,12 @@ class UserService {
             connections.push(...connectionsChunk)
         }
 
-        const user = await this.getUser(userId)
-        await this.exportService.sendExport(group.name, user!, connections)
+        return connections
+    }
 
-        return true
+    async searchGroupConnections(groupId: string, request: SearchConnectionsRequest): Promise<SearchResponse> {
+        const {userId, name, limit, skip} = request
+        return await this.connectionGroupDao.getConnections(userId, groupId, name, limit, skip)
     }
 
     async addConnectionToGroup(request: AddConnectionToGroupRequest): Promise<ConnectionGroup> {

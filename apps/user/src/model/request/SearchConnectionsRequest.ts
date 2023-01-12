@@ -5,7 +5,7 @@ import {UserRequest} from './UserRequest';
 
 const searchConnectionsSchema = {
     userId: Joi.string().uuid().required(),
-    name: Joi.string(),
+    name: Joi.string().allow(),
     limit: Joi.number().min(1).max(25).required(),
     skip: Joi.number().min(0).required()
 }

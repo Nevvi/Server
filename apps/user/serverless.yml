@@ -303,6 +303,17 @@ functions:
           - ses:SendRawEmail
         Resource: arn:aws:ses:us-east-1:275527036335:identity/nevvi.net
 
+  getConnectionsInGroup:
+    handler: src/functions/ConnectionGroupHandler.getConnections
+    events:
+      - http:
+          path: /v1/users/{userId}/connection-groups/{groupId}/connections
+          method: get
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+
   addToConnectionGroup:
     handler: src/functions/ConnectionGroupHandler.addConnection
     events:
