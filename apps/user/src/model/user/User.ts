@@ -14,6 +14,7 @@ class User {
     phoneNumber: string;
     phoneNumberConfirmed: boolean;
     onboardingCompleted: boolean;
+    deviceId: string;
     address: Address;
     profileImage: string;
     birthday: string;
@@ -32,6 +33,7 @@ class User {
             phoneNumber,
             phoneNumberConfirmed,
             onboardingCompleted,
+            deviceId,
             email,
             emailConfirmed,
             address,
@@ -55,6 +57,7 @@ class User {
         this.phoneNumber = phoneNumber
         this.phoneNumberConfirmed = phoneNumberConfirmed === true
         this.onboardingCompleted = onboardingCompleted === undefined ? true : onboardingCompleted
+        this.deviceId = deviceId
         this.address = address ? new Address({...address}) : new Address({})
         this.profileImage = profileImage ? profileImage : process.env.DEFAULT_PROFILE_IMAGE
         this.permissionGroups = permissionGroups ? permissionGroups.map((pg: object) => new PermissionGroup({...pg})) : DEFAULT_PERMISSION_GROUPS

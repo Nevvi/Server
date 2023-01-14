@@ -71,7 +71,8 @@ export const updateUser: Handler = async (event) => {
             body.address,
             body.permissionGroups,
             body.birthday,
-            body.onboardingCompleted
+            body.onboardingCompleted,
+            body.deviceId
         )
         request.validate()
 

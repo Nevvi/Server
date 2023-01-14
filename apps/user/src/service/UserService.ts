@@ -97,6 +97,7 @@ class UserService {
         existingUser.phoneNumber = request.phoneNumber ? request.phoneNumber : existingUser.phoneNumber
         existingUser.birthday = request.birthday ? request.birthday : existingUser.birthday
         existingUser.onboardingCompleted = request.onboardingCompleted ? request.onboardingCompleted : existingUser.onboardingCompleted
+        existingUser.deviceId = request.deviceId ? request.deviceId : existingUser.deviceId
         existingUser.address = request.address ? new Address(request.address) : existingUser.address
         existingUser.permissionGroups = request.permissionGroups ?
             request.permissionGroups.map((pg: object) => new PermissionGroup({...pg})) :

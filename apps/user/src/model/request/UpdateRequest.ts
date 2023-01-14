@@ -1,5 +1,3 @@
-
-
 'use strict'
 
 const Joi = require('joi');
@@ -28,7 +26,8 @@ const updateSchema = {
         fields: Joi.array().items(Joi.string()).required()
     })),
     birthday: ExtendedJoi.date().format('YYYY-MM-DD').raw(),
-    onboardingCompleted: Joi.boolean()
+    onboardingCompleted: Joi.boolean(),
+    deviceId: Joi.string()
 }
 
 class UpdateRequest extends UserRequest {
@@ -39,7 +38,16 @@ class UpdateRequest extends UserRequest {
     permissionGroups: object[];
     birthday: string;
     onboardingCompleted: boolean;
-    constructor(firstName: string, lastName: string, phoneNumber: string, address: object, permissionGroups: object[], birthday: string, onboardingCompleted: boolean) {
+    deviceId: string;
+
+    constructor(firstName: string,
+                lastName: string,
+                phoneNumber: string,
+                address: object,
+                permissionGroups: object[],
+                birthday: string,
+                onboardingCompleted: boolean,
+                deviceId: string) {
         super(updateSchema)
         this.firstName = firstName
         this.lastName = lastName
@@ -48,6 +56,7 @@ class UpdateRequest extends UserRequest {
         this.permissionGroups = permissionGroups
         this.birthday = birthday
         this.onboardingCompleted = onboardingCompleted
+        this.deviceId = deviceId
     }
 }
 

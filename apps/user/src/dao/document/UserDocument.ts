@@ -13,6 +13,7 @@ module.exports = class {
     phoneNumber: string;
     phoneNumberConfirmed: boolean;
     onboardingCompleted: boolean;
+    deviceId: string;
     address: Address;
     permissionGroups: PermissionGroup[];
     blockedUsers: string[];
@@ -33,6 +34,7 @@ module.exports = class {
             email,
             emailConfirmed,
             onboardingCompleted,
+            deviceId,
             address,
             permissionGroups,
             blockedUsers,
@@ -56,6 +58,7 @@ module.exports = class {
         this.phoneNumber = phoneNumber
         this.phoneNumberConfirmed = phoneNumberConfirmed === true
         this.onboardingCompleted = onboardingCompleted
+        this.deviceId = deviceId
         this.address = address
         this.birthday = birthday
         this.profileImage = profileImage
