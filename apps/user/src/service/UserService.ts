@@ -325,6 +325,11 @@ class UserService {
     }
 
     async createGroup(request: CreateGroupRequest): Promise<ConnectionGroup> {
+        const groups = await this.getConnectionGroups(request.userId)
+        if (groups.length > 10) {
+            throw new InvalidRequestError("User cannot have more than 10 connection groups")
+        }
+
         return await this.connectionGroupDao.createConnectionGroup(request.userId, request.name)
     }
 
@@ -400,6 +405,9 @@ class UserService {
         }
         if (group.connections.includes(request.connectedUserId)) {
             throw new UserAlreadyInGroupError()
+        }
+        if (group.connections.length > 200) {
+            throw new InvalidRequestError("Group cannot exceed 200 connections")
         }
 
         const success = await this.connectionGroupDao.addUserToGroup(request.userId, request.groupId, request.connectedUserId)
