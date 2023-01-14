@@ -10,7 +10,7 @@ const updateSchema = {
     id: Joi.forbidden(), // can't change this
     email: Joi.forbidden(), // not allowed via this endpoint
     emailConfirmed: Joi.forbidden(), // not allowed via this endpoint
-    phoneNumber: Joi.string(), // not allowed via this endpoint
+    phoneNumber: Joi.string(),
     phoneNumberConfirmed: Joi.forbidden(), // not allowed via this endpoint
     firstName: Joi.string(),
     lastName: Joi.string(),
