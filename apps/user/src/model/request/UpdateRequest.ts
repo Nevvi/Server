@@ -15,11 +15,11 @@ const updateSchema = {
     firstName: Joi.string(),
     lastName: Joi.string(),
     address: Joi.object().keys({
-        street: Joi.string(),
-        unit: Joi.string().allow(""),
-        city: Joi.string(),
-        state: Joi.string(),
-        zipCode: Joi.number()
+        street: Joi.string().allow(null),
+        unit: Joi.string().allow(null),
+        city: Joi.string().allow(null),
+        state: Joi.string().allow(null),
+        zipCode: Joi.number().allow(null)
     }),
     permissionGroups: Joi.array().items(Joi.object().keys({
         name: Joi.string().required(),
