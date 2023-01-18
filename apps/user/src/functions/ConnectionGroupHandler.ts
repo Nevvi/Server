@@ -6,7 +6,7 @@ import {Handler} from "aws-lambda";
 import {CreateGroupRequest} from "../model/request/CreateGroupRequest";
 import {AddConnectionToGroupRequest} from "../model/request/AddConnectionToGroupRequest";
 import {RemoveConnectionFromGroupRequest} from "../model/request/RemoveConnectionFromGroupRequest";
-import {SearchConnectionsRequest} from "../model/request/SearchConnectionsRequest";
+import {SearchGroupsRequest} from "../model/request/SearchGroupsRequest";
 
 const userService = new UserService()
 
@@ -55,8 +55,6 @@ export const exportGroup: Handler = async (event) => {
     try {
         console.log("Received request to export connection group")
         const {userId, groupId} = event.pathParameters
-        console.log(userId, groupId)
-
         await userService.exportGroup(userId, groupId)
 
         return createResponse(200, {})
@@ -76,7 +74,7 @@ export const getConnections: Handler = async (event) => {
         const limit = searchParams.limit ? parseInt(searchParams.limit) : undefined;
         const skip = searchParams.skip ? parseInt(searchParams.skip) : undefined
 
-        const request = new SearchConnectionsRequest(userId, name, limit, skip)
+        const request = new SearchGroupsRequest(userId, name, limit, skip)
         request.validate()
 
         const result = await userService.searchGroupConnections(groupId, request)

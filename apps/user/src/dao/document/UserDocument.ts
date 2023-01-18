@@ -16,7 +16,7 @@ module.exports = class {
     deviceId: string;
     address: Address;
     permissionGroups: PermissionGroup[];
-    blockedUsers: string[];
+    blockedUsers: string[]; // this would be better off in more of a SQL table since it can infinitely grow
     profileImage: string;
     birthday: string;
     createDate: string;

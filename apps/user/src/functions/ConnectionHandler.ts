@@ -92,10 +92,11 @@ export const getConnections: Handler = async (event) => {
         const queryParams = (event.queryStringParameters || {})
         const searchParams = typeof queryParams === 'object' ? queryParams : JSON.parse(queryParams)
         const name = searchParams.name
+        const inSync = searchParams.inSync ? searchParams.inSync === 'true' : undefined;
         const limit = searchParams.limit ? parseInt(searchParams.limit) : undefined;
         const skip = searchParams.skip ? parseInt(searchParams.skip) : undefined
 
-        const request = new SearchConnectionsRequest(userId, name, limit, skip)
+        const request = new SearchConnectionsRequest(userId, name, inSync, limit, skip)
         request.validate()
 
         const result = await userService.getConnections(request)
@@ -123,7 +124,8 @@ export const updateConnection: Handler = async (event) => {
 
         // validate incoming request is good
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
-        const request = new UpdateConnectionRequest(userId, connectedUserId, body.permissionGroupName)
+        const inSync = body.inSync !== undefined ? body.inSync : undefined;
+        const request = new UpdateConnectionRequest(userId, connectedUserId, body.permissionGroupName, inSync)
         request.validate()
 
         const result = await userService.updateConnection(request)

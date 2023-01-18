@@ -85,6 +85,15 @@ class User {
         blockedUsers.delete(userId)
         this.blockedUsers = Array.from(blockedUsers)
     }
+
+    didConnectionDataChange(other: User): boolean {
+        return this.firstName !== other.firstName ||
+            this.lastName !== other.lastName ||
+            this.birthday !== other.birthday ||
+            ((this.phoneNumber && this.phoneNumberConfirmed) !== (other.phoneNumber && other.phoneNumberConfirmed)) ||
+            ((this.email && this.emailConfirmed) !== (other.email && other.emailConfirmed)) ||
+            JSON.stringify(this.address) !== JSON.stringify(other.address)
+    }
 }
 
 export {User}

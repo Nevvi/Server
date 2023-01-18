@@ -19,6 +19,7 @@ import {
 import {Connection} from "../model/connection/Connection";
 import {SlimUser} from "../model/user/SlimUser";
 import {SearchResponse} from "../model/response/SearchResponse";
+import {int} from "aws-sdk/clients/datapipeline";
 
 class ConnectionDao {
     private db: Db;
@@ -105,6 +106,7 @@ class ConnectionDao {
             userId,
             connectedUserId,
             permissionGroupName,
+            inSync: false,
             createDate: now,
             createBy: 'HARDCODED_FOR_NOW',
             updateDate: now,
@@ -123,11 +125,12 @@ class ConnectionDao {
         return new ConnectionRequest(document)
     }
 
-    async getConnections(userId: string, name: string | undefined, limit: number, skip: number): Promise<SearchResponse> {
+    async getConnections(userId: string, name: string | undefined, inSync: boolean | undefined, limit: number, skip: number): Promise<SearchResponse> {
         const pipeline: any = [
             {
                 '$match': {
-                    'userId': userId
+                    'userId': userId,
+                    'inSync': inSync !== undefined ? inSync : { '$exists': true }
                 }
             }, {
                 '$lookup': {
@@ -178,6 +181,7 @@ class ConnectionDao {
             .map(i => {
                 const user = new SlimUser(new UserDocument(i["connectedUser"][0]))
                 user.id = i["connectedUser"][0]._id
+                user.inSync = i["inSync"]
                 return user
             })
 
@@ -197,11 +201,23 @@ class ConnectionDao {
         return result ? new Connection(result) : undefined
     }
 
-    async updateConnection(userId: string, connectedUserId: string, permissionGroup: string): Promise<boolean> {
+    async updateConnection(userId: string, connectedUserId: string, permissionGroup: string | undefined, inSync: boolean | undefined): Promise<boolean> {
+        if (permissionGroup === undefined && inSync === undefined) {
+            return true
+        }
+
+        const fieldsToSet: any = {}
+        if (permissionGroup) {
+            fieldsToSet["permissionGroupName"] = permissionGroup
+        }
+        if (inSync !== undefined) {
+            fieldsToSet["inSync"] = inSync
+        }
+
         const result = await this.db.collection(this.connectionCollectionName)
             .updateOne(
                 {userId: userId, connectedUserId: connectedUserId},
-                {$set: {permissionGroupName: permissionGroup}},
+                {$set: fieldsToSet},
             )
 
         return result && result.modifiedCount === 1
@@ -212,6 +228,18 @@ class ConnectionDao {
             .deleteOne({userId: userId, connectedUserId: connectedUserId},)
 
         return result && result.deletedCount === 1
+    }
+
+    async markConnections(userId: string): Promise<int> {
+        // Update the connections of all the people connected to this user as out of sync
+        // so that they are notified to grab the latest data
+        const result = await this.db.collection(this.connectionCollectionName)
+            .updateMany(
+                {connectedUserId: userId},
+                {$set: {"inSync": false}},
+            )
+
+        return result && result.modifiedCount
     }
 }
 

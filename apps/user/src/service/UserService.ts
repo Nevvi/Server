@@ -36,6 +36,7 @@ import {ConnectionGroupDao} from "../dao/ConnectionGroupDao";
 import {AddConnectionToGroupRequest} from "../model/request/AddConnectionToGroupRequest";
 import {RemoveConnectionFromGroupRequest} from "../model/request/RemoveConnectionFromGroupRequest";
 import {ExportService} from "./ExportService";
+import {SearchGroupsRequest} from "../model/request/SearchGroupsRequest";
 
 class UserService {
     private userDao: UserDao;
@@ -91,6 +92,8 @@ class UserService {
             await this.authenticationDao.updateUser(existingUser.id, request.phoneNumber)
         }
 
+        const userCopy = new User(JSON.parse(JSON.stringify(existingUser)))
+
         // TODO - make this a little more dynamic
         existingUser.firstName = request.firstName ? request.firstName : existingUser.firstName
         existingUser.lastName = request.lastName ? request.lastName : existingUser.lastName
@@ -103,7 +106,17 @@ class UserService {
             request.permissionGroups.map((pg: object) => new PermissionGroup({...pg})) :
             existingUser.permissionGroups
 
-        return await this.userDao.updateUser(existingUser)
+        if (existingUser.didConnectionDataChange(userCopy)) {
+            console.log("User changed!")
+            const [user, markedConnections] = await Promise.all([
+                this.userDao.updateUser(existingUser),
+                this.connectionDao.markConnections(existingUser.id)
+            ])
+            console.log(`Marked ${markedConnections} as out of sync`)
+            return user
+        } else {
+            return await this.userDao.updateUser(existingUser)
+        }
     }
 
     async updateUserContact(existingUser: User, request: UpdateContactRequest): Promise<User> {
@@ -249,8 +262,8 @@ class UserService {
     }
 
     async getConnections(request: SearchConnectionsRequest): Promise<SearchResponse> {
-        const {userId, name, limit, skip} = request
-        return await this.connectionDao.getConnections(userId, name, limit, skip)
+        const {userId, name, inSync, limit, skip} = request
+        return await this.connectionDao.getConnections(userId, name, inSync, limit, skip)
     }
 
     async getConnection(userId: string, otherUserId: string): Promise<UserConnectionResponse> {
@@ -292,7 +305,8 @@ class UserService {
     }
 
     async updateConnection(request: UpdateConnectionRequest): Promise<UserConnectionResponse> {
-        const success = await this.connectionDao.updateConnection(request.userId, request.otherUserId, request.permissionGroupName)
+        // TODO let's just do an update like we do for user
+        const success = await this.connectionDao.updateConnection(request.userId, request.otherUserId, request.permissionGroupName, request.inSync)
         if (!success) {
             throw new ConnectionDoesNotExistError()
         }
@@ -384,7 +398,7 @@ class UserService {
         return connections
     }
 
-    async searchGroupConnections(groupId: string, request: SearchConnectionsRequest): Promise<SearchResponse> {
+    async searchGroupConnections(groupId: string, request: SearchGroupsRequest): Promise<SearchResponse> {
         const {userId, name, limit, skip} = request
         return await this.connectionGroupDao.getConnections(userId, groupId, name, limit, skip)
     }

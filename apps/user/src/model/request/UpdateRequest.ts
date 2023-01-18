@@ -1,5 +1,7 @@
 'use strict'
 
+import {InvalidRequestError} from "../../error/Errors";
+
 const Joi = require('joi');
 const JoiDate = require('@hapi/joi-date')
 import {UserRequest} from './UserRequest';
@@ -12,8 +14,8 @@ const updateSchema = {
     emailConfirmed: Joi.forbidden(), // not allowed via this endpoint
     phoneNumber: Joi.string(),
     phoneNumberConfirmed: Joi.forbidden(), // not allowed via this endpoint
-    firstName: Joi.string(),
-    lastName: Joi.string(),
+    firstName: Joi.string().allow(null),
+    lastName: Joi.string().allow(null),
     address: Joi.object().keys({
         street: Joi.string().allow(null),
         unit: Joi.string().allow(null),
@@ -27,7 +29,7 @@ const updateSchema = {
     })),
     birthday: ExtendedJoi.date().format('YYYY-MM-DD').raw(),
     onboardingCompleted: Joi.boolean(),
-    deviceId: Joi.string()
+    deviceId: Joi.string().allow(null)
 }
 
 class UpdateRequest extends UserRequest {
@@ -57,6 +59,19 @@ class UpdateRequest extends UserRequest {
         this.birthday = birthday
         this.onboardingCompleted = onboardingCompleted
         this.deviceId = deviceId
+    }
+
+
+    validate(body?: object) {
+        super.validate(body);
+
+        if (this.permissionGroups) {
+            // @ts-ignore
+            const permissionGroupNames = new Set(this.permissionGroups.map(pg => pg.name))
+            if (permissionGroupNames.size != this.permissionGroups.length) {
+                throw new InvalidRequestError("Permission groups cannot have the same name")
+            }
+        }
     }
 }
 
