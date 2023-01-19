@@ -2,6 +2,7 @@
 
 import {Address} from "../../model/user/Address";
 import {PermissionGroup} from "../../model/user/PermissionGroup";
+import {DeviceSettings} from "../../model/user/DeviceSettings";
 
 module.exports = class {
     _id: string;
@@ -15,6 +16,7 @@ module.exports = class {
     onboardingCompleted: boolean;
     deviceId: string;
     address: Address;
+    deviceSettings: DeviceSettings;
     permissionGroups: PermissionGroup[];
     blockedUsers: string[]; // this would be better off in more of a SQL table since it can infinitely grow
     profileImage: string;
@@ -36,6 +38,7 @@ module.exports = class {
             onboardingCompleted,
             deviceId,
             address,
+            deviceSettings,
             permissionGroups,
             blockedUsers,
             profileImage,
@@ -60,6 +63,7 @@ module.exports = class {
         this.onboardingCompleted = onboardingCompleted
         this.deviceId = deviceId
         this.address = address
+        this.deviceSettings = deviceSettings
         this.birthday = birthday
         this.profileImage = profileImage
         this.permissionGroups = permissionGroups

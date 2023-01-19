@@ -23,6 +23,10 @@ const updateSchema = {
         state: Joi.string().allow(null),
         zipCode: Joi.number().allow(null)
     }),
+    deviceSettings: Joi.object().keys({
+        autoSync: Joi.boolean().required(),
+        syncAllInformation: Joi.boolean().required(),
+    }),
     permissionGroups: Joi.array().items(Joi.object().keys({
         name: Joi.string().required(),
         fields: Joi.array().items(Joi.string()).required()
@@ -37,6 +41,7 @@ class UpdateRequest extends UserRequest {
     lastName: string;
     phoneNumber: string;
     address: object;
+    deviceSettings: object;
     permissionGroups: object[];
     birthday: string;
     onboardingCompleted: boolean;
@@ -46,6 +51,7 @@ class UpdateRequest extends UserRequest {
                 lastName: string,
                 phoneNumber: string,
                 address: object,
+                deviceSettings: object,
                 permissionGroups: object[],
                 birthday: string,
                 onboardingCompleted: boolean,
@@ -55,6 +61,7 @@ class UpdateRequest extends UserRequest {
         this.lastName = lastName
         this.phoneNumber = phoneNumber
         this.address = address
+        this.deviceSettings = deviceSettings
         this.permissionGroups = permissionGroups
         this.birthday = birthday
         this.onboardingCompleted = onboardingCompleted

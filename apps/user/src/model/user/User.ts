@@ -2,6 +2,7 @@
 
 import {Address} from "./Address";
 import {PermissionGroup} from "./PermissionGroup";
+import {DeviceSettings} from "./DeviceSettings";
 
 const DEFAULT_PERMISSION_GROUPS = [new PermissionGroup({name: "ALL", fields: []})]
 
@@ -16,6 +17,7 @@ class User {
     onboardingCompleted: boolean;
     deviceId: string;
     address: Address;
+    deviceSettings: DeviceSettings;
     profileImage: string;
     birthday: string;
     permissionGroups: PermissionGroup[];
@@ -37,6 +39,7 @@ class User {
             email,
             emailConfirmed,
             address,
+            deviceSettings,
             permissionGroups,
             blockedUsers,
             profileImage,
@@ -59,6 +62,7 @@ class User {
         this.onboardingCompleted = onboardingCompleted === undefined ? true : onboardingCompleted
         this.deviceId = deviceId
         this.address = address ? new Address({...address}) : new Address({})
+        this.deviceSettings = deviceSettings ? new DeviceSettings({...deviceSettings}) : new DeviceSettings({})
         this.profileImage = profileImage ? profileImage : process.env.DEFAULT_PROFILE_IMAGE
         this.permissionGroups = permissionGroups ? permissionGroups.map((pg: object) => new PermissionGroup({...pg})) : DEFAULT_PERMISSION_GROUPS
         this.blockedUsers = blockedUsers || []
