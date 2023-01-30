@@ -1,0 +1,91 @@
+service: notification
+
+frameworkVersion: '3'
+variablesResolutionMode: 20210326
+
+plugins:
+  - serverless-prune-plugin
+  - serverless-iam-roles-per-function
+  - serverless-webpack
+  - serverless-domain-manager
+  - serverless-plugin-split-stacks
+
+
+params:
+  default:
+#    apiUserPoolClient: ${ssm:/nevvi/cognito/nevvi-development-api-notifications/clients/notification/id}
+#    apiUserPoolClientSecret: ${ssm:/nevvi/cognito/nevvi-development-api-notifications/clients/notification/secret}
+    apiUserPoolName: nevvi-development-api-users
+    basePath: ${self:provider.stage}-notification
+    domainName: api.development.nevvi.net
+    mongoUri: ${ssm:/nevvi/mongo/nevvi-development/uri}
+    oauthDomain: https://nevvi-development-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
+  development:
+    basePath: notification
+  production:
+#    apiUserPoolClient: ${ssm:/nevvi/cognito/nevvi-api-notifications/clients/notification/id}
+#    apiUserPoolClientSecret: ${ssm:/nevvi/cognito/nevvi-api-notifications/clients/notification/secret}
+    apiUserPoolName: nevvi-api-users
+    basePath: notification
+    mongoUri: ${ssm:/nevvi/mongo/nevvi/uri}
+    domainName: api.nevvi.net
+    oauthDomain: https://nevvi-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
+
+custom:
+  splitStacks:
+    perFunction: false
+    perType: true
+    perGroupFunction: false
+  prune:
+    automatic: true
+    number: 2
+  customDomain:
+    domainName: ${param:domainName}
+    basePath: ${param:basePath}
+  apiUserPoolName: ${param:apiUserPoolName}
+  apiUserPoolArn: ${ssm:/nevvi/cognito/${self:custom.apiUserPoolName}/arn}
+  mongoUri: ${param:mongoUri}
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  lambdaHashingVersion: 20201221
+  stage: ${opt:stage, 'test'}
+  region: ${opt:region, 'us-east-1'}
+  apiName: notification-${self:provider.stage}
+  stackName: notification-${self:provider.stage}
+  deploymentBucket:
+    name: nevvi-serverless-deployment-bucket
+  deploymentPrefix: ${self:provider.stage}
+  environment:
+    MONGO_URI: ${param:mongoUri}
+    OAUTH_DOMAIN_URL: ${param:oauthDomain}
+#    API_CLIENT_ID: ${param:apiUserPoolClient}
+#    API_CLIENT_SECRET: ${param:apiUserPoolClientSecret}
+    USER_API_SCOPES: user_api/user_api.all
+
+functions:
+  notificationAuthorizer:
+    handler: src/functions/NotificationAuthorizer.authorize
+
+  updateDeviceToken:
+    handler: src/functions/NotificationHandler.updateDeviceToken
+    events:
+      - http:
+          path: /v1/users/{userId}/notifications/token
+          method: post
+          authorizer:
+            name: notificationAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+
+#  createUser:
+#    handler: src/functions/NotificationHandler.createUser
+#    events:
+#      - http:
+#          path: /api/v1/notifications
+#          method: post
+#          authorizer:
+#            arn: ${self:custom.apiUserPoolArn}
+#            scopes:
+#              - notification_api/notification_api.all
