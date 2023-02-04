@@ -241,6 +241,33 @@ class ConnectionDao {
 
         return result && result.modifiedCount
     }
+
+    async getOutOfSyncUsers(skip: int = 0, limit: int = 500): Promise<string[]> {
+        const pipeline = [{
+            $match: {
+                inSync: false
+            }
+        }, {
+            $group: {
+                _id: '$userId',
+                outOfSync: {
+                    $sum: 1
+                }
+            }
+        }, {
+            $skip: skip
+        }, {
+            $limit: limit
+        }]
+
+        const results = await this.db.collection(this.connectionCollectionName)
+            .aggregate(pipeline)
+            .toArray()
+
+        return results.map(doc => {
+            return doc["_id"]
+        })
+    }
 }
 
 export {ConnectionDao}

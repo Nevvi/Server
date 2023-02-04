@@ -13,21 +13,19 @@ plugins:
 
 params:
   default:
-#    apiUserPoolClient: ${ssm:/nevvi/cognito/nevvi-development-api-notifications/clients/notification/id}
-#    apiUserPoolClientSecret: ${ssm:/nevvi/cognito/nevvi-development-api-notifications/clients/notification/secret}
     apiUserPoolName: nevvi-development-api-users
     basePath: ${self:provider.stage}-notification
     domainName: api.development.nevvi.net
     mongoUri: ${ssm:/nevvi/mongo/nevvi-development/uri}
+    notificationQueueArn: ${ssm:/nevvi/sqs/notifications-dev/arn}
     oauthDomain: https://nevvi-development-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
   development:
     basePath: notification
   production:
-#    apiUserPoolClient: ${ssm:/nevvi/cognito/nevvi-api-notifications/clients/notification/id}
-#    apiUserPoolClientSecret: ${ssm:/nevvi/cognito/nevvi-api-notifications/clients/notification/secret}
     apiUserPoolName: nevvi-api-users
     basePath: notification
     mongoUri: ${ssm:/nevvi/mongo/nevvi/uri}
+    notificationQueueArn: ${ssm:/nevvi/sqs/notifications/arn}
     domainName: api.nevvi.net
     oauthDomain: https://nevvi-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
 
@@ -60,8 +58,6 @@ provider:
   environment:
     MONGO_URI: ${param:mongoUri}
     OAUTH_DOMAIN_URL: ${param:oauthDomain}
-#    API_CLIENT_ID: ${param:apiUserPoolClient}
-#    API_CLIENT_SECRET: ${param:apiUserPoolClientSecret}
     USER_API_SCOPES: user_api/user_api.all
 
 functions:
@@ -79,13 +75,9 @@ functions:
             resultTtlInSeconds: 0
             type: request
 
-#  createUser:
-#    handler: src/functions/NotificationHandler.createUser
-#    events:
-#      - http:
-#          path: /api/v1/notifications
-#          method: post
-#          authorizer:
-#            arn: ${self:custom.apiUserPoolArn}
-#            scopes:
-#              - notification_api/notification_api.all
+  sendNotification:
+    handler: src/functions/NotificationHandler.sendNotification
+    events:
+      - sqs:
+          arn: ${param:notificationQueueArn}
+

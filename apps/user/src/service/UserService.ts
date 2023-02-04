@@ -38,6 +38,7 @@ import {RemoveConnectionFromGroupRequest} from "../model/request/RemoveConnectio
 import {ExportService} from "./ExportService";
 import {SearchGroupsRequest} from "../model/request/SearchGroupsRequest";
 import {DeviceSettings} from "../model/user/DeviceSettings";
+import {NotificationDao} from "../dao/NotificationDao";
 
 class UserService {
     private userDao: UserDao;
@@ -46,6 +47,7 @@ class UserService {
     private connectionGroupDao: ConnectionGroupDao;
     private authenticationDao: AuthenticationDao;
     private exportService: ExportService
+    private notificationDao: NotificationDao
 
     constructor() {
         this.userDao = new UserDao()
@@ -54,6 +56,7 @@ class UserService {
         this.connectionDao = new ConnectionDao()
         this.connectionGroupDao = new ConnectionGroupDao()
         this.exportService = new ExportService()
+        this.notificationDao = new NotificationDao()
     }
 
     async getUser(userId: string): Promise<User | null> {
@@ -198,8 +201,12 @@ class UserService {
         }
 
         const requestText = `${requestingUser.firstName} would like to connect!`
-        return await this.connectionDao.createConnectionRequest(requestingUserId,
+        const newRequest = await this.connectionDao.createConnectionRequest(requestingUserId,
             requestedUserId, requestingUser.profileImage, requestText, permissionGroupName)
+
+        await this.notificationDao.sendNotification(requestedUserId, "Nevvi", requestText)
+
+        return newRequest
     }
 
     async confirmConnection(request: ConfirmConnectionRequest): Promise<ConnectionRequest> {
@@ -211,16 +218,23 @@ class UserService {
             throw new ConnectionRequestDoesNotExistError()
         }
 
+        const requestingUser = await this.userDao.getUser(requestingUserId)
+        if (!requestingUser) {
+            throw new UserNotFoundError(requestingUserId)
+        }
+
         if (existingRequest.status !== RequestStatus.PENDING) {
             throw new InvalidRequestError("Request not in a pending state")
         }
 
         // mark connection request as confirmed and create connections
         existingRequest.status = RequestStatus.APPROVED
+        const requestText = `${requestingUser.firstName} accepted your request!`
         await Promise.all([
             this.connectionDao.updateConnectionRequest(existingRequest),
             this.connectionDao.createConnection(requestingUserId, requestedUserId, existingRequest.requestingPermissionGroupName),
-            this.connectionDao.createConnection(requestedUserId, requestingUserId, permissionGroupName)
+            this.connectionDao.createConnection(requestedUserId, requestingUserId, permissionGroupName),
+            this.notificationDao.sendNotification(requestingUserId, "Nevvi", requestText)
         ])
 
         return existingRequest
@@ -456,6 +470,26 @@ class UserService {
         }
 
         return group
+    }
+
+    async notifyOutOfSyncUsers(): Promise<number> {
+        let skip = 0
+        let limit = 500
+        let notified = 0
+        let users = await this.connectionDao.getOutOfSyncUsers(skip, limit)
+
+        while (users.length > 0) {
+            // TODO - send this to SQS for further processing
+            await Promise.all(users.map(async userId => {
+                return this.notificationDao.sendNotification(userId, "You're connections are out of sync!", "Open the app to sync your device")
+            }))
+
+            notified = notified + users.length
+            skip = skip + limit
+            users = await this.connectionDao.getOutOfSyncUsers(skip, limit)
+        }
+
+        return notified
     }
 }
 

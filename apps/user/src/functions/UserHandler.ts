@@ -128,6 +128,16 @@ export const searchUsers: Handler = async (event) => {
     }
 }
 
+export const notifyOutOfSyncUsers: Handler = async (event) => {
+    try {
+        console.log("Received request to notify users of out of sync connections")
+        const notified = await userService.notifyOutOfSyncUsers()
+        return createResponse(200, {users: notified})
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
 async function getUserById(userId: string) {
     const user = await userService.getUser(userId)
 

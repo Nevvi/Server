@@ -18,8 +18,18 @@ class DeviceAlreadyExistsError extends Error {
     }
 }
 
+class DeviceDoesNotExistError extends Error {
+    private statusCode: number;
+
+    constructor(userId: string) {
+        super(`Device does not exist for this user id: ${userId}`)
+        this.statusCode = 404;
+    }
+}
+
 
 export {
     InvalidRequestError,
-    DeviceAlreadyExistsError
+    DeviceAlreadyExistsError,
+    DeviceDoesNotExistError
 }

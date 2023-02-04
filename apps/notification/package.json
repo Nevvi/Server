@@ -23,6 +23,7 @@
     "@hapi/joi-date": "^2.0.1",
     "aws-sdk": "^2.1291.0",
     "axios": "^0.21.1",
+    "firebase-admin": "^11.5.0",
     "fork-ts-checker-webpack-plugin": "^6.5.0",
     "joi": "^17.5.0",
     "mongodb": "^4.12.1",
