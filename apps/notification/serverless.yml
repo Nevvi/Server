@@ -16,6 +16,7 @@ params:
     apiUserPoolName: nevvi-development-api-users
     basePath: ${self:provider.stage}-notification
     domainName: api.development.nevvi.net
+    firebaseCredentials: ${ssm:/nevvi/firebase/credentials}
     mongoUri: ${ssm:/nevvi/mongo/nevvi-development/uri}
     notificationQueueArn: ${ssm:/nevvi/sqs/notifications-dev/arn}
     oauthDomain: https://nevvi-development-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
@@ -56,6 +57,7 @@ provider:
     name: nevvi-serverless-deployment-bucket
   deploymentPrefix: ${self:provider.stage}
   environment:
+    FIREBASE_CREDENTIALS: ${param:firebaseCredentials}
     MONGO_URI: ${param:mongoUri}
     OAUTH_DOMAIN_URL: ${param:oauthDomain}
     USER_API_SCOPES: user_api/user_api.all

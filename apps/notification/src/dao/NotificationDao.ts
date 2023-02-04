@@ -5,9 +5,10 @@ class NotificationDao {
     private admin: any
     constructor() {
         this.admin = require("firebase-admin");
-        const serviceAccount = require("./firebase_creds.json");
+        // @ts-ignore
+        const serviceAccount = new Buffer(process.env.FIREBASE_CREDENTIALS, 'base64').toString();
         this.admin.initializeApp({
-            credential: this.admin.credential.cert(serviceAccount)
+            credential: this.admin.credential.cert(JSON.parse(serviceAccount))
         });
     }
 
