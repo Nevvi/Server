@@ -5,8 +5,8 @@ import {LoginRequest} from "../model/request/LoginRequest";
 import {RegisterRequest} from "../model/request/RegisterRequest";
 import {LogoutRequest} from "../model/request/LogoutRequest";
 import {
-    AdminGetUserResponse, AdminUpdateUserAttributesResponse,
-    ConfirmSignUpResponse, GetUserAttributeVerificationCodeResponse, GetUserResponse,
+    AdminGetUserResponse, AdminUpdateUserAttributesResponse, ConfirmForgotPasswordResponse,
+    ConfirmSignUpResponse, ForgotPasswordResponse, GetUserAttributeVerificationCodeResponse, GetUserResponse,
     GlobalSignOutResponse, InitiateAuthResponse,
     SignUpResponse, UserType, VerifyUserAttributeResponse
 } from "aws-sdk/clients/cognitoidentityserviceprovider";
@@ -121,6 +121,22 @@ class AuthenticationDao {
             AccessToken: request.accessToken,
             AttributeName: request.attributeName,
             Code: request.code
+        }).promise()
+    }
+
+    async forgotPassword(username: string): Promise<ForgotPasswordResponse> {
+        return await this.cognito.forgotPassword({
+            ClientId: this.clientId,
+            Username: username
+        }).promise()
+    }
+
+    async confirmForgotPassword(username: string, code: string, password: string): Promise<ConfirmForgotPasswordResponse> {
+        return await this.cognito.confirmForgotPassword({
+            ClientId: this.clientId,
+            Username: username,
+            ConfirmationCode: code,
+            Password: password
         }).promise()
     }
 }

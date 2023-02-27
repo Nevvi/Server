@@ -1,5 +1,7 @@
 'use strict'
 
+import {ObjectList} from "aws-sdk/clients/s3";
+
 const AWS = require('aws-sdk')
 import {S3} from "aws-sdk";
 
@@ -23,6 +25,24 @@ class ImageDao {
 
         const res = await this.s3.upload(params).promise();
         return res.Location
+    }
+
+    async removeOldImages(userId: string, excludedFile: string) {
+        const objectList = await this.s3.listObjectsV2({
+            Bucket: this.bucket,
+            Delimiter: '/',
+            Prefix: `users/${userId}/images/`
+        }).promise()
+
+        const images: ObjectList = objectList.Contents ? objectList.Contents : []
+        for (const image of images) {
+            if (!image.Key?.includes(excludedFile)) {
+                await this.s3.deleteObject({
+                    Bucket: this.bucket,
+                    Key: image.Key!
+                }).promise()
+            }
+        }
     }
 
     async getImage(key: string): Promise<S3.GetObjectOutput> {

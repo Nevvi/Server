@@ -4,7 +4,7 @@ import {AuthenticationDao} from "../dao/AuthenticationDao";
 import {RegisterRequest} from "../model/request/RegisterRequest";
 import {LoginRequest} from "../model/request/LoginRequest";
 import {ConfirmResponse, LoginResponse, LogoutResponse, RegisterResponse} from "../model/response/Response";
-import {InvalidRequestError, UserPhoneNumberAlreadyExistsError} from "../error/Errors";
+import {InvalidRequestError, UserNotFoundError, UserPhoneNumberAlreadyExistsError} from "../error/Errors";
 import {LogoutRequest} from "../model/request/LogoutRequest";
 import {AdminGetUserResponse, SignUpResponse, UserType} from "aws-sdk/clients/cognitoidentityserviceprovider";
 import {ConfirmSignupRequest} from "../model/request/ConfirmSignupRequest";
@@ -12,6 +12,8 @@ import {ConfirmCodeRequest} from "../model/request/ConfirmCodeRequest";
 import {SendCodeRequest} from "../model/request/SendCodeRequest";
 import {User} from "../model/User";
 import {UpdateRequest} from "../model/request/UpdateRequest";
+import {ForgotPasswordRequest} from "../model/request/ForgotPasswordRequest";
+import {ResetPasswordRequest} from "../model/request/ResetPasswordRequest";
 
 class AuthenticationService {
     private authenticationDao: AuthenticationDao;
@@ -62,6 +64,24 @@ class AuthenticationService {
     async logout(logoutRequest: LogoutRequest): Promise<LogoutResponse> {
         await this.authenticationDao.logout(logoutRequest)
         return new LogoutResponse()
+    }
+
+    async forgotPassword(request: ForgotPasswordRequest) {
+        const user = await this.authenticationDao.getUserByEmail(request.email)
+        if (!user) {
+            return
+        }
+
+        await this.authenticationDao.forgotPassword(user!.Username!)
+    }
+
+    async confirmForgotPassword(request: ResetPasswordRequest) {
+        const user = await this.authenticationDao.getUserByEmail(request.email)
+        if (!user) {
+            throw new UserNotFoundError()
+        }
+
+        await this.authenticationDao.confirmForgotPassword(user!.Username!, request.code, request.password)
     }
 
     async sendCode(request: SendCodeRequest) {

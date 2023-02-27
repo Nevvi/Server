@@ -145,9 +145,10 @@ functions:
     iamRoleStatements:
       - Effect: Allow
         Action:
-          - s3:PutObject
-          - s3:PutObjectAcl
-        Resource: ${self:custom.userImagesBucketArn}/*
+          - s3:*
+        Resource:
+          - ${self:custom.userImagesBucketArn}
+          - ${self:custom.userImagesBucketArn}/*
   searchUsers:
     handler: src/functions/UserHandler.searchUsers
     events:

@@ -11,6 +11,8 @@ import {SendCodeRequest} from "../model/request/SendCodeRequest";
 import {ConfirmCodeRequest} from "../model/request/ConfirmCodeRequest";
 import {UserService} from "../service/UserService";
 import {UpdateRequest} from "../model/request/UpdateRequest";
+import {ForgotPasswordRequest} from "../model/request/ForgotPasswordRequest";
+import {ResetPasswordRequest} from "../model/request/ResetPasswordRequest";
 
 const authenticationService = new AuthenticationService()
 const userService = new UserService()
@@ -79,6 +81,37 @@ export const logout: Handler = async (event: any) => {
         return createResponse(e.statusCode, e.message)
     }
 }
+
+export const forgotPassword: Handler = async (event: any) => {
+    try {
+        console.log("Received request to forgot password")
+        const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
+        const request = new ForgotPasswordRequest(body.email)
+        request.validate()
+        await authenticationService.forgotPassword(request)
+        return createResponse(200, {
+            "message": "A verification code has been sent to that email if it exists."
+        })
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
+export const confirmForgotPassword: Handler = async (event: any) => {
+    try {
+        console.log("Received request to confirm a forgotten password")
+        const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
+        const request = new ResetPasswordRequest(body.email, body.code, body.password)
+        request.validate()
+        await authenticationService.confirmForgotPassword(request)
+        return createResponse(200, {
+            "message": "Password has been reset"
+        })
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
 
 export const sendCode: Handler = async (event: any) => {
     try {

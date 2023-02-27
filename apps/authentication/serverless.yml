@@ -105,6 +105,32 @@ functions:
           path: /v1/logout
           method: post
 
+  forgotPassword:
+    handler: src/functions/AuthHandler.forgotPassword
+    events:
+      - http:
+          path: /v1/forgotPassword
+          method: post
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - cognito-idp:ListUsers
+          - cognito-idp:ForgotPassword
+        Resource: ${self:custom.publicUserPoolArn}
+
+  confirmForgotPassword:
+    handler: src/functions/AuthHandler.confirmForgotPassword
+    events:
+      - http:
+          path: /v1/confirmForgotPassword
+          method: post
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - cognito-idp:ListUsers
+          - cognito-idp:ConfirmForgotPassword
+        Resource: ${self:custom.publicUserPoolArn}
+
   sendVerificationCode:
     handler: src/functions/AuthHandler.sendCode
     events:

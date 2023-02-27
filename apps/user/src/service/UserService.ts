@@ -142,7 +142,9 @@ class UserService {
         }
 
         user.profileImage = await this.imageDao.uploadImage(userId, image, imageName, contentType)
-        return await this.userDao.updateUser(user)
+        const updatedUser = await this.userDao.updateUser(user)
+        await this.imageDao.removeOldImages(userId, imageName)
+        return updatedUser
     }
 
     async requestConnection(request: RequestConnectionRequest): Promise<ConnectionRequest> {
