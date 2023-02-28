@@ -17,6 +17,17 @@ import {ResetPasswordRequest} from "../model/request/ResetPasswordRequest";
 const authenticationService = new AuthenticationService()
 const userService = new UserService()
 
+export const getMinAppVersions: Handler = async (event: any) => {
+    try {
+        console.log("Received request to get min app versions")
+        return createResponse(200, {
+            "ios": process.env.MIN_IOS_VERSION
+        })
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
 export const register: Handler = async (event: any) => {
     try {
         console.log("Received request to create an account")
