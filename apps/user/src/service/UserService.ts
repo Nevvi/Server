@@ -40,6 +40,18 @@ import {SearchGroupsRequest} from "../model/request/SearchGroupsRequest";
 import {DeviceSettings} from "../model/user/DeviceSettings";
 import {NotificationDao} from "../dao/NotificationDao";
 
+const PNF = require('google-libphonenumber').PhoneNumberFormat;
+const phoneUtil = require('google-libphonenumber').PhoneNumberUtil.getInstance();
+
+function formatPhoneNumber(phoneNumber: string): string {
+    const phoneNumberParsed = phoneUtil.parseAndKeepRawInput(phoneNumber, 'US');
+
+    if (!phoneUtil.isValidNumberForRegion(phoneNumberParsed, 'US')) {
+        throw new InvalidRequestError('Invalid phone number format')
+    }
+    return phoneUtil.format(phoneNumberParsed, PNF.E164);
+}
+
 class UserService {
     private userDao: UserDao;
     private imageDao: ImageDao;
@@ -93,7 +105,8 @@ class UserService {
         // once confirmed it will call back here so that we can keep track that it was confirmed
         if (request.phoneNumber && existingUser.phoneNumber !== request.phoneNumber) {
             // TODO - also validate that phone number isn't already being used and confirmed
-            await this.authenticationDao.updateUser(existingUser.id, request.phoneNumber)
+            console.log("Updating user phone number", request.phoneNumber)
+            await this.authenticationDao.updateUser(existingUser.id, formatPhoneNumber(request.phoneNumber))
         }
 
         const userCopy = new User(JSON.parse(JSON.stringify(existingUser)))
@@ -101,7 +114,7 @@ class UserService {
         // TODO - make this a little more dynamic
         existingUser.firstName = request.firstName ? request.firstName : existingUser.firstName
         existingUser.lastName = request.lastName ? request.lastName : existingUser.lastName
-        existingUser.phoneNumber = request.phoneNumber ? request.phoneNumber : existingUser.phoneNumber
+        existingUser.phoneNumber = request.phoneNumber ? formatPhoneNumber(request.phoneNumber) : existingUser.phoneNumber
         existingUser.birthday = request.birthday ? request.birthday : existingUser.birthday
         existingUser.onboardingCompleted = request.onboardingCompleted ? request.onboardingCompleted : existingUser.onboardingCompleted
         existingUser.deviceId = request.deviceId ? request.deviceId : existingUser.deviceId
