@@ -16,6 +16,7 @@ module.exports = class {
     onboardingCompleted: boolean;
     deviceId: string;
     address: Address;
+    mailingAddress: Address;
     deviceSettings: DeviceSettings;
     permissionGroups: PermissionGroup[];
     blockedUsers: string[]; // this would be better off in more of a SQL table since it can infinitely grow
@@ -38,6 +39,7 @@ module.exports = class {
             onboardingCompleted,
             deviceId,
             address,
+            mailingAddress,
             deviceSettings,
             permissionGroups,
             blockedUsers,
@@ -63,6 +65,7 @@ module.exports = class {
         this.onboardingCompleted = onboardingCompleted
         this.deviceId = deviceId
         this.address = address
+        this.mailingAddress = mailingAddress
         this.deviceSettings = deviceSettings
         this.birthday = birthday
         this.profileImage = profileImage

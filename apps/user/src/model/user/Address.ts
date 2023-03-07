@@ -5,7 +5,7 @@ class Address {
     unit: string
     city: string
     state: string
-    zipCode: number
+    zipCode: string
     constructor(body: object) {
         // @ts-ignore
         const {street, unit, city, state, zipCode} = body;
@@ -15,7 +15,7 @@ class Address {
         this.unit = unit
         this.city = city
         this.state = state
-        this.zipCode = zipCode
+        this.zipCode = zipCode ? zipCode.toString() : null
     }
 }
 

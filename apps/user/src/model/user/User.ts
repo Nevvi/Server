@@ -17,6 +17,7 @@ class User {
     onboardingCompleted: boolean;
     deviceId: string;
     address: Address;
+    mailingAddress: Address;
     deviceSettings: DeviceSettings;
     profileImage: string;
     birthday: string;
@@ -39,6 +40,7 @@ class User {
             email,
             emailConfirmed,
             address,
+            mailingAddress,
             deviceSettings,
             permissionGroups,
             blockedUsers,
@@ -62,6 +64,7 @@ class User {
         this.onboardingCompleted = onboardingCompleted === undefined ? true : onboardingCompleted
         this.deviceId = deviceId
         this.address = address ? new Address({...address}) : new Address({})
+        this.mailingAddress = mailingAddress ? new Address({...mailingAddress}) : new Address({})
         this.deviceSettings = deviceSettings ? new DeviceSettings({...deviceSettings}) : new DeviceSettings({})
         this.profileImage = profileImage ? profileImage : process.env.DEFAULT_PROFILE_IMAGE
         this.permissionGroups = permissionGroups ? permissionGroups.map((pg: object) => new PermissionGroup({...pg})) : DEFAULT_PERMISSION_GROUPS
@@ -96,7 +99,8 @@ class User {
             this.birthday !== other.birthday ||
             ((this.phoneNumber && this.phoneNumberConfirmed) !== (other.phoneNumber && other.phoneNumberConfirmed)) ||
             ((this.email && this.emailConfirmed) !== (other.email && other.emailConfirmed)) ||
-            JSON.stringify(this.address) !== JSON.stringify(other.address)
+            JSON.stringify(this.address) !== JSON.stringify(other.address) ||
+            JSON.stringify(this.mailingAddress) !== JSON.stringify(other.address)
     }
 }
 

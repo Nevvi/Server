@@ -69,6 +69,7 @@ export const updateUser: Handler = async (event) => {
             body.lastName,
             body.phoneNumber,
             body.address,
+            body.mailingAddress,
             body.deviceSettings,
             body.permissionGroups,
             body.birthday,

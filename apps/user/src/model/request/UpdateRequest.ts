@@ -21,7 +21,14 @@ const updateSchema = {
         unit: Joi.string().allow(null),
         city: Joi.string().allow(null),
         state: Joi.string().allow(null),
-        zipCode: Joi.number().allow(null)
+        zipCode: Joi.string().allow(null)
+    }),
+    mailingAddress: Joi.object().keys({
+        street: Joi.string().allow(null),
+        unit: Joi.string().allow(null),
+        city: Joi.string().allow(null),
+        state: Joi.string().allow(null),
+        zipCode: Joi.string().allow(null)
     }),
     deviceSettings: Joi.object().keys({
         autoSync: Joi.boolean().required(),
@@ -41,6 +48,7 @@ class UpdateRequest extends UserRequest {
     lastName: string;
     phoneNumber: string;
     address: object;
+    mailingAddress: object;
     deviceSettings: object;
     permissionGroups: object[];
     birthday: string;
@@ -51,6 +59,7 @@ class UpdateRequest extends UserRequest {
                 lastName: string,
                 phoneNumber: string,
                 address: object,
+                mailingAddress: object,
                 deviceSettings: object,
                 permissionGroups: object[],
                 birthday: string,
@@ -61,6 +70,7 @@ class UpdateRequest extends UserRequest {
         this.lastName = lastName
         this.phoneNumber = phoneNumber
         this.address = address
+        this.mailingAddress = mailingAddress
         this.deviceSettings = deviceSettings
         this.permissionGroups = permissionGroups
         this.birthday = birthday
