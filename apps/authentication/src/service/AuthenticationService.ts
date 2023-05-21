@@ -58,6 +58,8 @@ class AuthenticationService {
             user = await this.authenticationDao.getUserByPhone(loginRequest.username)
         }
 
+        console.log(user, authResult)
+
         return new LoginResponse(user?.Username!, authResult.AuthenticationResult!);
     }
 

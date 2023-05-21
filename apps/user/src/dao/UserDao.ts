@@ -102,27 +102,17 @@ class UserDao {
         return user
     }
 
-    async searchUsers(userId: string, name: string, skip: number, limit: number): Promise<SlimUser[]> {
+    async searchUsers(userId: string, name: string, phoneNumbers: string[], skip: number, limit: number): Promise<SlimUser[]> {
         const user = await this.getUser(userId)
         if (!user) {
             return []
         }
 
-        const search = name.split(' ').filter(n => n).join('_').toLowerCase()
-
+        // TODO - if phoneNumbers is long we may want to chunk this out
+        const query = this.getQuery(user, name, phoneNumbers)
         const pipeline = [
             {
-                '$match': {
-                    'nameLower': {
-                        '$regex': search
-                    },
-                    '_id': {
-                        '$nin': [userId, ...user.blockedUsers]
-                    },
-                    'blockedUsers': {
-                        '$nin': [userId]
-                    }
-                }
+                '$match': query
             },
             {
                 '$skip': skip
@@ -160,6 +150,8 @@ class UserDao {
             }
         ]
 
+        console.log(JSON.stringify(pipeline))
+
         const results = await this.db.collection(this.collectionName)
             .aggregate(pipeline)
             .toArray()
@@ -172,20 +164,30 @@ class UserDao {
         })
     }
 
-    async searchUserCount(userId: string, name: string): Promise<number> {
+    async searchUserCount(userId: string, name: string, phoneNumbers: string[]): Promise<number> {
         const user = await this.getUser(userId)
         if (!user) {
             return 0
         }
 
-        const search = name.split(' ').filter(n => n).join('_').toLowerCase()
+        const query = this.getQuery(user, name, phoneNumbers)
+        return await this.db.collection(this.collectionName).countDocuments(query);
+    }
 
-        return await this.db.collection(this.collectionName)
-            .countDocuments({
-                nameLower: { $regex : search},
-                _id: { $nin: [userId, ...user.blockedUsers] }, // don't show user themselves or users they blocked
-                blockedUsers: { $nin: [userId] } // don't show user people that blocked them
-            });
+    private getQuery(user: User, name: string, phoneNumbers: string[]): any {
+        const query: any = {
+            '_id': { '$nin': [user.id, ...user.blockedUsers] }, // don't show user themselves or users they blocked
+            'blockedUsers': { '$nin': [user.id] } // don't show user people that blocked them
+        }
+
+        if (phoneNumbers !== undefined && phoneNumbers.length > 0) {
+            query['phoneNumber'] = { $in : phoneNumbers}
+        } else if(name !== undefined) {
+            const search = name.split(' ').filter(n => n).join('_').toLowerCase()
+            query['nameLower'] = { $regex : search}
+        }
+
+        return query
     }
 
     async getBlockedUsers(userId: string): Promise<SlimUser[]> {

@@ -117,6 +117,7 @@ export const searchUsers: Handler = async (event) => {
             searchParams.name,
             searchParams.email,
             searchParams.phoneNumber,
+            searchParams.phoneNumbers ? searchParams.phoneNumbers.split(",") : undefined,
             searchParams.limit ? parseInt(searchParams.limit) : undefined,
             searchParams.skip ? parseInt(searchParams.skip) : undefined)
 

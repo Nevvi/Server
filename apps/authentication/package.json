@@ -21,6 +21,7 @@
   "homepage": "https://github.com/Nevvi/Server#readme",
   "devDependencies": {
     "@types/aws-lambda": "^8.10.51",
+    "@types/node": "^20.2.2",
     "serverless-domain-manager": "^6.2.0",
     "serverless-webpack": "^5.10.0",
     "ts-loader": "^9.2.6",

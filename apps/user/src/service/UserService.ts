@@ -93,8 +93,8 @@ class UserService {
         }
 
         const [users, userCount] = await Promise.all([
-            this.userDao.searchUsers(userId, request.name, request.skip, request.limit),
-            this.userDao.searchUserCount(userId, request.name)
+            this.userDao.searchUsers(userId, request.name, request.phoneNumbers, request.skip, request.limit),
+            this.userDao.searchUserCount(userId, request.name, request.phoneNumbers)
         ])
 
         return new SearchResponse(users, userCount)
