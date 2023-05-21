@@ -4,7 +4,10 @@ import {Address} from "./Address";
 import {PermissionGroup} from "./PermissionGroup";
 import {DeviceSettings} from "./DeviceSettings";
 
-const DEFAULT_PERMISSION_GROUPS = [new PermissionGroup({name: "ALL", fields: []})]
+const DEFAULT_PERMISSION_GROUPS = [
+    new PermissionGroup({name: "ALL", fields: []}),
+    new PermissionGroup({name: "CONTACT_INFO", fields: ["email", "phoneNumber"]})
+]
 
 class User {
     id: any;
