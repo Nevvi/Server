@@ -92,9 +92,13 @@ class UserService {
             return new SearchResponse(user ? [new SlimUser(user)] : [], user ? 1 : 0)
         }
 
+        const formattedNumbers = request.phoneNumbers ?
+            request.phoneNumbers.map(number => formatPhoneNumber(number)) :
+            []
+
         const [users, userCount] = await Promise.all([
-            this.userDao.searchUsers(userId, request.name, request.phoneNumbers, request.skip, request.limit),
-            this.userDao.searchUserCount(userId, request.name, request.phoneNumbers)
+            this.userDao.searchUsers(userId, request.name, formattedNumbers, request.skip, request.limit),
+            this.userDao.searchUserCount(userId, request.name, formattedNumbers)
         ])
 
         return new SearchResponse(users, userCount)
