@@ -13,7 +13,7 @@ class UserConnectionResponse {
     profileImage: string;
     birthday: string;
     permissionGroup: string;
-    constructor(user: object, permissionGroup: string) {
+    constructor(user: any, permissionGroup: string) {
         // @ts-ignore
         const {id, firstName, lastName, phoneNumber, email, address, mailingAddress, profileImage, birthday} = user;
 

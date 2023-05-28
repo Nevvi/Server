@@ -92,8 +92,15 @@ class UserService {
             return new SearchResponse(user ? [new SlimUser(user)] : [], user ? 1 : 0)
         }
 
-        const formattedNumbers = request.phoneNumbers ?
-            request.phoneNumbers.map(number => formatPhoneNumber(number)) :
+        // @ts-ignore
+        const formattedNumbers: string[] = request.phoneNumbers ?
+            request.phoneNumbers.map(number => {
+                try {
+                    return formatPhoneNumber(number)
+                } catch (err) {
+                    return undefined
+                }
+            }).filter(num => num !== undefined) :
             []
 
         const [users, userCount] = await Promise.all([
@@ -321,19 +328,23 @@ class UserService {
         }
 
         const permissionGroup = user.permissionGroups.find(pg => pg.name === connectionToMe.permissionGroupName)
+        const userObj: any = user.toPlainObj()
 
         // No permission group details exist... return all (shouldn't happen)
         if (!permissionGroup || connectionToMe.permissionGroupName === "ALL") {
             console.log(`No permission group found with name ${connectionToMe.permissionGroupName} for user ${user.id}`)
-            return new UserConnectionResponse(user, theirPermissionGroup)
+            userObj["phoneNumber"] = user.phoneNumberConfirmed ? user.phoneNumber : null
+            return new UserConnectionResponse(userObj, theirPermissionGroup)
         }
 
         // Filter attributes down to only the ones specified in the permission group
-        const userObj = user.toPlainObj()
         let body = {}
         permissionGroup.getFields().forEach(field => {
-            // @ts-ignore
-            body[field] = userObj[field]
+            // only append the phone number if the user has confirmed their phone number
+            if (field !== "phoneNumber" || (field === "phoneNumber" && user.phoneNumberConfirmed)) {
+                // @ts-ignore
+                body[field] = userObj[field]
+            }
         })
 
         // Return the permission group that user put other user in so they can update if they want
