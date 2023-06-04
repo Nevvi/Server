@@ -147,6 +147,34 @@ class UserDao {
                     ],
                     'as': 'connectedUser'
                 }
+            },
+            {
+                '$lookup': {
+                    'from': 'connection_requests',
+                    'let': {
+                        'searchedUserId': '$_id'
+                    },
+                    'pipeline': [
+                        {
+                            '$match': {
+                                '$expr': {
+                                    '$and': [
+                                        {
+                                            '$eq': [
+                                                '$requestedUserId', '$$searchedUserId'
+                                            ]
+                                        }, {
+                                            '$eq': [
+                                                '$requestingUserId', userId
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    'as': 'requestedUser'
+                }
             }
         ]
 
@@ -160,6 +188,7 @@ class UserDao {
             const user = new SlimUser(new User(i))
             user.id = i._id
             user.connected = i["connectedUser"] && i["connectedUser"].length === 1
+            user.requested = i["requestedUser"] && i["requestedUser"].length === 1
             return user
         })
     }
