@@ -332,7 +332,9 @@ class UserService {
 
         // No permission group details exist... return all (shouldn't happen)
         if (!permissionGroup || connectionToMe.permissionGroupName === "ALL") {
-            console.log(`No permission group found with name ${connectionToMe.permissionGroupName} for user ${user.id}`)
+            if (!permissionGroup) {
+                console.log(`No permission group found with name ${connectionToMe.permissionGroupName} for user ${user.id}`)
+            }
             userObj["phoneNumber"] = user.phoneNumberConfirmed ? user.phoneNumber : null
             return new UserConnectionResponse(userObj, theirPermissionGroup)
         }
@@ -415,6 +417,8 @@ class UserService {
         if (!connections.length) {
             throw new InvalidRequestError("Cannot export an empty group")
         }
+
+        console.log(`Exporting ${connections.length} connections for group ${group.name}`)
 
         const user = await this.getUser(userId)
         await this.exportService.sendExport(group.name, user!, connections)

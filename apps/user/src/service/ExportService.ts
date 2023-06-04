@@ -26,6 +26,7 @@ class ExportService {
                 "zipCode": connection.address.zipCode
             }
         })
+
         const workSheet = XLSX.utils.json_to_sheet(data);
         const workBook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workBook, workSheet, "Connections");
@@ -36,6 +37,7 @@ class ExportService {
 
         const subject = `${groupName} export`
         const body = `Hello ${user.firstName},\n\nAttached is the export for the ${connections.length} connection(s) in the ${groupName} group`
+        console.log(subject, body)
 
         await this.emailDao.sendEmail(subject, body, user.email, workbookData)
     }
