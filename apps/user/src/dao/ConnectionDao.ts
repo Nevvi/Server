@@ -50,15 +50,15 @@ class ConnectionDao {
 
     async createConnectionRequest(requestingUser: User, requestedUserId: string, permissionGroupName: string): Promise<ConnectionRequest> {
         const now = new Date().toISOString()
-        const requesterUserId = requestingUser.id
-        const requesterProfileImage = requestingUser.profileImage
+        const requestingUserId = requestingUser.id
+        const requesterImage = requestingUser.profileImage
         const requesterFirstName = requestingUser.firstName
         const requesterLastName = requestingUser.lastName
 
         const document = new ConnectionRequestDocument({
-            requesterUserId,
+            requestingUserId,
             requestedUserId,
-            requesterProfileImage,
+            requesterImage,
             requesterFirstName,
             requesterLastName,
             requestingPermissionGroupName: permissionGroupName,
@@ -186,8 +186,8 @@ class ConnectionDao {
         const users = userResults
             .filter(i => i["connectedUser"] && i["connectedUser"].length === 1)
             .map(i => {
-                const connectionInfo = {...i["connectedUser"][0], permissionGroup: i["permissionGroup"]}
-                const user = new SlimUser(new UserDocument(connectionInfo))
+                const userDoc = new UserDocument(i["connectedUser"][0])
+                const user = new SlimUser({...userDoc, permissionGroup: i["permissionGroupName"]})
                 user.id = i["connectedUser"][0]._id
                 user.inSync = i["inSync"]
                 return user
