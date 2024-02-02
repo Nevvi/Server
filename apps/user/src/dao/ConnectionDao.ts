@@ -132,7 +132,12 @@ class ConnectionDao {
         return new ConnectionRequest(document)
     }
 
-    async getConnections(userId: string, name: string | undefined, inSync: boolean | undefined, limit: number, skip: number): Promise<SearchResponse> {
+    async getConnections(userId: string,
+                         name: string | undefined,
+                         permissionGroup: string | undefined,
+                         inSync: boolean | undefined,
+                         limit: number,
+                         skip: number): Promise<SearchResponse> {
         const pipeline: any = [
             {
                 '$match': {
@@ -154,6 +159,14 @@ class ConnectionDao {
             pipeline.push({
                 '$match': {
                     'connectedUser.nameLower':  {$regex : search}
+                }
+            })
+        }
+
+        if (permissionGroup) {
+            pipeline.push({
+                '$match': {
+                    'permissionGroupName': permissionGroup
                 }
             })
         }

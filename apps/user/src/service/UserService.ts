@@ -311,8 +311,8 @@ class UserService {
     }
 
     async getConnections(request: SearchConnectionsRequest): Promise<SearchResponse> {
-        const {userId, name, inSync, limit, skip} = request
-        return await this.connectionDao.getConnections(userId, name, inSync, limit, skip)
+        const {userId, name, permissionGroup, inSync, limit, skip} = request
+        return await this.connectionDao.getConnections(userId, name, permissionGroup, inSync, limit, skip)
     }
 
     async getConnection(userId: string, otherUserId: string): Promise<UserConnectionResponse> {

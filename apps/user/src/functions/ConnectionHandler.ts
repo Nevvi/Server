@@ -92,11 +92,12 @@ export const getConnections: Handler = async (event) => {
         const queryParams = (event.queryStringParameters || {})
         const searchParams = typeof queryParams === 'object' ? queryParams : JSON.parse(queryParams)
         const name = searchParams.name
+        const permissionGroup = searchParams.permissionGroup
         const inSync = searchParams.inSync ? searchParams.inSync === 'true' : undefined;
         const limit = searchParams.limit ? parseInt(searchParams.limit) : undefined;
         const skip = searchParams.skip ? parseInt(searchParams.skip) : undefined
 
-        const request = new SearchConnectionsRequest(userId, name, inSync, limit, skip)
+        const request = new SearchConnectionsRequest(userId, name, permissionGroup, inSync, limit, skip)
         request.validate()
 
         const result = await userService.getConnections(request)
