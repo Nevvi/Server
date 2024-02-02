@@ -5,7 +5,8 @@ import {RequestStatus} from "../../model/connection/RequestStatus";
 module.exports = class {
     requestingUserId: string;
     requestedUserId: string;
-    requestText: string;
+    requesterFirstName: string;
+    requesterLastName: string;
     requesterImage: string;
     requestingPermissionGroupName: string;
     status: RequestStatus;
@@ -16,12 +17,13 @@ module.exports = class {
 
     constructor(body: object) {
         // @ts-ignore
-        const {requestingUserId, requestedUserId, requestText, requesterImage, requestingPermissionGroupName, status, createDate, updateDate, updateBy, createBy} = body;
+        const {requestingUserId, requestedUserId, requesterFirstName, requesterLastName, requesterImage, requestingPermissionGroupName, status, createDate, updateDate, updateBy, createBy} = body;
 
         // data fields
         this.requestingUserId = requestingUserId
         this.requestedUserId = requestedUserId
-        this.requestText = requestText
+        this.requesterFirstName = requesterFirstName
+        this.requesterLastName = requesterLastName
         this.requesterImage = requesterImage
         this.requestingPermissionGroupName = requestingPermissionGroupName
         this.status = status

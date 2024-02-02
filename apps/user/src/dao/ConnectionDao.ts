@@ -20,6 +20,7 @@ import {Connection} from "../model/connection/Connection";
 import {SlimUser} from "../model/user/SlimUser";
 import {SearchResponse} from "../model/response/SearchResponse";
 import {int} from "aws-sdk/clients/datapipeline";
+import {User} from "../model/user/User";
 
 class ConnectionDao {
     private db: Db;
@@ -47,13 +48,19 @@ class ConnectionDao {
         return (results || []).map(i => new ConnectionRequest(i))
     }
 
-    async createConnectionRequest(requestingUserId: string, requestedUserId: string, requesterImage: string, requestText: string, permissionGroupName: string): Promise<ConnectionRequest> {
+    async createConnectionRequest(requestingUser: User, requestedUserId: string, permissionGroupName: string): Promise<ConnectionRequest> {
         const now = new Date().toISOString()
+        const requesterUserId = requestingUser.id
+        const requesterProfileImage = requestingUser.profileImage
+        const requesterFirstName = requestingUser.firstName
+        const requesterLastName = requestingUser.lastName
+
         const document = new ConnectionRequestDocument({
-            requestingUserId,
+            requesterUserId,
             requestedUserId,
-            requesterImage,
-            requestText,
+            requesterProfileImage,
+            requesterFirstName,
+            requesterLastName,
             requestingPermissionGroupName: permissionGroupName,
             status: RequestStatus.PENDING,
             createDate: now,
@@ -179,7 +186,8 @@ class ConnectionDao {
         const users = userResults
             .filter(i => i["connectedUser"] && i["connectedUser"].length === 1)
             .map(i => {
-                const user = new SlimUser(new UserDocument(i["connectedUser"][0]))
+                const connectionInfo = {...i["connectedUser"][0], permissionGroup: i["permissionGroup"]}
+                const user = new SlimUser(new UserDocument(connectionInfo))
                 user.id = i["connectedUser"][0]._id
                 user.inSync = i["inSync"]
                 return user

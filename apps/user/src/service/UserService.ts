@@ -228,8 +228,8 @@ class UserService {
         }
 
         const requestText = `${requestingUser.firstName} would like to connect!`
-        const newRequest = await this.connectionDao.createConnectionRequest(requestingUserId,
-            requestedUserId, requestingUser.profileImage, requestText, permissionGroupName)
+        const newRequest = await this.connectionDao.createConnectionRequest(requestingUser,
+            requestedUserId, permissionGroupName)
 
         await this.notificationDao.sendNotification(requestedUserId, "Nevvi", requestText)
 
@@ -245,9 +245,15 @@ class UserService {
             throw new ConnectionRequestDoesNotExistError()
         }
 
-        const requestingUser = await this.userDao.getUser(requestingUserId)
+        const [requestingUser, requestedUser] = await Promise.all([
+            this.userDao.getUser(requestingUserId),
+            this.userDao.getUser(requestedUserId),
+        ])
+
         if (!requestingUser) {
             throw new UserNotFoundError(requestingUserId)
+        } else if (!requestedUser) {
+            throw new UserNotFoundError(requestedUserId)
         }
 
         if (existingRequest.status !== RequestStatus.PENDING) {
@@ -256,7 +262,7 @@ class UserService {
 
         // mark connection request as confirmed and create connections
         existingRequest.status = RequestStatus.APPROVED
-        const requestText = `${requestingUser.firstName} accepted your request!`
+        const requestText = `${requestedUser.firstName} accepted your request!`
         await Promise.all([
             this.connectionDao.updateConnectionRequest(existingRequest),
             this.connectionDao.createConnection(requestingUserId, requestedUserId, existingRequest.requestingPermissionGroupName),

@@ -11,10 +11,11 @@ class SlimUser {
     connected: boolean;
     requested: boolean;
     inSync: boolean;
+    permissionGroup: string;
 
     constructor(body: object) {
         // @ts-ignore
-        const {id, firstName, lastName, profileImage, connected, requested, inSync} = body;
+        const {id, firstName, lastName, profileImage, connected, requested, inSync, permissionGroup} = body;
 
         // data fields
         this.id = id
@@ -24,7 +25,9 @@ class SlimUser {
         this.connected = connected === true
         this.requested = requested === true
         this.inSync = inSync === true
+        this.permissionGroup = permissionGroup
     }
+
 }
 
 export {SlimUser}
