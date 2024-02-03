@@ -13,6 +13,7 @@ class User {
     id: any;
     firstName: any;
     lastName: any;
+    bio: any;
     email: string;
     emailConfirmed: boolean;
     phoneNumber: string;
@@ -36,6 +37,7 @@ class User {
             id,
             firstName,
             lastName,
+            bio,
             phoneNumber,
             phoneNumberConfirmed,
             onboardingCompleted,
@@ -59,6 +61,7 @@ class User {
         this.id = id
         this.firstName = firstName
         this.lastName = lastName
+        this.bio = bio
         this.email = email
         this.emailConfirmed = emailConfirmed === true
         this.birthday = birthday
@@ -99,6 +102,7 @@ class User {
     didConnectionDataChange(other: User): boolean {
         return this.firstName !== other.firstName ||
             this.lastName !== other.lastName ||
+            this.bio !== other.bio ||
             this.birthday !== other.birthday ||
             ((this.phoneNumber && this.phoneNumberConfirmed) !== (other.phoneNumber && other.phoneNumberConfirmed)) ||
             ((this.email && this.emailConfirmed) !== (other.email && other.emailConfirmed)) ||

@@ -8,6 +8,7 @@ module.exports = class {
     _id: string;
     firstName: string;
     lastName: string;
+    bio: string;
     nameLower: string | null;
     email: string;
     emailConfirmed: boolean;
@@ -32,6 +33,7 @@ module.exports = class {
             id,
             firstName,
             lastName,
+            bio,
             phoneNumber,
             phoneNumberConfirmed,
             email,
@@ -58,6 +60,7 @@ module.exports = class {
         this.firstName = firstName
         this.lastName = lastName
         this.nameLower = firstName && lastName ? [firstName, lastName].join('_').toLowerCase() : null
+        this.bio = bio
         this.email = email
         this.emailConfirmed = emailConfirmed === true
         this.phoneNumber = phoneNumber

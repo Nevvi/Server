@@ -125,6 +125,7 @@ class UserService {
         // TODO - make this a little more dynamic
         existingUser.firstName = request.firstName ? request.firstName : existingUser.firstName
         existingUser.lastName = request.lastName ? request.lastName : existingUser.lastName
+        existingUser.bio = request.bio ? request.bio : existingUser.bio
         existingUser.phoneNumber = request.phoneNumber ? formatPhoneNumber(request.phoneNumber) : existingUser.phoneNumber
         existingUser.birthday = request.birthday ? request.birthday : existingUser.birthday
         existingUser.onboardingCompleted = request.onboardingCompleted ? request.onboardingCompleted : existingUser.onboardingCompleted

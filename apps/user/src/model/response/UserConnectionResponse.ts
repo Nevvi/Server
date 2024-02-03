@@ -6,6 +6,7 @@ class UserConnectionResponse {
     id: any;
     firstName: any;
     lastName: any;
+    bio: any;
     email: string;
     phoneNumber: string;
     address: Address;
@@ -15,12 +16,13 @@ class UserConnectionResponse {
     permissionGroup: string;
     constructor(user: any, permissionGroup: string) {
         // @ts-ignore
-        const {id, firstName, lastName, phoneNumber, email, address, mailingAddress, profileImage, birthday} = user;
+        const {id, firstName, lastName, bio, phoneNumber, email, address, mailingAddress, profileImage, birthday} = user;
 
         // data fields
         this.id = id
         this.firstName = firstName
         this.lastName = lastName
+        this.bio = bio
         this.email = email
         this.phoneNumber = phoneNumber
         this.address = address ? address : new Address({})

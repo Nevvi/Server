@@ -2,8 +2,6 @@
 
 class Connection {
     userId: string;
-    firstName: string | undefined;
-    lastName: string | undefined;
     profileImage: string | undefined;
     permissionGroupName: string;
     inSync: boolean;

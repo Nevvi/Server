@@ -16,6 +16,7 @@ const updateSchema = {
     phoneNumberConfirmed: Joi.forbidden(), // not allowed via this endpoint
     firstName: Joi.string().allow(null),
     lastName: Joi.string().allow(null),
+    bio: Joi.string().allow(null),
     address: Joi.object().keys({
         street: Joi.string().allow(null),
         unit: Joi.string().allow(null),
@@ -46,6 +47,7 @@ const updateSchema = {
 class UpdateRequest extends UserRequest {
     firstName: string;
     lastName: string;
+    bio: string;
     phoneNumber: string;
     address: object;
     mailingAddress: object;
@@ -57,6 +59,7 @@ class UpdateRequest extends UserRequest {
 
     constructor(firstName: string,
                 lastName: string,
+                bio: string,
                 phoneNumber: string,
                 address: object,
                 mailingAddress: object,
@@ -68,6 +71,7 @@ class UpdateRequest extends UserRequest {
         super(updateSchema)
         this.firstName = firstName
         this.lastName = lastName
+        this.bio = bio
         this.phoneNumber = phoneNumber
         this.address = address
         this.mailingAddress = mailingAddress

@@ -67,6 +67,7 @@ export const updateUser: Handler = async (event) => {
         const request = new UpdateRequest(
             body.firstName,
             body.lastName,
+            body.bio,
             body.phoneNumber,
             body.address,
             body.mailingAddress,

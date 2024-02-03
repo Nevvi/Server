@@ -1,6 +1,6 @@
 'use strict'
 
-const DEFAULT_FIELDS = ["id", "firstName", "lastName", "profileImage"]
+const DEFAULT_FIELDS = ["id", "firstName", "lastName", "bio", "profileImage"]
 
 class PermissionGroup {
     name: string;
