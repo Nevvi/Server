@@ -73,7 +73,7 @@ class User {
         this.mailingAddress = mailingAddress ? new Address({...mailingAddress}) : new Address({})
         this.deviceSettings = deviceSettings ? new DeviceSettings({...deviceSettings}) : new DeviceSettings({})
         this.profileImage = profileImage ? profileImage : process.env.DEFAULT_PROFILE_IMAGE
-        this.permissionGroups = permissionGroups ? permissionGroups.map((pg: object) => new PermissionGroup({...pg})) : DEFAULT_PERMISSION_GROUPS
+        this.permissionGroups = permissionGroups && permissionGroups.length > 0 ? permissionGroups.map((pg: object) => new PermissionGroup({...pg})) : DEFAULT_PERMISSION_GROUPS
         this.blockedUsers = blockedUsers || []
 
         // audit fields
