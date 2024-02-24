@@ -100,9 +100,7 @@ class User {
     }
 
     didConnectionDataChange(other: User): boolean {
-        return this.firstName !== other.firstName ||
-            this.lastName !== other.lastName ||
-            this.bio !== other.bio ||
+        return this.bio !== other.bio ||
             this.birthday !== other.birthday ||
             ((this.phoneNumber && this.phoneNumberConfirmed) !== (other.phoneNumber && other.phoneNumberConfirmed)) ||
             ((this.email && this.emailConfirmed) !== (other.email && other.emailConfirmed)) ||
