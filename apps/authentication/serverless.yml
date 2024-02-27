@@ -63,7 +63,7 @@ provider:
     OAUTH_DOMAIN_URL: ${param:oauthDomain}
     PUBLIC_USER_POOL_CLIENT_ID: ${self:custom.publicUserPoolClientId}
     PUBLIC_USER_POOL_ID: ${self:custom.publicUserPoolId}
-    USER_API_URL: https://${param:domainName}/tyler-user
+    USER_API_URL: https://${param:domainName}/user
     API_CLIENT_ID: ${param:apiUserPoolClient}
     API_CLIENT_SECRET: ${param:apiUserPoolClientSecret}
     USER_API_SCOPES: user_api/user_api.all

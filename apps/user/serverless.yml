@@ -77,7 +77,7 @@ provider:
   environment:
     MONGO_URI: ${param:mongoUri}
     OAUTH_DOMAIN_URL: ${param:oauthDomain}
-    AUTHENTICATION_API_URL: https://${param:domainName}/tyler-authentication
+    AUTHENTICATION_API_URL: https://${param:domainName}/authentication
     API_CLIENT_ID: ${param:apiUserPoolClient}
     API_CLIENT_SECRET: ${param:apiUserPoolClientSecret}
     DEFAULT_PROFILE_IMAGE: ${param:defaultProfileImage}
