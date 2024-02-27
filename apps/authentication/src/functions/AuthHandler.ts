@@ -32,7 +32,7 @@ export const register: Handler = async (event: any) => {
     try {
         console.log("Received request to create an account")
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
-        const request = new RegisterRequest(body.email, body.password)
+        const request = new RegisterRequest(body.username, body.password)
         request.validate()
         const registerResponse = await authenticationService.register(request)
         return createResponse(200, registerResponse)
@@ -53,13 +53,13 @@ export const confirm: Handler = async (event: any) => {
         // Need to do this before returning because user will be logging in immediately after
         // this and requesting data
         console.log("User confirmed.. calling user service to create record", body.username)
-        const user = await authenticationService.getUserByEmail(body.username)
+        const user = await authenticationService.getUserByPhone(body.username)
         console.log("User in cognito", user)
         if (!user) {
-            console.log("Didn't find user with expected email")
+            console.log("Didn't find user with expected phone number")
             return createResponse(500, {})
         }
-        await userService.createUser(user?.userId, user?.email)
+        await userService.createUser(user?.userId, user?.phoneNumber)
 
         return createResponse(200, confirmResponse)
     } catch (e: any) {
@@ -97,11 +97,11 @@ export const forgotPassword: Handler = async (event: any) => {
     try {
         console.log("Received request to forgot password")
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
-        const request = new ForgotPasswordRequest(body.email)
+        const request = new ForgotPasswordRequest(body.username)
         request.validate()
         await authenticationService.forgotPassword(request)
         return createResponse(200, {
-            "message": "A verification code has been sent to that email if it exists."
+            "message": "A verification code has been sent to that number if it exists."
         })
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)
@@ -112,7 +112,7 @@ export const confirmForgotPassword: Handler = async (event: any) => {
     try {
         console.log("Received request to confirm a forgotten password")
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
-        const request = new ResetPasswordRequest(body.email, body.code, body.password)
+        const request = new ResetPasswordRequest(body.username, body.code, body.password)
         request.validate()
         await authenticationService.confirmForgotPassword(request)
         return createResponse(200, {
@@ -146,9 +146,9 @@ export const confirmCode: Handler = async (event: any) => {
         const request = new ConfirmCodeRequest(accessToken, attribute, code)
         request.validate()
 
-        // If we successfully validate the phone number we need to update the user
+        // If we successfully validate the email we need to update the user
         const userId = await authenticationService.confirmCode(request)
-        await userService.confirmUserPhoneNumber(userId)
+        await userService.confirmUserEmail(userId)
 
         return createResponse(200, {"message": "Success"})
     } catch (e: any) {
@@ -162,7 +162,7 @@ export const updateUser: Handler = async (event) => {
 
         // validate incoming request is good
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
-        const request = new UpdateRequest(body.phoneNumber)
+        const request = new UpdateRequest(body.email)
         request.validate()
 
         const {userId} = event.pathParameters

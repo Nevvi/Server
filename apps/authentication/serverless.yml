@@ -8,6 +8,7 @@ plugins:
   - serverless-iam-roles-per-function
   - serverless-webpack
   - serverless-domain-manager
+  - serverless-plugin-split-stacks
 
 params:
   default:
@@ -30,6 +31,10 @@ params:
     publicUserPoolName: nevvi-public-users
 
 custom:
+  splitStacks:
+    perFunction: false
+    perType: true
+    perGroupFunction: false
   prune:
     automatic: true
     number: 2
@@ -45,7 +50,7 @@ custom:
 
 provider:
   name: aws
-  runtime: nodejs14.x
+  runtime: nodejs16.x
   lambdaHashingVersion: 20201221
   stage: ${opt:stage, 'test'}
   region: ${opt:region, 'us-east-1'}
@@ -58,7 +63,7 @@ provider:
     OAUTH_DOMAIN_URL: ${param:oauthDomain}
     PUBLIC_USER_POOL_CLIENT_ID: ${self:custom.publicUserPoolClientId}
     PUBLIC_USER_POOL_ID: ${self:custom.publicUserPoolId}
-    USER_API_URL: https://${param:domainName}/user
+    USER_API_URL: https://${param:domainName}/tyler-user
     API_CLIENT_ID: ${param:apiUserPoolClient}
     API_CLIENT_SECRET: ${param:apiUserPoolClientSecret}
     USER_API_SCOPES: user_api/user_api.all

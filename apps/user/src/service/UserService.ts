@@ -77,7 +77,7 @@ class UserService {
 
     async createUser(request: RegisterRequest): Promise<User> {
         const user = new User(request)
-        user.emailConfirmed = true
+        user.phoneNumberConfirmed = true
         user.onboardingCompleted = false
         return await this.userDao.createUser(user)
     }
@@ -114,10 +114,10 @@ class UserService {
     async updateUser(existingUser: User, request: UpdateRequest): Promise<User> {
         // Need to send new phone number over to auth service to get confirmed
         // once confirmed it will call back here so that we can keep track that it was confirmed
-        if (request.phoneNumber && existingUser.phoneNumber !== request.phoneNumber) {
-            // TODO - also validate that phone number isn't already being used and confirmed
-            console.log("Updating user phone number", request.phoneNumber)
-            await this.authenticationDao.updateUser(existingUser.id, formatPhoneNumber(request.phoneNumber))
+        if (request.email && existingUser.email !== request.email) {
+            // TODO - also validate that email isn't already being used and confirmed
+            console.log("Updating user email", request.email)
+            await this.authenticationDao.updateUser(existingUser.id, request.email)
         }
 
         const userCopy = new User(JSON.parse(JSON.stringify(existingUser)))
@@ -126,7 +126,7 @@ class UserService {
         existingUser.firstName = request.firstName ? request.firstName : existingUser.firstName
         existingUser.lastName = request.lastName ? request.lastName : existingUser.lastName
         existingUser.bio = request.bio ? request.bio : existingUser.bio
-        existingUser.phoneNumber = request.phoneNumber ? formatPhoneNumber(request.phoneNumber) : existingUser.phoneNumber
+        existingUser.email = request.email ? request.email : existingUser.email
         existingUser.birthday = request.birthday ? request.birthday : existingUser.birthday
         existingUser.onboardingCompleted = request.onboardingCompleted ? request.onboardingCompleted : existingUser.onboardingCompleted
         existingUser.deviceId = request.deviceId ? request.deviceId : existingUser.deviceId
@@ -154,9 +154,6 @@ class UserService {
         // TODO - validate this new email or phone number doesn't already exist
         existingUser.email = request.email ? request.email : existingUser.email
         existingUser.emailConfirmed = request.emailConfirmed !== undefined ? request.emailConfirmed : existingUser.emailConfirmed
-
-        existingUser.phoneNumber = request.phoneNumber ? request.phoneNumber : existingUser.phoneNumber
-        existingUser.phoneNumberConfirmed = request.phoneNumberConfirmed !== undefined ? request.phoneNumberConfirmed : existingUser.phoneNumberConfirmed
 
         return await this.userDao.updateUser(existingUser)
     }
@@ -342,15 +339,15 @@ class UserService {
             if (!permissionGroup) {
                 console.log(`No permission group found with name ${connectionToMe.permissionGroupName} for user ${user.id}`)
             }
-            userObj["phoneNumber"] = user.phoneNumberConfirmed ? user.phoneNumber : null
+            userObj["email"] = user.emailConfirmed ? user.email : null
             return new UserConnectionResponse(userObj, theirPermissionGroup)
         }
 
         // Filter attributes down to only the ones specified in the permission group
         let body = {}
         permissionGroup.getFields().forEach(field => {
-            // only append the phone number if the user has confirmed their phone number
-            if (field !== "phoneNumber" || (field === "phoneNumber" && user.phoneNumberConfirmed)) {
+            // only append the email if the user has confirmed it
+            if (field !== "email" || (field === "email" && user.emailConfirmed)) {
                 // @ts-ignore
                 body[field] = userObj[field]
             }

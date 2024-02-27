@@ -4,18 +4,18 @@ const Joi = require('joi');
 import {UserRequest} from './UserRequest';
 
 const schema = {
-    email: Joi.string().email().required(),
+    username: Joi.string().required(),
     code: Joi.string().required(),
     password: Joi.string().required()
 }
 
 class ResetPasswordRequest extends UserRequest {
-    public email: string;
+    public username: string;
     public code: string;
     public password: string;
-    constructor(email: string, code: string, password: string) {
+    constructor(username: string, code: string, password: string) {
         super(schema)
-        this.email = email
+        this.username = username
         this.code = code
         this.password = password
     }

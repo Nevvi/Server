@@ -4,7 +4,7 @@ import {AuthenticationDao} from "../dao/AuthenticationDao";
 import {RegisterRequest} from "../model/request/RegisterRequest";
 import {LoginRequest} from "../model/request/LoginRequest";
 import {ConfirmResponse, LoginResponse, LogoutResponse, RegisterResponse} from "../model/response/Response";
-import {InvalidRequestError, UserNotFoundError, UserPhoneNumberAlreadyExistsError} from "../error/Errors";
+import {InvalidRequestError, UserNotFoundError, UserEmailAlreadyExistsError} from "../error/Errors";
 import {LogoutRequest} from "../model/request/LogoutRequest";
 import {AdminGetUserResponse, SignUpResponse, UserType} from "aws-sdk/clients/cognitoidentityserviceprovider";
 import {ConfirmSignupRequest} from "../model/request/ConfirmSignupRequest";
@@ -26,8 +26,8 @@ class AuthenticationService {
         return this._mapToUser(response)
     }
 
-    async getUserByEmail(email: string): Promise<User | null> {
-        const response = await this.authenticationDao.getUserByEmail(email)
+    async getUserByPhone(phoneNumber: string): Promise<User | null> {
+        const response = await this.authenticationDao.getUserByPhone(phoneNumber)
         if (!response) {
             return null
         }
@@ -53,12 +53,10 @@ class AuthenticationService {
             throw new InvalidRequestError("Received undefined login response")
         }
 
-        let user = await this.authenticationDao.getUserByEmail(loginRequest.username)
+        let user = await this.authenticationDao.getUserByPhone(loginRequest.username)
         if (!user) {
-            user = await this.authenticationDao.getUserByPhone(loginRequest.username)
+            user = await this.authenticationDao.getUserByEmail(loginRequest.username)
         }
-
-        console.log(user, authResult)
 
         return new LoginResponse(user?.Username!, authResult.AuthenticationResult!);
     }
@@ -69,7 +67,7 @@ class AuthenticationService {
     }
 
     async forgotPassword(request: ForgotPasswordRequest) {
-        const user = await this.authenticationDao.getUserByEmail(request.email)
+        const user = await this.authenticationDao.getUserByPhone(request.username)
         if (!user) {
             return
         }
@@ -78,7 +76,7 @@ class AuthenticationService {
     }
 
     async confirmForgotPassword(request: ResetPasswordRequest) {
-        const user = await this.authenticationDao.getUserByEmail(request.email)
+        const user = await this.authenticationDao.getUserByPhone(request.username)
         if (!user) {
             throw new UserNotFoundError()
         }
@@ -97,11 +95,11 @@ class AuthenticationService {
     }
 
     async updateUser(userId: string, request: UpdateRequest): Promise<User> {
-        // Only one phone number can exist per user
-        if (request.phoneNumber !== undefined) {
-            const user = await this.authenticationDao.getUserByPhone(request.phoneNumber)
+        // Only one email can exist per user
+        if (request.email !== undefined) {
+            const user = await this.authenticationDao.getUserByEmail(request.email)
             if (user && this._mapToUserFromUserType(user).userId !== userId) {
-                throw new UserPhoneNumberAlreadyExistsError(request.phoneNumber)
+                throw new UserEmailAlreadyExistsError(request.email)
             }
         }
 
@@ -130,15 +128,15 @@ class AuthenticationService {
 
         // always present after registration
         const userId = attributes.find(a => a.Name === 'sub')!.Value!
-        const email = attributes.find(a => a.Name === 'email')!.Value!
-        const emailVerified = attributes.find(a => a.Name === 'email_verified')!.Value! === 'true'
+        const phone = attributes?.find(a => a.Name === 'phone_number')!.Value!
+        const phoneVerified = attributes?.find(a => a.Name === 'phone_number_verified')!.Value! === 'true'
 
         // not always present
-        const phone = attributes?.find(a => a.Name === 'phone_number')?.Value
-        const phoneVerified = attributes?.find(a => a.Name === 'phone_number_verified')?.Value === 'true'
+        const email = attributes.find(a => a.Name === 'email')?.Value
+        const emailVerified = attributes.find(a => a.Name === 'email_verified')?.Value === 'true'
         const name = attributes?.find(a => a.Name === 'name')?.Value
 
-        return new User(userId, email, emailVerified, phone, phoneVerified, name)
+        return new User(userId, phone, phoneVerified, email, emailVerified, name)
     }
 }
 

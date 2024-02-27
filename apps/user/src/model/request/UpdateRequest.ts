@@ -10,9 +10,9 @@ const ExtendedJoi = Joi.extend(JoiDate)
 
 const updateSchema = {
     id: Joi.forbidden(), // can't change this
-    email: Joi.forbidden(), // not allowed via this endpoint
+    email: Joi.string().email(),
     emailConfirmed: Joi.forbidden(), // not allowed via this endpoint
-    phoneNumber: Joi.string(),
+    phoneNumber: Joi.forbidden(), // not allowed via this endpoint
     phoneNumberConfirmed: Joi.forbidden(), // not allowed via this endpoint
     firstName: Joi.string().allow(null),
     lastName: Joi.string().allow(null),
@@ -47,7 +47,7 @@ class UpdateRequest extends UserRequest {
     firstName: string;
     lastName: string;
     bio: string;
-    phoneNumber: string;
+    email: string;
     address: object;
     mailingAddress: object;
     deviceSettings: object;
@@ -59,7 +59,7 @@ class UpdateRequest extends UserRequest {
     constructor(firstName: string,
                 lastName: string,
                 bio: string,
-                phoneNumber: string,
+                email: string,
                 address: object,
                 mailingAddress: object,
                 deviceSettings: object,
@@ -71,7 +71,7 @@ class UpdateRequest extends UserRequest {
         this.firstName = firstName
         this.lastName = lastName
         this.bio = bio
-        this.phoneNumber = phoneNumber
+        this.email = email
         this.address = address
         this.mailingAddress = mailingAddress
         this.deviceSettings = deviceSettings

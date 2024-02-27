@@ -5,17 +5,17 @@ import {UserRequest} from './UserRequest';
 
 const updateSchema = {
     username: Joi.forbidden(), // can't change this
-    email: Joi.forbidden(), // not allowed via this endpoint
+    email: Joi.string().email(),
     emailConfirmed: Joi.forbidden(), // not allowed via this endpoint
-    phoneNumber: Joi.string(), // not allowed via this endpoint
+    phoneNumber: Joi.forbidden(), // not allowed via this endpoint
     phoneNumberConfirmed: Joi.forbidden(), // not allowed via this endpoint
 }
 
 class UpdateRequest extends UserRequest {
-    phoneNumber: string;
-    constructor(phoneNumber: string) {
+    email: string;
+    constructor(email: string) {
         super(updateSchema)
-        this.phoneNumber = phoneNumber
+        this.email = email
     }
 }
 

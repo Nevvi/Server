@@ -13,9 +13,9 @@ class AuthenticationDao {
         )
     }
 
-    async updateUser(id: string, phoneNumber: string) {
+    async updateUser(id: string, email: string) {
         try {
-            return await this.client.updateUser(id, phoneNumber)
+            return await this.client.updateUser(id, email)
         } catch (e) {
             console.log(`Failed to update user`, e)
             throw e

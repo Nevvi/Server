@@ -20,9 +20,9 @@ class UserNotFoundError extends HttpStatusCodeError {
     }
 }
 
-class UserPhoneNumberAlreadyExistsError extends HttpStatusCodeError {
-    constructor(number: string) {
-        super(`User already exists with number: ${number}`, 409)
+class UserEmailAlreadyExistsError extends HttpStatusCodeError {
+    constructor(email: string) {
+        super(`User already exists with email: ${email}`, 409)
     }
 }
 
@@ -31,5 +31,5 @@ export {
     HttpStatusCodeError,
     InvalidRequestError,
     UserNotFoundError,
-    UserPhoneNumberAlreadyExistsError
+    UserEmailAlreadyExistsError
 }

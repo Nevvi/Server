@@ -8,21 +8,17 @@ const updateSchema = {
     id: Joi.forbidden(), // can't change this
     email: Joi.string().email(), // not always present
     emailConfirmed: Joi.boolean(), // not always present
-    phoneNumber: Joi.string(), // not always present
-    phoneNumberConfirmed: Joi.boolean(), // not always present
+    phoneNumber: Joi.forbidden(), // cannot update via this endpoint
+    phoneNumberConfirmed: Joi.forbidden(), // cannot update via this endpoint
 }
 
 class UpdateContactRequest extends UserRequest {
     email: string;
     emailConfirmed: boolean;
-    phoneNumber: string;
-    phoneNumberConfirmed: boolean;
-    constructor(email: string, emailConfirmed: boolean, phoneNumber: string, phoneNumberConfirmed: boolean) {
+    constructor(email: string, emailConfirmed: boolean) {
         super(updateSchema)
         this.email = email
         this.emailConfirmed = emailConfirmed
-        this.phoneNumber = phoneNumber
-        this.phoneNumberConfirmed = phoneNumberConfirmed
     }
 }
 

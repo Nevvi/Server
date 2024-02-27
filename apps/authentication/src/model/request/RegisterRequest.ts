@@ -4,16 +4,16 @@ const Joi = require('joi');
 import {UserRequest} from './UserRequest';
 
 const registerSchema = {
-    email: Joi.string().email().required(),
+    username: Joi.string().required(),
     password: Joi.string().required()
 }
 
 class RegisterRequest extends UserRequest {
-    public email: string;
+    public username: string;
     public password: string;
-    constructor(email: string, password: string) {
+    constructor(username: string, password: string) {
         super(registerSchema)
-        this.email = email
+        this.username = username
         this.password = password
     }
 }

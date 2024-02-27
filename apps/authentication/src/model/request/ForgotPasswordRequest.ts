@@ -4,14 +4,14 @@ const Joi = require('joi');
 import {UserRequest} from './UserRequest';
 
 const schema = {
-    email: Joi.string().email().required()
+    username: Joi.string().required()
 }
 
 class ForgotPasswordRequest extends UserRequest {
-    public email: string;
-    constructor(email: string) {
+    public username: string;
+    constructor(username: string) {
         super(schema)
-        this.email = email
+        this.username = username
     }
 }
 

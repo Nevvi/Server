@@ -27,7 +27,7 @@ export const createUser: Handler = async (event) => {
     try{
         console.log("Received request to create user")
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
-        const request = new RegisterRequest(body.id, body.email)
+        const request = new RegisterRequest(body.id, body.phoneNumber)
         request.validate()
         const user = await userService.createUser(request)
         return createResponse(201, user)
@@ -42,7 +42,7 @@ export const updateUserContact: Handler = async (event) => {
 
         // validate incoming request is good
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
-        const request = new UpdateContactRequest(body.email, body.emailConfirmed, body.phoneNumber, body.phoneNumberConfirmed)
+        const request = new UpdateContactRequest(body.email, body.emailConfirmed)
         request.validate(body)
 
         // validate user exists with that username
@@ -68,7 +68,7 @@ export const updateUser: Handler = async (event) => {
             body.firstName,
             body.lastName,
             body.bio,
-            body.phoneNumber,
+            body.email,
             body.address,
             body.mailingAddress,
             body.deviceSettings,

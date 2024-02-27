@@ -14,6 +14,7 @@ import {ConfirmSignupRequest} from "../model/request/ConfirmSignupRequest";
 import {UpdateRequest} from "../model/request/UpdateRequest";
 import {SendCodeRequest} from "../model/request/SendCodeRequest";
 import {ConfirmCodeRequest} from "../model/request/ConfirmCodeRequest";
+import {formatPhoneNumber} from "../util/Utils";
 
 const AWS = require('aws-sdk')
 
@@ -52,9 +53,11 @@ class AuthenticationDao {
     }
 
     async getUserByPhone(phoneNumber: string): Promise<UserType | null> {
+        const formatted = formatPhoneNumber(phoneNumber)
+
         const users = await this.cognito.listUsers({
             UserPoolId: this.userPoolId,
-            Filter: `phone_number=\"${phoneNumber}\"`
+            Filter: `phone_number=\"${formatted}\"`
         }).promise()
 
         return users.Users?.length === 1 ? users.Users[0] : null
@@ -62,8 +65,8 @@ class AuthenticationDao {
 
     async updateUser(username: string, request: UpdateRequest): Promise<AdminUpdateUserAttributesResponse> {
         const attributes = []
-        if (request.phoneNumber) {
-            attributes.push({Name: "phone_number", Value: request.phoneNumber})
+        if (request.email) {
+            attributes.push({Name: "email", Value: request.email})
         }
 
         return await this.cognito.adminUpdateUserAttributes({
@@ -74,31 +77,37 @@ class AuthenticationDao {
     }
 
     async register(request: RegisterRequest): Promise<SignUpResponse> {
+        const formatted = formatPhoneNumber(request.username)
+
         return await this.cognito.signUp({
             ClientId: this.clientId,
             Password: request.password,
-            Username: request.email,
+            Username: formatted,
             UserAttributes: [
-                {Name: "email", Value: request.email}
+                {Name: "phone_number", Value: formatted}
             ]
         }).promise()
     }
 
     async confirm(request: ConfirmSignupRequest): Promise<ConfirmSignUpResponse> {
+        const formatted = formatPhoneNumber(request.username)
+
         return await this.cognito.confirmSignUp({
             ClientId: this.clientId,
-            Username: request.username,
+            Username: formatted,
             ConfirmationCode: request.confirmationCode
         }).promise()
     }
 
     async login(request: LoginRequest): Promise<InitiateAuthResponse> {
+        const formatted = formatPhoneNumber(request.username)
+
         return await this.cognito.initiateAuth({
             AuthFlow: 'USER_PASSWORD_AUTH',
             ClientId: this.clientId,
             AuthParameters: {
                 PASSWORD: request.password,
-                USERNAME: request.username
+                USERNAME: formatted
             },
         }).promise()
     }
