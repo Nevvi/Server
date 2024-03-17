@@ -103,6 +103,7 @@ class UserDao {
     }
 
     async searchUsers(userId: string, name: string, phoneNumbers: string[], skip: number, limit: number): Promise<SlimUser[]> {
+        console.log("Searching for users by name " + name + " and phone numbers " + phoneNumbers)
         const user = await this.getUser(userId)
         if (!user) {
             return []

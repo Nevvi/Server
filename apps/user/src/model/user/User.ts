@@ -100,8 +100,7 @@ class User {
     }
 
     didConnectionDataChange(other: User): boolean {
-        return this.bio !== other.bio ||
-            this.birthday !== other.birthday ||
+        return this.birthday !== other.birthday ||
             ((this.phoneNumber && this.phoneNumberConfirmed) !== (other.phoneNumber && other.phoneNumberConfirmed)) ||
             ((this.email && this.emailConfirmed) !== (other.email && other.emailConfirmed)) ||
             JSON.stringify(this.address) !== JSON.stringify(other.address) ||

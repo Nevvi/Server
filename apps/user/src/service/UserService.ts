@@ -37,8 +37,9 @@ import {AddConnectionToGroupRequest} from "../model/request/AddConnectionToGroup
 import {RemoveConnectionFromGroupRequest} from "../model/request/RemoveConnectionFromGroupRequest";
 import {ExportService} from "./ExportService";
 import {SearchGroupsRequest} from "../model/request/SearchGroupsRequest";
-import {DeviceSettings} from "../model/user/DeviceSettings";
 import {NotificationDao} from "../dao/NotificationDao";
+import {DeviceSettings} from "../model/user/DeviceSettings";
+import {int} from "aws-sdk/clients/datapipeline";
 
 const PNF = require('google-libphonenumber').PhoneNumberFormat;
 const phoneUtil = require('google-libphonenumber').PhoneNumberUtil.getInstance();
@@ -51,6 +52,13 @@ function formatPhoneNumber(phoneNumber: string): string {
     }
     return phoneUtil.format(phoneNumberParsed, PNF.E164);
 }
+
+function chunk(arr: any[], size: int): any[][] {
+    return Array.from({length: Math.ceil(arr.length / size)}, (v, i) =>
+        arr.slice(i * size, i * size + size)
+    );
+}
+
 
 class UserService {
     private userDao: UserDao;
@@ -103,10 +111,14 @@ class UserService {
             }).filter(num => num !== undefined) :
             []
 
-        const [users, userCount] = await Promise.all([
-            this.userDao.searchUsers(userId, request.name, formattedNumbers, request.skip, request.limit),
-            this.userDao.searchUserCount(userId, request.name, formattedNumbers)
-        ])
+        // this could be a ton of numbers, chunk out the calls to avoid a massive db call
+        const phoneNumberChunks: string[][] = chunk(formattedNumbers, 40)
+        const userBatches: SlimUser[][] = await Promise.all(phoneNumberChunks.map(chunk => {
+            return this.userDao.searchUsers(userId, request.name, chunk, request.skip, request.limit)
+        }))
+
+        const users: SlimUser[] = userBatches.flat()
+        const userCount = await this.userDao.searchUserCount(userId, request.name, formattedNumbers)
 
         return new SearchResponse(users, userCount)
     }
