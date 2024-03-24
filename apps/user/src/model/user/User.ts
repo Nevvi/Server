@@ -104,7 +104,7 @@ class User {
             ((this.phoneNumber && this.phoneNumberConfirmed) !== (other.phoneNumber && other.phoneNumberConfirmed)) ||
             ((this.email && this.emailConfirmed) !== (other.email && other.emailConfirmed)) ||
             JSON.stringify(this.address) !== JSON.stringify(other.address) ||
-            JSON.stringify(this.mailingAddress) !== JSON.stringify(other.address)
+            JSON.stringify(this.mailingAddress) !== JSON.stringify(other.mailingAddress)
     }
 }
 

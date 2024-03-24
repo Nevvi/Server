@@ -15,7 +15,7 @@ class SearchGroupsRequest extends UserRequest {
     name: string | undefined;
     limit: number;
     skip: number;
-    constructor(userId: string, name: string | undefined, limit: number = 10, skip: number = 0) {
+    constructor(userId: string, name: string | undefined, limit: number = 25, skip: number = 0) {
         super(schema)
         this.userId = userId
         this.name = name

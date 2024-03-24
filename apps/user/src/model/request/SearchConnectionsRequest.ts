@@ -23,7 +23,7 @@ class SearchConnectionsRequest extends UserRequest {
                 name: string | undefined,
                 permissionGroup: string | undefined,
                 inSync: boolean | undefined,
-                limit: number = 10,
+                limit: number = 25,
                 skip: number = 0) {
         super(searchConnectionsSchema)
         this.userId = userId

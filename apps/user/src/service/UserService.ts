@@ -100,25 +100,38 @@ class UserService {
             return new SearchResponse(user ? [new SlimUser(user)] : [], user ? 1 : 0)
         }
 
-        // @ts-ignore
-        const formattedNumbers: string[] = request.phoneNumbers ?
-            request.phoneNumbers.map(number => {
-                try {
-                    return formatPhoneNumber(number)
-                } catch (err) {
-                    return undefined
-                }
-            }).filter(num => num !== undefined) :
-            []
+        let users: SlimUser[] = []
+        let userCount: number = 0
 
-        // this could be a ton of numbers, chunk out the calls to avoid a massive db call
-        const phoneNumberChunks: string[][] = chunk(formattedNumbers, 40)
-        const userBatches: SlimUser[][] = await Promise.all(phoneNumberChunks.map(chunk => {
-            return this.userDao.searchUsers(userId, request.name, chunk, request.skip, request.limit)
-        }))
+        if (request.phoneNumbers) {
+            // @ts-ignore
+            const formattedNumbers: string[] = request.phoneNumbers ?
+                request.phoneNumbers.map(number => {
+                    try {
+                        return formatPhoneNumber(number)
+                    } catch (err) {
+                        return undefined
+                    }
+                }).filter(num => num !== undefined) :
+                []
 
-        const users: SlimUser[] = userBatches.flat()
-        const userCount = await this.userDao.searchUserCount(userId, request.name, formattedNumbers)
+            // this could be a ton of numbers, chunk out the calls to avoid a massive db call
+            const phoneNumberChunks: string[][] = chunk(formattedNumbers, 40)
+            const chunkResults: [SlimUser[], number][] = await Promise.all(phoneNumberChunks.map(chunk => {
+                return Promise.all([
+                    this.userDao.searchUsers(userId, request.name, chunk, request.skip, request.limit),
+                    this.userDao.searchUserCount(userId, request.name, chunk)
+                ])
+            }))
+
+            chunkResults.forEach(([chunkUsers, chunkCount]) => {
+                users.push(...chunkUsers)
+                userCount = userCount + chunkCount
+            })
+        } else {
+            users = await this.userDao.searchUsers(userId, request.name, [], request.skip, request.limit)
+            userCount = await this.userDao.searchUserCount(userId, request.name, [])
+        }
 
         return new SearchResponse(users, userCount)
     }
