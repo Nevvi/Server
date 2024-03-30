@@ -40,6 +40,8 @@ import {SearchGroupsRequest} from "../model/request/SearchGroupsRequest";
 import {NotificationDao} from "../dao/NotificationDao";
 import {DeviceSettings} from "../model/user/DeviceSettings";
 import {int} from "aws-sdk/clients/datapipeline";
+import {getSuggestedConnections} from "../functions/ConnectionHandler";
+import {SuggestionsDao} from "../dao/SuggestionsDao";
 
 const PNF = require('google-libphonenumber').PhoneNumberFormat;
 const phoneUtil = require('google-libphonenumber').PhoneNumberUtil.getInstance();
@@ -65,6 +67,7 @@ class UserService {
     private imageDao: ImageDao;
     private connectionDao: ConnectionDao;
     private connectionGroupDao: ConnectionGroupDao;
+    private suggestionsDao: SuggestionsDao;
     private authenticationDao: AuthenticationDao;
     private exportService: ExportService
     private notificationDao: NotificationDao
@@ -75,6 +78,7 @@ class UserService {
         this.imageDao = new ImageDao()
         this.connectionDao = new ConnectionDao()
         this.connectionGroupDao = new ConnectionGroupDao()
+        this.suggestionsDao = new SuggestionsDao()
         this.exportService = new ExportService()
         this.notificationDao = new NotificationDao()
     }
@@ -254,7 +258,11 @@ class UserService {
         const newRequest = await this.connectionDao.createConnectionRequest(requestingUser,
             requestedUserId, permissionGroupName)
 
-        await this.notificationDao.sendNotification(requestedUserId, "Nevvi", requestText)
+        // send notification and remove the requested user as a suggestion (if they were a suggestion)
+        await Promise.all([
+            this.notificationDao.sendNotification(requestedUserId, "Nevvi", requestText),
+            this.suggestionsDao.removeSuggestion(requestingUserId, requestedUserId)
+        ])
 
         return newRequest
     }
@@ -283,14 +291,16 @@ class UserService {
             throw new InvalidRequestError("Request not in a pending state")
         }
 
-        // mark connection request as confirmed and create connections
+        // mark connection request as confirmed, create connections, send notification, and remove users as suggestions
         existingRequest.status = RequestStatus.APPROVED
         const requestText = `${requestedUser.firstName} accepted your request!`
         await Promise.all([
             this.connectionDao.updateConnectionRequest(existingRequest),
             this.connectionDao.createConnection(requestingUserId, requestedUserId, existingRequest.requestingPermissionGroupName),
             this.connectionDao.createConnection(requestedUserId, requestingUserId, permissionGroupName),
-            this.notificationDao.sendNotification(requestingUserId, "Nevvi", requestText)
+            this.notificationDao.sendNotification(requestingUserId, "Nevvi", requestText),
+            this.suggestionsDao.removeSuggestion(requestingUserId, requestedUserId),
+            this.suggestionsDao.removeSuggestion(requestedUserId, requestingUserId)
         ])
 
         return existingRequest
@@ -317,9 +327,12 @@ class UserService {
         const user = await this.userDao.getUser(request.userId)
         user!!.addBlockedUser(requestingUserId)
 
+        // mark connection request as rejected, update blocked users, and remove users as suggestions
         await Promise.all([
             this.connectionDao.updateConnectionRequest(existingRequest),
-            this.userDao.updateUser(user!!)
+            this.userDao.updateUser(user!!),
+            this.suggestionsDao.removeSuggestion(requestingUserId, requestedUserId),
+            this.suggestionsDao.removeSuggestion(requestedUserId, requestingUserId)
         ])
 
         return existingRequest
@@ -331,6 +344,10 @@ class UserService {
 
     async getBlockedUsers(userId: string): Promise<SlimUser[]> {
         return await this.userDao.getBlockedUsers(userId)
+    }
+
+    async getSuggestedConnections(userId: string): Promise<SlimUser[]> {
+        return await this.suggestionsDao.getSuggestions(userId)
     }
 
     async getConnections(request: SearchConnectionsRequest): Promise<SearchResponse> {

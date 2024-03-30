@@ -84,6 +84,17 @@ export const getRejectedUsers: Handler = async (event) => {
     }
 }
 
+export const getSuggestedConnections: Handler = async (event) => {
+    try {
+        console.log("Received request to get suggested connections")
+        const {userId} = event.pathParameters
+        const result = await userService.getSuggestedConnections(userId)
+        return createResponse(200, result)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
 export const getConnections: Handler = async (event) => {
     try {
         console.log("Received request to get connections")

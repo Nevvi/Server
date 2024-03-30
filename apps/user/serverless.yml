@@ -237,6 +237,17 @@ functions:
             resultTtlInSeconds: 0
             type: request
 
+  getSuggestedConnections:
+    handler: src/functions/ConnectionHandler.getSuggestedConnections
+    events:
+      - http:
+          path: /v1/users/{userId}/connections/suggested
+          method: get
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+
   getConnections:
     handler: src/functions/ConnectionHandler.getConnections
     events:
