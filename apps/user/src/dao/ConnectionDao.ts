@@ -271,22 +271,43 @@ class ConnectionDao {
     }
 
     async getOutOfSyncUsers(skip: int = 0, limit: int = 500): Promise<string[]> {
-        const pipeline = [{
-            $match: {
-                inSync: false
-            }
-        }, {
-            $group: {
-                _id: '$userId',
-                outOfSync: {
-                    $sum: 1
+        const pipeline = [
+            {
+                $match: {
+                    inSync: false
                 }
+            },
+            {
+                $group: {
+                    _id: '$userId',
+                    outOfSync: {
+                        $sum: 1
+                    }
+                }
+            },
+            {
+                $lookup: {
+                    'from': 'users',
+                    'localField': '_id',
+                    'foreignField': '_id',
+                    'as': 'user'
+                }
+            },
+            {
+                $match: {
+                    $or: [
+                        { "user.deviceSettings.notifyOutOfSync": { $exists: false } },
+                        { "user.deviceSettings.notifyOutOfSync": { $eq: true } }
+                    ]
+                }
+            },
+            {
+                $skip: skip
+            },
+            {
+                $limit: limit
             }
-        }, {
-            $skip: skip
-        }, {
-            $limit: limit
-        }]
+        ]
 
         const results = await this.db.collection(this.connectionCollectionName)
             .aggregate(pipeline)

@@ -2,7 +2,7 @@
 
 import {Db, MongoServerError} from "mongodb";
 
-const { MongoClient } = require('mongodb');
+const {MongoClient} = require('mongodb');
 const client = new MongoClient(process.env.MONGO_URI);
 
 // documents
@@ -179,8 +179,6 @@ class UserDao {
             }
         ]
 
-        console.log(JSON.stringify(pipeline))
-
         const results = await this.db.collection(this.collectionName)
             .aggregate(pipeline)
             .toArray()
@@ -206,15 +204,15 @@ class UserDao {
 
     private getQuery(user: User, name: string, phoneNumbers: string[]): any {
         const query: any = {
-            '_id': { '$nin': [user.id, ...user.blockedUsers] }, // don't show user themselves or users they blocked
-            'blockedUsers': { '$nin': [user.id] } // don't show user people that blocked them
+            '_id': {'$nin': [user.id, ...user.blockedUsers]}, // don't show user themselves or users they blocked
+            'blockedUsers': {'$nin': [user.id]} // don't show user people that blocked them
         }
 
         if (phoneNumbers !== undefined && phoneNumbers.length > 0) {
-            query['phoneNumber'] = { $in : phoneNumbers}
-        } else if(name !== undefined) {
+            query['phoneNumber'] = {$in: phoneNumbers}
+        } else if (name !== undefined) {
             const search = name.split(' ').filter(n => n).join('_').toLowerCase()
-            query['nameLower'] = { $regex : search}
+            query['nameLower'] = {$regex: search}
         }
 
         return query
@@ -255,6 +253,45 @@ class UserDao {
                 user.id = i["blockedUser"][0]._id
                 return user
             })
+    }
+
+    async getUsersByBirthday(birthday: Date): Promise<User[]> {
+        const pipeline: any = [
+            {
+                $project: {
+                    _id: 1,
+                    firstName: 1,
+                    lastName: 1,
+                    todayDayOfYear: {
+                        $dayOfYear: birthday,
+                    },
+                    birthDayOfYear: {
+                        $dayOfYear: {
+                            $dateFromString: {
+                                dateString: "$birthday",
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $match: {
+                    $expr: {
+                        $eq: ["$todayDayOfYear", "$birthDayOfYear"]
+                    }
+                }
+            }
+        ]
+
+        const results = await this.db.collection(this.collectionName)
+            .aggregate(pipeline)
+            .toArray()
+
+        return results.map(res => {
+            const user = new User(res)
+            user.id = res._id
+            return user
+        })
     }
 }
 

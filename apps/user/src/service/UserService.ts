@@ -42,6 +42,7 @@ import {DeviceSettings} from "../model/user/DeviceSettings";
 import {int} from "aws-sdk/clients/datapipeline";
 import {getSuggestedConnections} from "../functions/ConnectionHandler";
 import {SuggestionsDao} from "../dao/SuggestionsDao";
+import {chmod} from "fs";
 
 const PNF = require('google-libphonenumber').PhoneNumberFormat;
 const phoneUtil = require('google-libphonenumber').PhoneNumberUtil.getInstance();
@@ -569,6 +570,36 @@ class UserService {
             skip = skip + limit
             users = await this.connectionDao.getOutOfSyncUsers(skip, limit)
         }
+
+        return notified
+    }
+
+    async notifyBirthdays(): Promise<number> {
+        let notified = 0
+
+        // Get people with a birthday today
+        const easternTime = new Date().toLocaleString("en-US", {timeZone: "America/New_York"});
+        const currentDate = new Date(easternTime)
+
+        let users = await this.userDao.getUsersByBirthday(currentDate)
+
+        // TODO - clean this up and check permission groups
+        const chunks: User[][] = chunk(users, 40)
+        await Promise.all(chunks.map(async userChunk => {
+            return await Promise.all(userChunk.map(async user => {
+                let connections = await this.connectionDao.getConnections(user.id, undefined, undefined, undefined, 100000, 0)
+                const text = `It's ${user.firstName} ${user.lastName}'s birthday!`
+                const body = `Wish them a happy birthday!`
+                return await Promise.all(connections.users.map(async connection => {
+                    let connectionUser = await this.userDao.getUser(connection.id)
+                    if (connectionUser?.deviceSettings.notifyBirthdays) {
+                        notified += 1
+                        console.log(`Notifying ${connection.id} about birthday for ${user.id}`)
+                        return this.notificationDao.sendNotification(connection.id, text, body)
+                    }
+                }))
+            }))
+        }))
 
         return notified
     }

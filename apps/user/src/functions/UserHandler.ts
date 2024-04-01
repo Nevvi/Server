@@ -141,6 +141,16 @@ export const notifyOutOfSyncUsers: Handler = async (event) => {
     }
 }
 
+export const notifyBirthdays: Handler = async (event) => {
+    try {
+        console.log("Received request to notify connections of a birthday")
+        const notified = await userService.notifyBirthdays()
+        return createResponse(200, {users: notified})
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
 async function getUserById(userId: string) {
     const user = await userService.getUser(userId)
 

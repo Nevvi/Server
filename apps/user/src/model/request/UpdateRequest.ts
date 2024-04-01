@@ -32,7 +32,9 @@ const updateSchema = {
         zipCode: Joi.string().allow(null)
     }),
     deviceSettings: Joi.object().keys({
-        autoSync: Joi.boolean().required()
+        autoSync: Joi.boolean(),
+        notifyOutOfSync: Joi.boolean(),
+        notifyBirthdays: Joi.boolean(),
     }),
     permissionGroups: Joi.array().items(Joi.object().keys({
         name: Joi.string().required(),

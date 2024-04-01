@@ -171,6 +171,18 @@ functions:
           - sqs:SendMessage
         Resource: ${self:custom.notificationQueueArn}
 
+  notifyBirthdays:
+    handler: src/functions/UserHandler.notifyBirthdays
+    events:
+      - schedule:
+          rate: cron(0 15 * * ? *) # 10am est every day (15 UTC - 5 hours)
+          enabled: true
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - sqs:SendMessage
+        Resource: ${self:custom.notificationQueueArn}
+
   # Connection Requests
   createConnectionRequest:
     handler: src/functions/ConnectionHandler.requestConnection
