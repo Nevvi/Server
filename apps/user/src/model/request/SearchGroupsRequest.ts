@@ -6,7 +6,7 @@ import {UserRequest} from './UserRequest';
 const schema = {
     userId: Joi.string().uuid().required(),
     name: Joi.string().allow(),
-    limit: Joi.number().min(1).max(25).required(),
+    limit: Joi.number().min(1).max(500).required(),
     skip: Joi.number().min(0).required()
 }
 

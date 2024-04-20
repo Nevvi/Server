@@ -588,8 +588,9 @@ class UserService {
         await Promise.all(chunks.map(async userChunk => {
             return await Promise.all(userChunk.map(async user => {
                 let connections = await this.connectionDao.getConnections(user.id, undefined, undefined, undefined, 100000, 0)
+                console.log(`Sending notification to ${connections.count} connections for ${user.firstName} ${user.lastName}'s birthday`)
                 const text = `It's ${user.firstName} ${user.lastName}'s birthday!`
-                const body = `Wish them a happy birthday!`
+                const body = `Wish them a happy birthday`
                 return await Promise.all(connections.users.map(async connection => {
                     let connectionUser = await this.userDao.getUser(connection.id)
                     if (connectionUser?.deviceSettings.notifyBirthdays) {

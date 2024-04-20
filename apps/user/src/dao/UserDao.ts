@@ -258,27 +258,9 @@ class UserDao {
     async getUsersByBirthday(birthday: Date): Promise<User[]> {
         const pipeline: any = [
             {
-                $project: {
-                    _id: 1,
-                    firstName: 1,
-                    lastName: 1,
-                    todayDayOfYear: {
-                        $dayOfYear: birthday,
-                    },
-                    birthDayOfYear: {
-                        $dayOfYear: {
-                            $dateFromString: {
-                                dateString: "$birthday",
-                            }
-                        }
-                    }
-                }
-            },
-            {
-                $match: {
-                    $expr: {
-                        $eq: ["$todayDayOfYear", "$birthDayOfYear"]
-                    }
+                '$match': {
+                    'birthdayMonth': birthday.getMonth(),
+                    'birthdayDayOfMonth': birthday.getDate(),
                 }
             }
         ]

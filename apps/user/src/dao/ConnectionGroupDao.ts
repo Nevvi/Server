@@ -140,6 +140,13 @@ class ConnectionGroupDao {
         }
 
         pipeline.push({
+            '$sort': {
+                "connectedUser.lastName": 1,
+                "connectedUser.firstName": 1
+            }
+        })
+
+        pipeline.push({
             '$facet': {
                 'connections': [
                     {

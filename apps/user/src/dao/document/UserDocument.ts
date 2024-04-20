@@ -23,6 +23,8 @@ module.exports = class {
     blockedUsers: string[]; // this would be better off in more of a SQL table since it can infinitely grow
     profileImage: string;
     birthday: string;
+    birthdayMonth: number;
+    birthdayDayOfMonth: number;
     createDate: string;
     createBy: string;
     updateDate: string;
@@ -53,8 +55,11 @@ module.exports = class {
             createBy
         } = body;
 
-        // dynamodb fields
+        // database-only fields
         this._id = id
+        let birthdate = new Date(birthday)
+        this.birthdayMonth = birthdate.getMonth() // note that `getMonth` is 0-indexed
+        this.birthdayDayOfMonth = birthdate.getDate() // note that `getDate` is NOT 0-indexed
 
         // data fields
         this.firstName = firstName
