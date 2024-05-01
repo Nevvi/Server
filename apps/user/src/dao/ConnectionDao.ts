@@ -132,6 +132,11 @@ class ConnectionDao {
         return new ConnectionRequest(document)
     }
 
+    async permissionGroupConnectionsExist(userId: string, permissionGroup: string): Promise<boolean> {
+        const connections = await this.getConnections(userId, undefined, permissionGroup, undefined, 1, 0)
+        return connections.count > 0
+    }
+
     async getConnections(userId: string,
                          name: string | undefined,
                          permissionGroup: string | undefined,

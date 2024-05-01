@@ -62,6 +62,10 @@ function chunk(arr: any[], size: int): any[][] {
     );
 }
 
+function areSetsEqual(a: any, b: any): boolean {
+    return a.size === b.size && [...a].every(value => b.has(value));
+}
+
 
 class UserService {
     private userDao: UserDao;
@@ -150,33 +154,46 @@ class UserService {
             await this.authenticationDao.updateUser(existingUser.id, request.email)
         }
 
-        const userCopy = new User(JSON.parse(JSON.stringify(existingUser)))
+        const updatedUser = new User(JSON.parse(JSON.stringify(existingUser)))
 
         // TODO - make this a little more dynamic
-        existingUser.firstName = request.firstName ? request.firstName : existingUser.firstName
-        existingUser.lastName = request.lastName ? request.lastName : existingUser.lastName
-        existingUser.bio = request.bio ? request.bio : existingUser.bio
-        existingUser.email = request.email ? request.email : existingUser.email
-        existingUser.birthday = request.birthday ? request.birthday : existingUser.birthday
-        existingUser.onboardingCompleted = request.onboardingCompleted ? request.onboardingCompleted : existingUser.onboardingCompleted
-        existingUser.deviceId = request.deviceId ? request.deviceId : existingUser.deviceId
-        existingUser.address = request.address ? new Address(request.address) : existingUser.address
-        existingUser.mailingAddress = request.mailingAddress ? new Address(request.mailingAddress) : existingUser.mailingAddress
-        existingUser.deviceSettings = request.deviceSettings ? new DeviceSettings(request.deviceSettings) : existingUser.deviceSettings
-        existingUser.permissionGroups = request.permissionGroups ?
+        updatedUser.firstName = request.firstName ? request.firstName : updatedUser.firstName
+        updatedUser.lastName = request.lastName ? request.lastName : updatedUser.lastName
+        updatedUser.bio = request.bio ? request.bio : updatedUser.bio
+        updatedUser.email = request.email ? request.email : updatedUser.email
+        updatedUser.birthday = request.birthday ? request.birthday : updatedUser.birthday
+        updatedUser.onboardingCompleted = request.onboardingCompleted ? request.onboardingCompleted : updatedUser.onboardingCompleted
+        updatedUser.deviceId = request.deviceId ? request.deviceId : updatedUser.deviceId
+        updatedUser.address = request.address ? new Address(request.address) : updatedUser.address
+        updatedUser.mailingAddress = request.mailingAddress ? new Address(request.mailingAddress) : updatedUser.mailingAddress
+        updatedUser.deviceSettings = request.deviceSettings ? new DeviceSettings(request.deviceSettings) : updatedUser.deviceSettings
+        updatedUser.permissionGroups = request.permissionGroups ?
             request.permissionGroups.map((pg: object) => new PermissionGroup({...pg})) :
-            existingUser.permissionGroups
+            updatedUser.permissionGroups
 
-        if (existingUser.didConnectionDataChange(userCopy)) {
+        const updatedPermissionGroups = new Set(updatedUser.permissionGroups.map(pg => pg.name))
+        const removedPermissionGroups = existingUser.permissionGroups.filter(pg => !updatedPermissionGroups.has(pg.name))
+        for (const permissionGroup of removedPermissionGroups) {
+            if (permissionGroup.name == "ALL") {
+                throw new InvalidRequestError(`Cannot delete the default ALL group`)
+            }
+
+            const connectionsExist = await this.connectionDao.permissionGroupConnectionsExist(updatedUser.id, permissionGroup.name)
+            if (connectionsExist) {
+                throw new InvalidRequestError(`Cannot delete permission group ${permissionGroup.name} while there are existing connections`)
+            }
+        }
+
+        if (updatedUser.didConnectionDataChange(existingUser)) {
             console.log("User changed!")
             const [user, markedConnections] = await Promise.all([
-                this.userDao.updateUser(existingUser),
-                this.connectionDao.markConnections(existingUser.id)
+                this.userDao.updateUser(updatedUser),
+                this.connectionDao.markConnections(updatedUser.id)
             ])
             console.log(`Marked ${markedConnections} as out of sync`)
             return user
         } else {
-            return await this.userDao.updateUser(existingUser)
+            return await this.userDao.updateUser(updatedUser)
         }
     }
 
