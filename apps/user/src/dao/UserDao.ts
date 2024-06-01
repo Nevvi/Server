@@ -11,6 +11,7 @@ const UserDocument = require('./document/UserDocument.ts')
 // models
 import {User} from '../model/user/User';
 import {SlimUser} from "../model/user/SlimUser";
+import {int} from "aws-sdk/clients/datapipeline";
 
 const {UserAlreadyExistsError, UserNotFoundError} = require('../error/Errors.ts')
 
@@ -100,6 +101,28 @@ class UserDao {
         }
 
         return user
+    }
+
+    async getUsers(skip: number = 0, limit: number = 1000): Promise<SlimUser[]> {
+        console.log("Getting users for skip: " + skip + " and limit: " + limit)
+        const pipeline = [
+            {
+                '$skip': skip
+            },
+            {
+                '$limit': limit
+            },
+        ]
+
+        const results = await this.db.collection(this.collectionName)
+            .aggregate(pipeline)
+            .toArray()
+
+        return results.map(i => {
+            const user = new SlimUser(new User(i))
+            user.id = i._id
+            return user
+        })
     }
 
     async searchUsers(userId: string, name: string, phoneNumbers: string[], skip: number, limit: number): Promise<SlimUser[]> {

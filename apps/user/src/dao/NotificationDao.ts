@@ -26,7 +26,6 @@ class NotificationDao {
             MessageBody: JSON.stringify(data)
         }).promise()
     }
-
 }
 
 export {NotificationDao}

@@ -23,6 +23,8 @@ params:
     notificationQueueArn: ${ssm:/nevvi/sqs/notifications-dev/arn}
     notificationQueueUrl: ${ssm:/nevvi/sqs/notifications-dev/url}
     oauthDomain: https://nevvi-development-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
+    refreshSuggestionsQueueArn: ${ssm:/nevvi/sqs/refresh-suggestions-dev/arn}
+    refreshSuggestionsQueueUrl: ${ssm:/nevvi/sqs/refresh-suggestions-dev/url}
     userImagesBucketName: nevvi-user-images-dev
   development:
     basePath: user
@@ -37,6 +39,8 @@ params:
     notificationQueueUrl: ${ssm:/nevvi/sqs/notifications/url}
     domainName: api.nevvi.net
     oauthDomain: https://nevvi-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
+    refreshSuggestionsQueueArn: ${ssm:/nevvi/sqs/refresh-suggestions/arn}
+    refreshSuggestionsQueueUrl: ${ssm:/nevvi/sqs/refresh-suggestions/url}
     userImagesBucketName: nevvi-user-images
 
 custom:
@@ -56,6 +60,7 @@ custom:
   userImagesBucketArn: ${ssm:/nevvi/s3/${self:custom.userImagesBucketName}/arn}
   mongoUri: ${param:mongoUri}
   notificationQueueArn: ${param:notificationQueueArn}
+  refreshSuggestionsQueueArn: ${param:refreshSuggestionsQueueArn}
 
 provider:
   name: aws
@@ -85,6 +90,7 @@ provider:
     USER_API_SCOPES: user_api/user_api.all
     EMAIL_FROM_ARN: arn:aws:ses:us-east-1:275527036335:identity/nevvi.net
     NOTIFICATION_QUEUE_URL: ${param:notificationQueueUrl}
+    REFRESH_SUGGESTIONS_QUEUE_URL: ${param:refreshSuggestionsQueueUrl}
 
 functions:
   userAuthorizer:
@@ -199,6 +205,10 @@ functions:
         Action:
           - sqs:SendMessage
         Resource: ${self:custom.notificationQueueArn}
+      - Effect: Allow
+        Action:
+          - sqs:SendMessage
+        Resource: ${self:custom.refreshSuggestionsQueueArn}
 
   confirmConnectionRequest:
     handler: src/functions/ConnectionHandler.confirmConnection
@@ -215,6 +225,10 @@ functions:
         Action:
           - sqs:SendMessage
         Resource: ${self:custom.notificationQueueArn}
+      - Effect: Allow
+        Action:
+          - sqs:SendMessage
+        Resource: ${self:custom.refreshSuggestionsQueueArn}
 
   denyConnectionRequest:
     handler: src/functions/ConnectionHandler.denyConnection
@@ -226,6 +240,11 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - sqs:SendMessage
+        Resource: ${self:custom.refreshSuggestionsQueueArn}
 
   getPendingRequests:
     handler: src/functions/ConnectionHandler.getOpenRequests
@@ -249,8 +268,20 @@ functions:
             resultTtlInSeconds: 0
             type: request
 
+  refreshAllSuggestions:
+    handler: src/functions/SuggestionHandler.refreshAllSuggestions
+    events:
+      - schedule:
+          rate: cron(0 11 * * ? *) # 6am est every day (11 UTC - 5 hours)
+          enabled: true
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - sqs:SendMessage
+        Resource: ${self:custom.refreshSuggestionsQueueArn}
+
   getSuggestedConnections:
-    handler: src/functions/ConnectionHandler.getSuggestedConnections
+    handler: src/functions/SuggestionHandler.getSuggestedConnections
     events:
       - http:
           path: /v1/users/{userId}/connections/suggested
@@ -259,6 +290,33 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
+
+  getSuggestions:
+    handler: src/functions/SuggestionHandler.getSuggestedConnections
+    events:
+      - http:
+          path: /v1/users/{userId}/suggestions
+          method: get
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+
+  ignoreSuggestion:
+    handler: src/functions/SuggestionHandler.ignoreSuggestion
+    events:
+      - http:
+          path: /v1/users/{userId}/suggestions/{suggestionId}
+          method: delete
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - sqs:SendMessage
+        Resource: ${self:custom.refreshSuggestionsQueueArn}
 
   getConnections:
     handler: src/functions/ConnectionHandler.getConnections
@@ -386,3 +444,9 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
+
+  refreshSuggestions:
+    handler: src/functions/SuggestionHandler.refreshSuggestions
+    events:
+      - sqs:
+          arn: ${param:refreshSuggestionsQueueArn}

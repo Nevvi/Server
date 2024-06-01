@@ -40,9 +40,7 @@ import {SearchGroupsRequest} from "../model/request/SearchGroupsRequest";
 import {NotificationDao} from "../dao/NotificationDao";
 import {DeviceSettings} from "../model/user/DeviceSettings";
 import {int} from "aws-sdk/clients/datapipeline";
-import {getSuggestedConnections} from "../functions/ConnectionHandler";
-import {SuggestionsDao} from "../dao/SuggestionsDao";
-import {chmod} from "fs";
+import {SuggestionService} from "./SuggestionService";
 
 const PNF = require('google-libphonenumber').PhoneNumberFormat;
 const phoneUtil = require('google-libphonenumber').PhoneNumberUtil.getInstance();
@@ -72,7 +70,7 @@ class UserService {
     private imageDao: ImageDao;
     private connectionDao: ConnectionDao;
     private connectionGroupDao: ConnectionGroupDao;
-    private suggestionsDao: SuggestionsDao;
+    private suggestionsService: SuggestionService;
     private authenticationDao: AuthenticationDao;
     private exportService: ExportService
     private notificationDao: NotificationDao
@@ -83,7 +81,7 @@ class UserService {
         this.imageDao = new ImageDao()
         this.connectionDao = new ConnectionDao()
         this.connectionGroupDao = new ConnectionGroupDao()
-        this.suggestionsDao = new SuggestionsDao()
+        this.suggestionsService = new SuggestionService()
         this.exportService = new ExportService()
         this.notificationDao = new NotificationDao()
     }
@@ -279,7 +277,7 @@ class UserService {
         // send notification and remove the requested user as a suggestion (if they were a suggestion)
         await Promise.all([
             this.notificationDao.sendNotification(requestedUserId, "Nevvi", requestText),
-            this.suggestionsDao.removeSuggestion(requestingUserId, requestedUserId)
+            this.suggestionsService.removeSuggestion(requestingUserId, requestedUserId)
         ])
 
         return newRequest
@@ -317,8 +315,8 @@ class UserService {
             this.connectionDao.createConnection(requestingUserId, requestedUserId, existingRequest.requestingPermissionGroupName),
             this.connectionDao.createConnection(requestedUserId, requestingUserId, permissionGroupName),
             this.notificationDao.sendNotification(requestingUserId, "Nevvi", requestText),
-            this.suggestionsDao.removeSuggestion(requestingUserId, requestedUserId),
-            this.suggestionsDao.removeSuggestion(requestedUserId, requestingUserId)
+            this.suggestionsService.removeSuggestion(requestingUserId, requestedUserId),
+            this.suggestionsService.removeSuggestion(requestedUserId, requestingUserId)
         ])
 
         return existingRequest
@@ -349,8 +347,8 @@ class UserService {
         await Promise.all([
             this.connectionDao.updateConnectionRequest(existingRequest),
             this.userDao.updateUser(user!!),
-            this.suggestionsDao.removeSuggestion(requestingUserId, requestedUserId),
-            this.suggestionsDao.removeSuggestion(requestedUserId, requestingUserId)
+            this.suggestionsService.removeSuggestion(requestingUserId, requestedUserId),
+            this.suggestionsService.removeSuggestion(requestedUserId, requestingUserId)
         ])
 
         return existingRequest
@@ -362,10 +360,6 @@ class UserService {
 
     async getBlockedUsers(userId: string): Promise<SlimUser[]> {
         return await this.userDao.getBlockedUsers(userId)
-    }
-
-    async getSuggestedConnections(userId: string): Promise<SlimUser[]> {
-        return await this.suggestionsDao.getSuggestions(userId)
     }
 
     async getConnections(request: SearchConnectionsRequest): Promise<SearchResponse> {
