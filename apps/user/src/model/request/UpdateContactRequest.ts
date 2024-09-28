@@ -1,4 +1,3 @@
-
 'use strict'
 
 const Joi = require('joi');
@@ -15,6 +14,7 @@ const updateSchema = {
 class UpdateContactRequest extends UserRequest {
     email: string;
     emailConfirmed: boolean;
+
     constructor(email: string, emailConfirmed: boolean) {
         super(updateSchema)
         this.email = email

@@ -11,6 +11,7 @@ const blockConnectionSchema = {
 class BlockConnectionRequest extends UserRequest {
     userId: string;
     otherUserId: string;
+
     constructor(userId: string, otherUserId: string) {
         super(blockConnectionSchema)
         this.userId = userId

@@ -11,6 +11,7 @@ const denyConnectionSchema = {
 class DenyConnectionRequest extends UserRequest {
     userId: string;
     otherUserId: string;
+
     constructor(userId: string, otherUserId: string) {
         super(denyConnectionSchema)
         this.userId = userId

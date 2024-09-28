@@ -10,7 +10,11 @@ import {Handler} from "aws-lambda";
 import {UpdateContactRequest} from "../model/request/UpdateContactRequest";
 import {SearchRequest} from "../model/request/SearchRequest";
 import {getFile} from "../util/ImageUtil";
+import {DeleteAccountRequest} from "../model/request/DeleteAccountRequest";
+import {AdminService} from "../service/AdminService";
+
 const userService = new UserService()
+const adminService = new AdminService()
 
 export const getUser: Handler = async (event) => {
     try{
@@ -31,6 +35,19 @@ export const createUser: Handler = async (event) => {
         request.validate()
         const user = await userService.createUser(request)
         return createResponse(201, user)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
+export const deleteUser: Handler = async (event) => {
+    try{
+        console.log("Received request to delete user")
+        const {userId} = event.pathParameters
+        const request = new DeleteAccountRequest(userId)
+        request.validate()
+        const user = await adminService.deleteAccount(request)
+        return createResponse(202, {message: "Account will be deleted within 24 to 48 hours"})
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)
     }

@@ -41,6 +41,7 @@ import {NotificationDao} from "../dao/NotificationDao";
 import {DeviceSettings} from "../model/user/DeviceSettings";
 import {int} from "aws-sdk/clients/datapipeline";
 import {SuggestionService} from "./SuggestionService";
+import {DeleteRequest} from "aws-sdk/clients/dynamodb";
 
 const PNF = require('google-libphonenumber').PhoneNumberFormat;
 const phoneUtil = require('google-libphonenumber').PhoneNumberUtil.getInstance();
@@ -91,6 +92,13 @@ class UserService {
     }
 
     async createUser(request: RegisterRequest): Promise<User> {
+        const user = new User(request)
+        user.phoneNumberConfirmed = true
+        user.onboardingCompleted = false
+        return await this.userDao.createUser(user)
+    }
+
+    async deleteUser(request: DeleteRequest): Promise<User> {
         const user = new User(request)
         user.phoneNumberConfirmed = true
         user.onboardingCompleted = false

@@ -13,7 +13,7 @@ class EmailDao {
         this.fromArn = process.env.EMAIL_FROM_ARN
     }
 
-    async sendEmail(subject: string, body: string, destination: string, attachmentBase64: string) {
+    async sendEmail(subject: string, body: string, destination: string, attachmentBase64: string | null) {
         const msg = mimemessage.factory({
             contentType: 'multipart/mixed',
             body: []
@@ -32,17 +32,17 @@ class EmailDao {
             body: body
         });
 
-        const attachmentEntity = mimemessage.factory({
-            contentType: 'text/plain',
-            contentTransferEncoding: 'base64',
-            body: attachmentBase64
-        });
-
-        attachmentEntity.header('Content-Disposition', `attachment ;filename="group.xlsx"`);
-
-        // Add the plain text entities to the multipart/alternate entity.
         alternateEntity.body.push(plainEntity);
-        alternateEntity.body.push(attachmentEntity);
+
+        if (attachmentBase64 != null) {
+            const attachmentEntity = mimemessage.factory({
+                contentType: 'text/plain',
+                contentTransferEncoding: 'base64',
+                body: attachmentBase64
+            });
+            attachmentEntity.header('Content-Disposition', `attachment ;filename="group.xlsx"`);
+            alternateEntity.body.push(attachmentEntity);
+        }
 
         // Add the multipart/alternate entity to the top-level MIME message.
         msg.body.push(alternateEntity);

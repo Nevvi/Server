@@ -1,5 +1,3 @@
-
-
 'use strict'
 
 const Joi = require('joi');
@@ -13,6 +11,7 @@ const registerSchema = {
 class RegisterRequest extends UserRequest {
     private id: string;
     private phoneNumber: string;
+
     constructor(id: string, phoneNumber: string) {
         super(registerSchema)
         this.id = id

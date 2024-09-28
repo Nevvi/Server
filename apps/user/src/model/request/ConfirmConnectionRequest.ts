@@ -13,6 +13,7 @@ class ConfirmConnectionRequest extends UserRequest {
     requestingUserId: string;
     requestedUserId: string;
     permissionGroupName: string;
+
     constructor(requestingUserId: string, requestedUserId: string, permissionGroupName: string) {
         super(addConnectionSchema)
         this.requestingUserId = requestingUserId

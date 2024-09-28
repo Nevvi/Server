@@ -1,5 +1,3 @@
-
-
 'use strict'
 
 const Joi = require('joi');
@@ -15,6 +13,7 @@ class AddConnectionToGroupRequest extends UserRequest {
     userId: string;
     groupId: string;
     connectedUserId: string;
+
     constructor(userId: string, groupId: string, connectedUserId: string) {
         super(schema)
         this.userId = userId

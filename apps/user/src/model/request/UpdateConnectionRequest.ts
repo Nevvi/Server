@@ -15,6 +15,7 @@ class UpdateConnectionRequest extends UserRequest {
     otherUserId: string;
     permissionGroupName: string | undefined;
     inSync: boolean | undefined;
+
     constructor(userId: string, otherUserId: string, permissionGroupName: string | undefined, inSync: boolean | undefined) {
         super(updateConnectionSchema)
         this.userId = userId

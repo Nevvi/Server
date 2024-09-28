@@ -1,5 +1,3 @@
-
-
 'use strict'
 
 const Joi = require('joi');
@@ -12,6 +10,7 @@ const schema = {
 class CreateGroupRequest extends UserRequest {
     userId: string;
     name: string;
+
     constructor(userId: string, name: string) {
         super(schema)
         this.userId = userId

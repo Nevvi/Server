@@ -19,6 +19,7 @@ class SearchConnectionsRequest extends UserRequest {
     inSync: boolean | undefined;
     limit: number;
     skip: number;
+
     constructor(userId: string,
                 name: string | undefined,
                 permissionGroup: string | undefined,

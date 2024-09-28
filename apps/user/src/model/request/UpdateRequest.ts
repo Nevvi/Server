@@ -1,10 +1,10 @@
 'use strict'
 
 import {InvalidRequestError} from "../../error/Errors";
+import {UserRequest} from './UserRequest';
 
 const Joi = require('joi');
 const JoiDate = require('@hapi/joi-date')
-import {UserRequest} from './UserRequest';
 
 const ExtendedJoi = Joi.extend(JoiDate)
 

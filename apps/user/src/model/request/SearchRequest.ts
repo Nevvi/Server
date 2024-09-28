@@ -19,6 +19,7 @@ class SearchRequest extends UserRequest {
     phoneNumbers: string[];
     limit: number;
     skip: number;
+
     constructor(name: string, email: string, phoneNumber: string, phoneNumbers: string[], limit: number = 10, skip: number = 0) {
         super(searchSchema)
         this.name = name
