@@ -37,6 +37,7 @@ export const register: Handler = async (event: any) => {
         const registerResponse = await authenticationService.register(request)
         return createResponse(200, registerResponse)
     } catch (e: any) {
+        console.log(`Failed to register account for ${JSON.parse(event.body)} due to ${e.message}`)
         return createResponse(e.statusCode, e.message)
     }
 }
@@ -63,6 +64,7 @@ export const confirm: Handler = async (event: any) => {
 
         return createResponse(200, confirmResponse)
     } catch (e: any) {
+        console.log(`Failed to confirm account for ${JSON.parse(event.body)} due to ${e.message}`)
         return createResponse(e.statusCode, e.message)
     }
 }
@@ -76,6 +78,7 @@ export const login: Handler = async (event: any) => {
         const loginResponse = await authenticationService.login(request)
         return createResponse(200, loginResponse)
     } catch (e: any) {
+        console.log(`Failed to login due to ${e.message}`)
         return createResponse(e.statusCode, e.message)
     }
 }
