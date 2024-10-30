@@ -16,7 +16,7 @@ class ResetPasswordRequest extends UserRequest {
     constructor(username: string, code: string, password: string) {
         super(schema)
         this.username = username
-        this.code = code
+        this.code = code.trim()
         this.password = password
     }
 }

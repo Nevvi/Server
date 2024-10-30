@@ -17,7 +17,7 @@ class ConfirmCodeRequest extends UserRequest {
         super(confirmCodeRequest)
         this.accessToken = accessToken
         this.attributeName = attributeName
-        this.code = code
+        this.code = code.trim()
     }
 }
 

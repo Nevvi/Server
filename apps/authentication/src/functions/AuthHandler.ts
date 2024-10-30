@@ -122,6 +122,7 @@ export const confirmForgotPassword: Handler = async (event: any) => {
             "message": "Password has been reset"
         })
     } catch (e: any) {
+        console.log(`Failed to confirm password due to ${e.message}`)
         return createResponse(e.statusCode, e.message)
     }
 }
@@ -155,6 +156,7 @@ export const confirmCode: Handler = async (event: any) => {
 
         return createResponse(200, {"message": "Success"})
     } catch (e: any) {
+        console.log(`Failed to confirm code for ${event.queryStringParameters} due to ${e.message}`)
         return createResponse(e.statusCode, e.message)
     }
 }
