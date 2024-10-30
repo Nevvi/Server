@@ -14,7 +14,7 @@ class ConfirmSignupRequest extends UserRequest {
     constructor(username: string, confirmationCode: string) {
         super(registerSchema)
         this.username = username
-        this.confirmationCode = confirmationCode
+        this.confirmationCode = confirmationCode.trim()
     }
 }
 
