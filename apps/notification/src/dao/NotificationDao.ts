@@ -1,5 +1,6 @@
 import {messaging} from "firebase-admin";
 import MessagingDevicesResponse = messaging.MessagingDevicesResponse;
+import {TokenMessage} from "firebase-admin/lib/messaging";
 
 class NotificationDao {
     private admin: any
@@ -13,15 +14,16 @@ class NotificationDao {
     }
 
     async sendNotification(token: string, title: string, body: string) {
-        const payload = {
+        const payload: TokenMessage = {
+            token: token,
             notification: {
                 title: title,
                 body: body,
-                badge: "1" // TODO - be more dynamic with this
             }
         };
 
-        const response: MessagingDevicesResponse = await this.admin.messaging().sendToDevice(token, payload)
+
+        const response: MessagingDevicesResponse = await this.admin.messaging().send(payload)
         console.log("Successfully sent message:", response);
     }
 }
