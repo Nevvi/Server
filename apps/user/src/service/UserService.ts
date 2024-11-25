@@ -160,6 +160,8 @@ class UserService {
             // TODO - also validate that email isn't already being used and confirmed
             console.log("Updating user email", request.email)
             const updatedAuthUser = await this.authenticationDao.updateUser(existingUser.id, request.email)
+            console.log(updatedAuthUser)
+            console.log(JSON.stringify(updatedAuthUser))
             // If the update resulted in a change in email then mark this value as false
             if (updatedAuthUser.emailVerified !== true) {
                 updatedUser.emailConfirmed = false
