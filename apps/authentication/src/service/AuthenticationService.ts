@@ -112,15 +112,15 @@ class AuthenticationService {
 
         // always present after registration
         const userId = attributes.find(a => a.Name === 'sub')!.Value!
-        const email = attributes.find(a => a.Name === 'email')!.Value!
-        const emailVerified = attributes.find(a => a.Name === 'email_verified')!.Value! === 'true'
+        const phone = attributes?.find(a => a.Name === 'phone_number')?.Value!
+        const phoneVerified = attributes?.find(a => a.Name === 'phone_number_verified')?.Value === 'true'
 
         // not always present
-        const phone = attributes?.find(a => a.Name === 'phone_number')?.Value
-        const phoneVerified = attributes?.find(a => a.Name === 'phone_number_verified')?.Value === 'true'
+        const email = attributes.find(a => a.Name === 'email')!.Value
+        const emailVerified = attributes.find(a => a.Name === 'email_verified')!.Value === 'true'
         const name = attributes?.find(a => a.Name === 'name')?.Value
 
-        return new User(userId, email, emailVerified, phone, phoneVerified, name)
+        return new User(userId, phone, phoneVerified, email, emailVerified, name)
     }
 
     _mapToUserFromUserType(response: UserType): User {
