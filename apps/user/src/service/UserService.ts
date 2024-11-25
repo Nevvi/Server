@@ -152,15 +152,19 @@ class UserService {
     }
 
     async updateUser(existingUser: User, request: UpdateRequest): Promise<User> {
-        // Need to send new phone number over to auth service to get confirmed
+        const updatedUser = new User(JSON.parse(JSON.stringify(existingUser)))
+
+        // Need to send new email over to auth service to get confirmed
         // once confirmed it will call back here so that we can keep track that it was confirmed
         if (request.email && existingUser.email !== request.email) {
             // TODO - also validate that email isn't already being used and confirmed
             console.log("Updating user email", request.email)
-            await this.authenticationDao.updateUser(existingUser.id, request.email)
+            const updatedAuthUser = await this.authenticationDao.updateUser(existingUser.id, request.email)
+            // If the update resulted in a change in email then mark this value as false
+            if (updatedAuthUser.emailVerified !== true) {
+                updatedUser.emailConfirmed = false
+            }
         }
-
-        const updatedUser = new User(JSON.parse(JSON.stringify(existingUser)))
 
         // TODO - make this a little more dynamic
         updatedUser.firstName = request.firstName ? request.firstName : updatedUser.firstName

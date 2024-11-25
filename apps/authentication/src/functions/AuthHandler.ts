@@ -98,9 +98,9 @@ export const logout: Handler = async (event: any) => {
 
 export const forgotPassword: Handler = async (event: any) => {
     try {
-        console.log("Received request to forgot password")
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
         const request = new ForgotPasswordRequest(body.username)
+        console.log(`Received request to forgot password: ${request}`)
         request.validate()
         await authenticationService.forgotPassword(request)
         return createResponse(200, {
@@ -113,9 +113,9 @@ export const forgotPassword: Handler = async (event: any) => {
 
 export const confirmForgotPassword: Handler = async (event: any) => {
     try {
-        console.log("Received request to confirm a forgotten password")
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
         const request = new ResetPasswordRequest(body.username, body.code, body.password)
+        console.log(`Received request to confirm a forgotten password: ${body.username} ${body.code}`)
         request.validate()
         await authenticationService.confirmForgotPassword(request)
         return createResponse(200, {
@@ -144,8 +144,8 @@ export const sendCode: Handler = async (event: any) => {
 
 export const confirmCode: Handler = async (event: any) => {
     try {
-        console.log("Received request to confirm a verification code")
         const {attribute, code} = (event.queryStringParameters || {})
+        console.log(`Received request to confirm a verification code: ${code}`)
         const accessToken = event.headers.AccessToken || event.headers.accesstoken
         const request = new ConfirmCodeRequest(accessToken, attribute, code)
         request.validate()
@@ -163,11 +163,10 @@ export const confirmCode: Handler = async (event: any) => {
 
 export const updateUser: Handler = async (event) => {
     try{
-        console.log("Received request to update user")
-
         // validate incoming request is good
         const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
         const request = new UpdateRequest(body.email)
+        console.log(`Received request to update user: ${request}`)
         request.validate()
 
         const {userId} = event.pathParameters
