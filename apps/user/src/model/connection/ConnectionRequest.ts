@@ -1,6 +1,7 @@
 'use strict'
 
 import {RequestStatus} from "./RequestStatus";
+import {DEFAULT_ALL_PERMISSION_GROUP_NAME} from "../Constants";
 class ConnectionRequest {
     requestingUserId: string;
     requestedUserId: string;
@@ -22,7 +23,7 @@ class ConnectionRequest {
         this.requestedUserId = requestedUserId
         this.requesterFirstName = requesterFirstName
         this.requesterLastName = requesterLastName
-        this.requestingPermissionGroupName = requestingPermissionGroupName || "ALL"
+        this.requestingPermissionGroupName = requestingPermissionGroupName || DEFAULT_ALL_PERMISSION_GROUP_NAME
         this.requesterImage = requesterImage || process.env.DEFAULT_PROFILE_IMAGE
         this.status = status
 

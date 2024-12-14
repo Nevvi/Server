@@ -3,7 +3,13 @@
 import {AuthenticationDao} from "../dao/AuthenticationDao";
 import {RegisterRequest} from "../model/request/RegisterRequest";
 import {LoginRequest} from "../model/request/LoginRequest";
-import {ConfirmResponse, LoginResponse, LogoutResponse, RegisterResponse} from "../model/response/Response";
+import {
+    ConfirmResponse,
+    LoginResponse,
+    LogoutResponse,
+    RefreshLoginResponse,
+    RegisterResponse
+} from "../model/response/Response";
 import {InvalidRequestError, UserNotFoundError, UserEmailAlreadyExistsError} from "../error/Errors";
 import {LogoutRequest} from "../model/request/LogoutRequest";
 import {AdminGetUserResponse, SignUpResponse, UserType} from "aws-sdk/clients/cognitoidentityserviceprovider";
@@ -14,6 +20,8 @@ import {User} from "../model/User";
 import {UpdateRequest} from "../model/request/UpdateRequest";
 import {ForgotPasswordRequest} from "../model/request/ForgotPasswordRequest";
 import {ResetPasswordRequest} from "../model/request/ResetPasswordRequest";
+import {ResendSignupCodeRequest} from "../model/request/ResendSignupCodeRequest";
+import {RefreshLoginRequest} from "../model/request/RefreshLoginRequest";
 
 class AuthenticationService {
     private authenticationDao: AuthenticationDao;
@@ -61,9 +69,31 @@ class AuthenticationService {
         return new LoginResponse(user?.Username!, authResult.AuthenticationResult!);
     }
 
+    async refreshLogin(request: RefreshLoginRequest): Promise<RefreshLoginResponse> {
+        const authResult = await this.authenticationDao.refreshLogin(request)
+
+        if (authResult === undefined) {
+            throw new InvalidRequestError("Received undefined login response")
+        }
+
+        return new RefreshLoginResponse(authResult.AuthenticationResult!);
+    }
+
     async logout(logoutRequest: LogoutRequest): Promise<LogoutResponse> {
         await this.authenticationDao.logout(logoutRequest)
         return new LogoutResponse()
+    }
+
+    async resendSignupCode(request: ResendSignupCodeRequest) {
+        const user = await this.authenticationDao.getUserByPhone(request.username)
+        if (!user) {
+            return
+        } else if (user.UserStatus !== "UNCONFIRMED") {
+            console.log("User is not in an unconfirmed status")
+            return
+        }
+
+        await this.authenticationDao.resendConfirmationCode(user!.Username!)
     }
 
     async forgotPassword(request: ForgotPasswordRequest) {

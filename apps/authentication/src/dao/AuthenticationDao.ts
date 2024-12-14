@@ -7,7 +7,7 @@ import {LogoutRequest} from "../model/request/LogoutRequest";
 import {
     AdminGetUserResponse, AdminUpdateUserAttributesResponse, ConfirmForgotPasswordResponse,
     ConfirmSignUpResponse, ForgotPasswordResponse, GetUserAttributeVerificationCodeResponse, GetUserResponse,
-    GlobalSignOutResponse, InitiateAuthResponse,
+    GlobalSignOutResponse, InitiateAuthResponse, ResendConfirmationCodeResponse,
     SignUpResponse, UserType, VerifyUserAttributeResponse
 } from "aws-sdk/clients/cognitoidentityserviceprovider";
 import {ConfirmSignupRequest} from "../model/request/ConfirmSignupRequest";
@@ -15,6 +15,7 @@ import {UpdateRequest} from "../model/request/UpdateRequest";
 import {SendCodeRequest} from "../model/request/SendCodeRequest";
 import {ConfirmCodeRequest} from "../model/request/ConfirmCodeRequest";
 import {formatPhoneNumber} from "../util/Utils";
+import {RefreshLoginRequest} from "../model/request/RefreshLoginRequest";
 
 const AWS = require('aws-sdk')
 
@@ -112,6 +113,16 @@ class AuthenticationDao {
         }).promise()
     }
 
+    async refreshLogin(request: RefreshLoginRequest): Promise<InitiateAuthResponse> {
+        return await this.cognito.initiateAuth({
+            AuthFlow: 'REFRESH_TOKEN_AUTH',
+            ClientId: this.clientId,
+            AuthParameters: {
+                REFRESH_TOKEN: request.refreshToken
+            }
+        }).promise()
+    }
+
     async logout(request: LogoutRequest): Promise<GlobalSignOutResponse> {
         return await this.cognito.globalSignOut({
             AccessToken: request.accessToken,
@@ -130,6 +141,13 @@ class AuthenticationDao {
             AccessToken: request.accessToken,
             AttributeName: request.attributeName,
             Code: request.code
+        }).promise()
+    }
+
+    async resendConfirmationCode(username: string): Promise<ResendConfirmationCodeResponse> {
+        return await this.cognito.resendConfirmationCode({
+            ClientId: this.clientId,
+            Username: username,
         }).promise()
     }
 

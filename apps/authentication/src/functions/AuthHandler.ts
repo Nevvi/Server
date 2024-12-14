@@ -13,6 +13,8 @@ import {UserService} from "../service/UserService";
 import {UpdateRequest} from "../model/request/UpdateRequest";
 import {ForgotPasswordRequest} from "../model/request/ForgotPasswordRequest";
 import {ResetPasswordRequest} from "../model/request/ResetPasswordRequest";
+import {ResendSignupCodeRequest} from "../model/request/ResendSignupCodeRequest";
+import {RefreshLoginRequest} from "../model/request/RefreshLoginRequest";
 
 const authenticationService = new AuthenticationService()
 const userService = new UserService()
@@ -83,6 +85,20 @@ export const login: Handler = async (event: any) => {
     }
 }
 
+export const refreshLogin: Handler = async (event: any) => {
+    try {
+        console.log("Received request to refresh login")
+        const refreshToken = event.headers.RefreshToken || event.headers.refreshtoken
+        const request = new RefreshLoginRequest(refreshToken)
+        request.validate()
+        const refreshLoginResponse = await authenticationService.refreshLogin(request)
+        return createResponse(200, refreshLoginResponse)
+    } catch (e: any) {
+        console.log(`Failed to refresh login due to ${e.message}`)
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
 export const logout: Handler = async (event: any) => {
     try {
         console.log("Received request to logout")
@@ -91,6 +107,21 @@ export const logout: Handler = async (event: any) => {
         request.validate()
         const logoutResponse = await authenticationService.logout(request)
         return createResponse(200, logoutResponse)
+    } catch (e: any) {
+        return createResponse(e.statusCode, e.message)
+    }
+}
+
+export const resendSignupCode: Handler = async (event: any) => {
+    try {
+        const body = typeof event.body === 'object' ? event.body : JSON.parse(event.body)
+        const request = new ResendSignupCodeRequest(body.username)
+        console.log(`Received request to resend signup code: ${request}`)
+        request.validate()
+        await authenticationService.resendSignupCode(request)
+        return createResponse(200, {
+            "message": "A verification code has been sent to that number if it exists."
+        })
     } catch (e: any) {
         return createResponse(e.statusCode, e.message)
     }

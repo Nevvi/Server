@@ -42,6 +42,7 @@ import {DeviceSettings} from "../model/user/DeviceSettings";
 import {int} from "aws-sdk/clients/datapipeline";
 import {SuggestionService} from "./SuggestionService";
 import {DeleteRequest} from "aws-sdk/clients/dynamodb";
+import {DEFAULT_ALL_PERMISSION_GROUP_NAME} from "../model/Constants";
 
 const PNF = require('google-libphonenumber').PhoneNumberFormat;
 const phoneUtil = require('google-libphonenumber').PhoneNumberUtil.getInstance();
@@ -157,11 +158,9 @@ class UserService {
         // Need to send new email over to auth service to get confirmed
         // once confirmed it will call back here so that we can keep track that it was confirmed
         if (request.email && existingUser.email !== request.email) {
-            // TODO - also validate that email isn't already being used and confirmed
+            // TODO - also validate that email isn't already being used and confirmed in the user data store
             console.log("Updating user email", request.email)
             const updatedAuthUser = await this.authenticationDao.updateUser(existingUser.id, request.email)
-            console.log(updatedAuthUser)
-            console.log(JSON.stringify(updatedAuthUser))
             // If the update resulted in a change in email then mark this value as false
             if (updatedAuthUser.emailVerified !== true) {
                 updatedUser.emailConfirmed = false
@@ -186,7 +185,7 @@ class UserService {
         const updatedPermissionGroups = new Set(updatedUser.permissionGroups.map(pg => pg.name))
         const removedPermissionGroups = existingUser.permissionGroups.filter(pg => !updatedPermissionGroups.has(pg.name))
         for (const permissionGroup of removedPermissionGroups) {
-            if (permissionGroup.name == "ALL") {
+            if (permissionGroup.name == DEFAULT_ALL_PERMISSION_GROUP_NAME) {
                 throw new InvalidRequestError(`Cannot delete the default ALL group`)
             }
 
@@ -392,7 +391,7 @@ class UserService {
             throw new ConnectionDoesNotExistError()
         }
 
-        const theirPermissionGroup = connectionToThem.permissionGroupName || "ALL"
+        const theirPermissionGroup = connectionToThem.permissionGroupName || DEFAULT_ALL_PERMISSION_GROUP_NAME
 
         const user = await this.getUser(otherUserId)
         if (!user) {
@@ -403,7 +402,7 @@ class UserService {
         const userObj: any = user.toPlainObj()
 
         // No permission group details exist... return all (shouldn't happen)
-        if (!permissionGroup || connectionToMe.permissionGroupName === "ALL") {
+        if (!permissionGroup || connectionToMe.permissionGroupName === DEFAULT_ALL_PERMISSION_GROUP_NAME) {
             if (!permissionGroup) {
                 console.log(`No permission group found with name ${connectionToMe.permissionGroupName} for user ${user.id}`)
             }

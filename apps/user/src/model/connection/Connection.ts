@@ -1,5 +1,7 @@
 'use strict'
 
+import {DEFAULT_ALL_PERMISSION_GROUP_NAME} from "../Constants";
+
 class Connection {
     userId: string;
     profileImage: string | undefined;
@@ -15,7 +17,7 @@ class Connection {
 
         // data fields
         this.userId = connectedUserId
-        this.permissionGroupName = permissionGroupName || "ALL"
+        this.permissionGroupName = permissionGroupName || DEFAULT_ALL_PERMISSION_GROUP_NAME
         this.inSync = inSync === true
 
         // audit fields

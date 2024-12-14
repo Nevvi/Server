@@ -111,12 +111,32 @@ functions:
           - cognito-idp:ListUsers
         Resource: ${self:custom.publicUserPoolArn}
 
+  refreshLogin:
+    handler: src/functions/AuthHandler.refreshLogin
+    events:
+      - http:
+          path: /v1/refreshLogin
+          method: post
+
   logout:
     handler: src/functions/AuthHandler.logout
     events:
       - http:
           path: /v1/logout
           method: post
+
+  resendSignupCode:
+    handler: src/functions/AuthHandler.resendSignupCode
+    events:
+      - http:
+          path: /v1/resendSignupCode
+          method: post
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - cognito-idp:ListUsers
+          - cognito-idp:ResendConfirmationCode
+        Resource: ${self:custom.publicUserPoolArn}
 
   forgotPassword:
     handler: src/functions/AuthHandler.forgotPassword

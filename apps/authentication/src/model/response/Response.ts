@@ -17,7 +17,17 @@ class LoginResponse {
         this.accessToken = authResult.AccessToken;
         this.idToken = authResult.IdToken;
         this.refreshToken = authResult.RefreshToken;
+    }
+}
 
+class RefreshLoginResponse {
+    private accessToken?: string;
+    private idToken?: string;
+    private refreshToken?: string;
+    constructor(authResult: AuthenticationResultType) {
+        this.accessToken = authResult.AccessToken;
+        this.idToken = authResult.IdToken;
+        this.refreshToken = authResult.RefreshToken;
     }
 }
 
@@ -45,4 +55,4 @@ class RegisterResponse {
     }
 }
 
-export {LoginResponse, LogoutResponse, RegisterResponse, ConfirmResponse}
+export {LoginResponse, RefreshLoginResponse, LogoutResponse, RegisterResponse, ConfirmResponse}
