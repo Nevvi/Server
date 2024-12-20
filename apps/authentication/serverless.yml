@@ -67,7 +67,7 @@ provider:
     API_CLIENT_ID: ${param:apiUserPoolClient}
     API_CLIENT_SECRET: ${param:apiUserPoolClientSecret}
     USER_API_SCOPES: user_api/user_api.all
-    MIN_IOS_VERSION: 1.9
+    MIN_IOS_VERSION: 1.6
 
 functions:
   authorizer:
