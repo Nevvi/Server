@@ -492,6 +492,10 @@ class UserService {
         console.log(`Exporting ${connections.length} connections for group ${group.name}`)
 
         const user = await this.getUser(userId)
+        if (!user || !user.email || !user.emailConfirmed) {
+            throw new InvalidRequestError("User must have a confirmed email address before exporting groups")
+        }
+
         await this.exportService.sendExport(group.name, user!, connections)
 
         return true
