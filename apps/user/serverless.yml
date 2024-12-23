@@ -426,7 +426,7 @@ functions:
       - Effect: Allow
         Action:
           - ses:SendRawEmail
-        Resource: arn:aws:ses:us-east-1:275527036335:identity/nevvi.net
+        Resource: arn:aws:ses:us-east-1:275527036335:identity/*
 
   getConnectionsInGroup:
     handler: src/functions/ConnectionGroupHandler.getConnections
