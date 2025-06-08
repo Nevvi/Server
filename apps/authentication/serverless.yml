@@ -12,9 +12,8 @@ plugins:
 
 params:
   default:
-    apiUserPoolClient: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/authentication/id}
-    apiUserPoolClientSecret: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/authentication/secret}
-    apiUserPoolName: nevvi-development-api-users
+    userApiKey: ${ssm:/nevvi/lambda/development/user-api-key}
+    authenticationApiKey: ${ssm:/nevvi/lambda/development/authentication-api-key}
     basePath: ${self:provider.stage}-authentication
     domainName: api.development.nevvi.net
     oauthDomain: https://nevvi-development-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
@@ -22,9 +21,8 @@ params:
   development:
     basePath: authentication
   production:
-    apiUserPoolClient: ${ssm:/nevvi/cognito/nevvi-api-users/clients/authentication/id}
-    apiUserPoolClientSecret: ${ssm:/nevvi/cognito/nevvi-api-users/clients/authentication/secret}
-    apiUserPoolName: nevvi-api-users
+    userApiKey: ${ssm:/nevvi/lambda/production/user-api-key}
+    authenticationApiKey: ${ssm:/nevvi/lambda/production/authentication-api-key}
     basePath: authentication
     domainName: api.nevvi.net
     oauthDomain: https://nevvi-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
@@ -45,8 +43,6 @@ custom:
   publicUserPoolArn: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/arn}
   publicUserPoolId: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/id}
   publicUserPoolClientId: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/clients/authentication/id}
-  apiUserPoolName: ${param:apiUserPoolName}
-  apiUserPoolArn: ${ssm:/nevvi/cognito/${self:custom.apiUserPoolName}/arn}
 
 provider:
   name: aws
@@ -56,6 +52,18 @@ provider:
   region: ${opt:region, 'us-east-1'}
   apiName: authentication-${self:provider.stage}
   stackName: authentication-${self:provider.stage}
+  apiGateway:
+    apiKeys:
+      - name: authentication-internal-api-key-${self:provider.stage}
+        value: ${param:authenticationApiKey}
+        description: API key for internal endpoints
+    usagePlan:
+      quota:
+        limit: 10000
+        period: MONTH
+      throttle:
+        rateLimit: 100
+        burstLimit: 200
   deploymentBucket:
     name: nevvi-serverless-deployment-bucket
   deploymentPrefix: ${self:provider.stage}
@@ -64,10 +72,8 @@ provider:
     PUBLIC_USER_POOL_CLIENT_ID: ${self:custom.publicUserPoolClientId}
     PUBLIC_USER_POOL_ID: ${self:custom.publicUserPoolId}
     USER_API_URL: https://${param:domainName}/user
-    API_CLIENT_ID: ${param:apiUserPoolClient}
-    API_CLIENT_SECRET: ${param:apiUserPoolClientSecret}
-    USER_API_SCOPES: user_api/user_api.all
     MIN_IOS_VERSION: 1.9
+    USER_API_KEY: ${param:userApiKey}
 
 functions:
   authorizer:
@@ -203,10 +209,7 @@ functions:
       - http:
           path: /api/v1/users/{userId}
           method: patch
-          authorizer:
-            arn: ${self:custom.apiUserPoolArn}
-            scopes:
-              - user_api/user_api.all
+          private: true
     iamRoleStatements:
       - Effect: Allow
         Action:

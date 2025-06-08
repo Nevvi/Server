@@ -13,9 +13,8 @@ plugins:
 
 params:
   default:
-    apiUserPoolClient: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/user/id}
-    apiUserPoolClientSecret: ${ssm:/nevvi/cognito/nevvi-development-api-users/clients/user/secret}
-    apiUserPoolName: nevvi-development-api-users
+    userApiKey: ${ssm:/nevvi/lambda/development/user-api-key}
+    authenticationApiKey: ${ssm:/nevvi/lambda/development/authentication-api-key}
     basePath: ${self:provider.stage}-user
     defaultProfileImage: https://nevvi-user-images-dev.s3.amazonaws.com/Default_Profile_Picture.png
     domainName: api.development.nevvi.net
@@ -29,9 +28,8 @@ params:
   development:
     basePath: user
   production:
-    apiUserPoolClient: ${ssm:/nevvi/cognito/nevvi-api-users/clients/user/id}
-    apiUserPoolClientSecret: ${ssm:/nevvi/cognito/nevvi-api-users/clients/user/secret}
-    apiUserPoolName: nevvi-api-users
+    userApiKey: ${ssm:/nevvi/lambda/development/user-api-key}
+    authenticationApiKey: ${ssm:/nevvi/lambda/development/authentication-api-key}
     basePath: user
     defaultProfileImage: https://nevvi-user-images.s3.amazonaws.com/Default_Profile_Picture.png
     mongoUri: ${ssm:/nevvi/mongo/nevvi/uri}
@@ -54,8 +52,6 @@ custom:
   customDomain:
     domainName: ${param:domainName}
     basePath: ${param:basePath}
-  apiUserPoolName: ${param:apiUserPoolName}
-  apiUserPoolArn: ${ssm:/nevvi/cognito/${self:custom.apiUserPoolName}/arn}
   userImagesBucketName: ${param:userImagesBucketName}
   userImagesBucketArn: ${ssm:/nevvi/s3/${self:custom.userImagesBucketName}/arn}
   mongoUri: ${param:mongoUri}
@@ -76,6 +72,17 @@ provider:
       - 'image/png'
       - 'image/jpeg'
       - 'application/octet-stream'
+    apiKeys:
+      - name: user-internal-api-key-${self:provider.stage}
+        value: ${param:userApiKey}
+        description: API key for internal endpoints
+    usagePlan:
+      quota:
+        limit: 10000
+        period: MONTH
+      throttle:
+        rateLimit: 100
+        burstLimit: 200
   deploymentBucket:
     name: nevvi-serverless-deployment-bucket
   deploymentPrefix: ${self:provider.stage}
@@ -83,15 +90,13 @@ provider:
     MONGO_URI: ${param:mongoUri}
     OAUTH_DOMAIN_URL: ${param:oauthDomain}
     AUTHENTICATION_API_URL: https://${param:domainName}/authentication
-    API_CLIENT_ID: ${param:apiUserPoolClient}
-    API_CLIENT_SECRET: ${param:apiUserPoolClientSecret}
     DEFAULT_PROFILE_IMAGE: ${param:defaultProfileImage}
     IMAGE_BUCKET: ${self:custom.userImagesBucketName}
-    USER_API_SCOPES: user_api/user_api.all
     EMAIL_FROM_ARN: arn:aws:ses:us-east-1:275527036335:identity/nevvi.net
     NOTIFICATION_QUEUE_URL: ${param:notificationQueueUrl}
     REFRESH_SUGGESTIONS_QUEUE_URL: ${param:refreshSuggestionsQueueUrl}
     ADMIN_EMAIL: tyler.cobb@nevvi.net
+    AUTHENTICATION_API_KEY: ${param:authenticationApiKey}
 
 functions:
   userAuthorizer:
@@ -114,10 +119,7 @@ functions:
       - http:
           path: /api/v1/users
           method: post
-          authorizer:
-            arn: ${self:custom.apiUserPoolArn}
-            scopes:
-              - user_api/user_api.all
+          private: true
   deleteUser:
     handler: src/functions/UserHandler.deleteUser
     events:
@@ -140,10 +142,7 @@ functions:
       - http:
           path: /api/v1/users/{userId}/contact
           method: post
-          authorizer:
-            arn: ${self:custom.apiUserPoolArn}
-            scopes:
-              - user_api/user_api.all
+          private: true
   updateUser:
     handler: src/functions/UserHandler.updateUser
     events:

@@ -7,9 +7,7 @@ class AuthenticationDao {
     constructor() {
         this.client = new AuthenticationHttpClient(
             process.env.AUTHENTICATION_API_URL,
-            process.env.API_CLIENT_ID,
-            process.env.API_CLIENT_SECRET,
-            process.env.USER_API_SCOPES,
+            process.env.AUTHENTICATION_API_KEY
         )
     }
 

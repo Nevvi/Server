@@ -7,9 +7,7 @@ class UserDao {
     constructor() {
         this.client = new UserHttpClient(
             process.env.USER_API_URL,
-            process.env.API_CLIENT_ID,
-            process.env.API_CLIENT_SECRET,
-            process.env.USER_API_SCOPES,
+            process.env.USER_API_KEY
         )
     }
 
