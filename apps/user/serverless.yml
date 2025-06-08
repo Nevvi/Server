@@ -28,8 +28,8 @@ params:
   development:
     basePath: user
   production:
-    userApiKey: ${ssm:/nevvi/lambda/development/user-api-key}
-    authenticationApiKey: ${ssm:/nevvi/lambda/development/authentication-api-key}
+    userApiKey: ${ssm:/nevvi/lambda/production/user-api-key}
+    authenticationApiKey: ${ssm:/nevvi/lambda/production/authentication-api-key}
     basePath: user
     defaultProfileImage: https://nevvi-user-images.s3.amazonaws.com/Default_Profile_Picture.png
     mongoUri: ${ssm:/nevvi/mongo/nevvi/uri}
