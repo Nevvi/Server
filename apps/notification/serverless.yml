@@ -62,7 +62,6 @@ provider:
     OAUTH_DOMAIN_URL: ${param:oauthDomain}
     USER_API_SCOPES: user_api/user_api.all
 
-
 functions:
   notificationAuthorizer:
     handler: src/functions/NotificationAuthorizer.authorize

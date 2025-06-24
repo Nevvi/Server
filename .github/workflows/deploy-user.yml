@@ -1,4 +1,4 @@
-name: Upload Dev Apps
+name: Build and deploy User
 
 on:
   push:
