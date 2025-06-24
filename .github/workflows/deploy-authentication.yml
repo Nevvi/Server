@@ -1,0 +1,56 @@
+name: Upload Dev Apps
+
+on:
+  push:
+    paths:
+      - apps/authentication/**
+
+jobs:
+  deploy-dev:
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.ORG_PAT }}
+          submodules: recursive
+      - name: Configure AWS
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set default.region us-east-1
+      - name: Initialize
+        run: |
+          npm install
+      - name: Initialize submodules
+        run: cd shared/common && npm install
+      - name: Deploy dev
+        run: |
+          cd authentication
+          npm install
+          npx serverless deploy --stage development
+  deploy-prod:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.ORG_PAT }}
+          submodules: recursive
+      - name: Configure AWS
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set default.region us-east-1
+      - name: Initialize
+        run: |
+          npm install
+      - name: Initialize submodules
+        run: cd shared/common && npm install
+      - name: Deploy dev
+        run: |
+          cd authentication
+          npm install
+          npx serverless deploy --stage production
