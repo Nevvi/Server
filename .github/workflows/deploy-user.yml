@@ -27,7 +27,7 @@ jobs:
         run: cd shared/common && npm install
       - name: Deploy dev
         run: |
-          cd user
+          cd apps/user
           npm install
           npx serverless deploy --stage development
   deploy-prod:
@@ -51,6 +51,6 @@ jobs:
         run: cd shared/common && npm install
       - name: Deploy dev
         run: |
-          cd user
+          cd apps/user
           npm install
           npx serverless deploy --stage production
