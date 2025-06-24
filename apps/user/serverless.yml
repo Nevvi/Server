@@ -21,7 +21,6 @@ params:
     mongoUri: ${ssm:/nevvi/mongo/nevvi-development/uri}
     notificationQueueArn: ${ssm:/nevvi/sqs/notifications-dev/arn}
     notificationQueueUrl: ${ssm:/nevvi/sqs/notifications-dev/url}
-    oauthDomain: https://nevvi-development-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
     refreshSuggestionsQueueArn: ${ssm:/nevvi/sqs/refresh-suggestions-dev/arn}
     refreshSuggestionsQueueUrl: ${ssm:/nevvi/sqs/refresh-suggestions-dev/url}
     userImagesBucketName: nevvi-user-images-dev
@@ -36,7 +35,6 @@ params:
     notificationQueueArn: ${ssm:/nevvi/sqs/notifications/arn}
     notificationQueueUrl: ${ssm:/nevvi/sqs/notifications/url}
     domainName: api.nevvi.net
-    oauthDomain: https://nevvi-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
     refreshSuggestionsQueueArn: ${ssm:/nevvi/sqs/refresh-suggestions/arn}
     refreshSuggestionsQueueUrl: ${ssm:/nevvi/sqs/refresh-suggestions/url}
     userImagesBucketName: nevvi-user-images
@@ -88,14 +86,13 @@ provider:
   deploymentPrefix: ${self:provider.stage}
   environment:
     MONGO_URI: ${param:mongoUri}
-    OAUTH_DOMAIN_URL: ${param:oauthDomain}
-    AUTHENTICATION_API_URL: https://${param:domainName}/authentication
     DEFAULT_PROFILE_IMAGE: ${param:defaultProfileImage}
     IMAGE_BUCKET: ${self:custom.userImagesBucketName}
     EMAIL_FROM_ARN: arn:aws:ses:us-east-1:275527036335:identity/nevvi.net
     NOTIFICATION_QUEUE_URL: ${param:notificationQueueUrl}
     REFRESH_SUGGESTIONS_QUEUE_URL: ${param:refreshSuggestionsQueueUrl}
     ADMIN_EMAIL: tyler.cobb@nevvi.net
+    AUTHENTICATION_API_URL: https://${param:domainName}/authentication
     AUTHENTICATION_API_KEY: ${param:authenticationApiKey}
 
 functions:

@@ -16,7 +16,6 @@ params:
     authenticationApiKey: ${ssm:/nevvi/lambda/development/authentication-api-key}
     basePath: ${self:provider.stage}-authentication
     domainName: api.development.nevvi.net
-    oauthDomain: https://nevvi-development-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
     publicUserPoolName: nevvi-development-public-users
   development:
     basePath: authentication
@@ -25,7 +24,6 @@ params:
     authenticationApiKey: ${ssm:/nevvi/lambda/production/authentication-api-key}
     basePath: authentication
     domainName: api.nevvi.net
-    oauthDomain: https://nevvi-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
     publicUserPoolName: nevvi-public-users
 
 custom:
@@ -68,11 +66,10 @@ provider:
     name: nevvi-serverless-deployment-bucket
   deploymentPrefix: ${self:provider.stage}
   environment:
-    OAUTH_DOMAIN_URL: ${param:oauthDomain}
     PUBLIC_USER_POOL_CLIENT_ID: ${self:custom.publicUserPoolClientId}
     PUBLIC_USER_POOL_ID: ${self:custom.publicUserPoolId}
-    USER_API_URL: https://${param:domainName}/user
     MIN_IOS_VERSION: 1.9
+    USER_API_URL: https://${param:domainName}/user
     USER_API_KEY: ${param:userApiKey}
 
 functions:

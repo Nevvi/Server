@@ -10,25 +10,20 @@ plugins:
   - serverless-domain-manager
   - serverless-plugin-split-stacks
 
-
 params:
   default:
-    apiUserPoolName: nevvi-development-api-users
     basePath: ${self:provider.stage}-notification
     domainName: api.development.nevvi.net
     firebaseCredentials: ${ssm:/nevvi/firebase/credentials}
     mongoUri: ${ssm:/nevvi/mongo/nevvi-development/uri}
     notificationQueueArn: ${ssm:/nevvi/sqs/notifications-dev/arn}
-    oauthDomain: https://nevvi-development-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
   development:
     basePath: notification
   production:
-    apiUserPoolName: nevvi-api-users
     basePath: notification
     mongoUri: ${ssm:/nevvi/mongo/nevvi/uri}
     notificationQueueArn: ${ssm:/nevvi/sqs/notifications/arn}
     domainName: api.nevvi.net
-    oauthDomain: https://nevvi-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
 
 custom:
   splitStacks:
@@ -41,8 +36,6 @@ custom:
   customDomain:
     domainName: ${param:domainName}
     basePath: ${param:basePath}
-  apiUserPoolName: ${param:apiUserPoolName}
-  apiUserPoolArn: ${ssm:/nevvi/cognito/${self:custom.apiUserPoolName}/arn}
   mongoUri: ${param:mongoUri}
 
 provider:
@@ -59,9 +52,6 @@ provider:
   environment:
     FIREBASE_CREDENTIALS: ${param:firebaseCredentials}
     MONGO_URI: ${param:mongoUri}
-    OAUTH_DOMAIN_URL: ${param:oauthDomain}
-    USER_API_SCOPES: user_api/user_api.all
-
 
 functions:
   notificationAuthorizer:
