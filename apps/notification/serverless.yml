@@ -1,14 +1,35 @@
+org: nevvi
+app: nevvi
 service: notification
 
-frameworkVersion: '3'
-variablesResolutionMode: 20210326
+frameworkVersion: '4'
 
 plugins:
+  - serverless-python-requirements
   - serverless-prune-plugin
   - serverless-iam-roles-per-function
-  - serverless-webpack
   - serverless-domain-manager
   - serverless-plugin-split-stacks
+
+package:
+  patterns:
+    - '!./**'           # exclude everything first
+    - './src/**'        # include your source directory
+
+custom:
+  splitStacks:
+    perFunction: false
+    perType: true
+    perGroupFunction: false
+  prune:
+    automatic: true
+    number: 2
+  customDomain:
+    domainName: ${param:domainName}
+    basePath: ${param:basePath}
+  pythonRequirements:
+    dockerizePip: false
+    layer: true
 
 params:
   default:
@@ -25,22 +46,9 @@ params:
     notificationQueueArn: ${ssm:/nevvi/sqs/notifications/arn}
     domainName: api.nevvi.net
 
-custom:
-  splitStacks:
-    perFunction: false
-    perType: true
-    perGroupFunction: false
-  prune:
-    automatic: true
-    number: 2
-  customDomain:
-    domainName: ${param:domainName}
-    basePath: ${param:basePath}
-  mongoUri: ${param:mongoUri}
-
 provider:
   name: aws
-  runtime: nodejs16.x
+  runtime: python3.12
   lambdaHashingVersion: 20201221
   stage: ${opt:stage, 'test'}
   region: ${opt:region, 'us-east-1'}
@@ -56,9 +64,13 @@ provider:
 functions:
   notificationAuthorizer:
     handler: src/functions/NotificationAuthorizer.authorize
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
 
   updateDeviceToken:
-    handler: src/functions/NotificationHandler.updateDeviceToken
+    handler: src/functions/NotificationHandler.update_device_token
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
     events:
       - http:
           path: /v1/users/{userId}/notifications/token
@@ -69,7 +81,9 @@ functions:
             type: request
 
   sendNotification:
-    handler: src/functions/NotificationHandler.sendNotification
+    handler: src/functions/NotificationHandler.send_notification
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
     events:
       - sqs:
           arn: ${param:notificationQueueArn}
