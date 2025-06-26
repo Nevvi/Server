@@ -29,10 +29,10 @@ def exception_handler(func):
             logger.error(f"Caught HTTP error: {e}")
             return create_response(e.status_code, {'error': e.message})
         except Exception as e:
-            logger.error(f"Error creating user: {e}")
+            logger.error(f"Caught exception handling request: {e}")
             return create_response(500, {'error': 'Internal server error'})
 
-    return wrapper()
+    return wrapper
 
 
 @exception_handler
@@ -89,7 +89,7 @@ def logout(event, context):
 @exception_handler
 def confirm(event, context):
     body = json.loads(event.get('body', '{}'))
-    request = ConfirmSignupRequest(username=body.get("username"), password=body.get("confirmationCode"))
+    request = ConfirmSignupRequest(username=body.get("username"), confirmation_code=body.get("confirmationCode"))
     auth_service.confirm(request=request)
 
     logger.info(f"User {request.username} confirmed.. calling user auth_service to create record")
