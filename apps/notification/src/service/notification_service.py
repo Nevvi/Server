@@ -1,10 +1,10 @@
 from typing import Optional
 
-from src.dao.DeviceDao import DeviceDao
-from src.dao.NotificationDao import NotificationDao
-from src.error.Errors import DeviceDoesNotExistError
-from src.model.Device import Device
-from src.model.request.UpdateTokenRequest import UpdateTokenRequest
+from src.dao.device_dao import DeviceDao
+from src.dao.notification_dao import NotificationDao
+from src.model.errors import DeviceDoesNotExistError
+from src.model.device import Device
+from src.model.requests import UpdateTokenRequest
 
 
 class NotificationService:
@@ -17,12 +17,13 @@ class NotificationService:
         return Device.from_document(device_document)
 
     def update_token(self, request: UpdateTokenRequest):
-        device = self.get_device(user_id=request.user_id)
+        user_id = str(request.user_id)
+        device = self.get_device(user_id=user_id)
 
         if not device:
-            self.device_dao.add_device(user_id=request.user_id, token=request.token)
+            self.device_dao.add_device(user_id=user_id, token=request.token)
         else:
-            self.device_dao.update_device_token(user_id=request.user_id, token=request.token)
+            self.device_dao.update_device_token(user_id=user_id, token=request.token)
 
     def send_notification(self, user_id: str, title: str, body: str):
         device = self.get_device(user_id=user_id)

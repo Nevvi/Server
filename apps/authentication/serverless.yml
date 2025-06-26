@@ -1,14 +1,38 @@
+org: nevvi
+app: nevvi
 service: authentication
 
-frameworkVersion: '3'
-variablesResolutionMode: 20210326
+frameworkVersion: '4'
 
 plugins:
+  - serverless-python-requirements
   - serverless-prune-plugin
   - serverless-iam-roles-per-function
-  - serverless-webpack
   - serverless-domain-manager
   - serverless-plugin-split-stacks
+
+package:
+  patterns:
+    - '!./**'           # exclude everything first
+    - './src/**'        # include your source directory
+
+custom:
+  splitStacks:
+    perFunction: false
+    perType: true
+    perGroupFunction: false
+  prune:
+    automatic: true
+    number: 2
+  customDomain:
+    domainName: ${param:domainName}
+    basePath: ${param:basePath}
+  pythonRequirements:
+    dockerizePip: true
+  publicUserPoolName: ${param:publicUserPoolName}
+  publicUserPoolArn: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/arn}
+  publicUserPoolId: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/id}
+  publicUserPoolClientId: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/clients/authentication/id}
 
 params:
   default:
@@ -26,42 +50,26 @@ params:
     domainName: api.nevvi.net
     publicUserPoolName: nevvi-public-users
 
-custom:
-  splitStacks:
-    perFunction: false
-    perType: true
-    perGroupFunction: false
-  prune:
-    automatic: true
-    number: 2
-  customDomain:
-    domainName: ${param:domainName}
-    basePath: ${param:basePath}
-  publicUserPoolName: ${param:publicUserPoolName}
-  publicUserPoolArn: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/arn}
-  publicUserPoolId: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/id}
-  publicUserPoolClientId: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/clients/authentication/id}
-
 provider:
   name: aws
-  runtime: nodejs16.x
+  runtime: python3.12
   lambdaHashingVersion: 20201221
   stage: ${opt:stage, 'test'}
   region: ${opt:region, 'us-east-1'}
   apiName: authentication-${self:provider.stage}
   stackName: authentication-${self:provider.stage}
-  apiGateway:
-    apiKeys:
-      - name: authentication-internal-api-key-${self:provider.stage}
-        value: ${param:authenticationApiKey}
-        description: API key for internal endpoints
-    usagePlan:
-      quota:
-        limit: 10000
-        period: MONTH
-      throttle:
-        rateLimit: 100
-        burstLimit: 200
+#  apiGateway:
+#    apiKeys:
+#      - name: authentication-internal-api-key-${self:provider.stage}
+#        value: ${param:authenticationApiKey}
+#        description: API key for internal endpoints
+#    usagePlan:
+#      quota:
+#        limit: 10000
+#        period: MONTH
+#      throttle:
+#        rateLimit: 100
+#        burstLimit: 200
   deploymentBucket:
     name: nevvi-serverless-deployment-bucket
   deploymentPrefix: ${self:provider.stage}
@@ -76,34 +84,34 @@ functions:
   authorizer:
     handler: src/functions/Authorizer.authorize
 
-  minAppVersions:
-    handler: src/functions/AuthHandler.getMinAppVersions
-    events:
-      - http:
-          path: /v1/versions
-          method: get
-
-  register:
-    handler: src/functions/AuthHandler.register
-    events:
-      - http:
-          path: /v1/register
-          method: post
-
-  confirm:
-    handler: src/functions/AuthHandler.confirm
-    events:
-      - http:
-          path: /v1/confirm
-          method: post
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - cognito-idp:ListUsers
-        Resource: ${self:custom.publicUserPoolArn}
+#  minAppVersions:
+#    handler: src/functions/AuthHandler.getMinAppVersions
+#    events:
+#      - http:
+#          path: /v1/versions
+#          method: get
+#
+#  register:
+#    handler: src/functions/AuthHandler.register
+#    events:
+#      - http:
+#          path: /v1/register
+#          method: post
+#
+#  confirm:
+#    handler: src/functions/AuthHandler.confirm
+#    events:
+#      - http:
+#          path: /v1/confirm
+#          method: post
+#    iamRoleStatements:
+#      - Effect: Allow
+#        Action:
+#          - cognito-idp:ListUsers
+#        Resource: ${self:custom.publicUserPoolArn}
 
   login:
-    handler: src/functions/AuthHandler.login
+    handler: src/functions/auth_handler.login
     events:
       - http:
           path: /v1/login
@@ -114,103 +122,103 @@ functions:
           - cognito-idp:ListUsers
         Resource: ${self:custom.publicUserPoolArn}
 
-  refreshLogin:
-    handler: src/functions/AuthHandler.refreshLogin
-    events:
-      - http:
-          path: /v1/refreshLogin
-          method: post
-
-  logout:
-    handler: src/functions/AuthHandler.logout
-    events:
-      - http:
-          path: /v1/logout
-          method: post
-
-  resendSignupCode:
-    handler: src/functions/AuthHandler.resendSignupCode
-    events:
-      - http:
-          path: /v1/resendSignupCode
-          method: post
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - cognito-idp:ListUsers
-          - cognito-idp:ResendConfirmationCode
-        Resource: ${self:custom.publicUserPoolArn}
-
-  forgotPassword:
-    handler: src/functions/AuthHandler.forgotPassword
-    events:
-      - http:
-          path: /v1/forgotPassword
-          method: post
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - cognito-idp:ListUsers
-          - cognito-idp:ForgotPassword
-        Resource: ${self:custom.publicUserPoolArn}
-
-  confirmForgotPassword:
-    handler: src/functions/AuthHandler.confirmForgotPassword
-    events:
-      - http:
-          path: /v1/confirmForgotPassword
-          method: post
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - cognito-idp:ListUsers
-          - cognito-idp:ConfirmForgotPassword
-        Resource: ${self:custom.publicUserPoolArn}
-
-  sendVerificationCode:
-    handler: src/functions/AuthHandler.sendCode
-    events:
-      - http:
-          path: /v1/users/{userId}/sendCode
-          method: post
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 0
-            type: request
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - cognito-idp:GetUserAttributeVerificationCode
-        Resource: ${self:custom.publicUserPoolArn}
-
-  confirmVerificationCode:
-    handler: src/functions/AuthHandler.confirmCode
-    events:
-      - http:
-          path: /v1/users/{userId}/confirmCode
-          method: post
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 0
-            type: request
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - cognito-idp:VerifyUserAttribute
-          - cognito-idp:GetUser
-        Resource: ${self:custom.publicUserPoolArn}
-
-  updateUser:
-    handler: src/functions/AuthHandler.updateUser
-    events:
-      - http:
-          path: /api/v1/users/{userId}
-          method: patch
-          private: true
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - cognito-idp:AdminGetUser
-          - cognito-idp:ListUsers
-          - cognito-idp:AdminUpdateUserAttributes
-        Resource: ${self:custom.publicUserPoolArn}
+#  refreshLogin:
+#    handler: src/functions/AuthHandler.refreshLogin
+#    events:
+#      - http:
+#          path: /v1/refreshLogin
+#          method: post
+#
+#  logout:
+#    handler: src/functions/AuthHandler.logout
+#    events:
+#      - http:
+#          path: /v1/logout
+#          method: post
+#
+#  resendSignupCode:
+#    handler: src/functions/AuthHandler.resendSignupCode
+#    events:
+#      - http:
+#          path: /v1/resendSignupCode
+#          method: post
+#    iamRoleStatements:
+#      - Effect: Allow
+#        Action:
+#          - cognito-idp:ListUsers
+#          - cognito-idp:ResendConfirmationCode
+#        Resource: ${self:custom.publicUserPoolArn}
+#
+#  forgotPassword:
+#    handler: src/functions/AuthHandler.forgotPassword
+#    events:
+#      - http:
+#          path: /v1/forgotPassword
+#          method: post
+#    iamRoleStatements:
+#      - Effect: Allow
+#        Action:
+#          - cognito-idp:ListUsers
+#          - cognito-idp:ForgotPassword
+#        Resource: ${self:custom.publicUserPoolArn}
+#
+#  confirmForgotPassword:
+#    handler: src/functions/AuthHandler.confirmForgotPassword
+#    events:
+#      - http:
+#          path: /v1/confirmForgotPassword
+#          method: post
+#    iamRoleStatements:
+#      - Effect: Allow
+#        Action:
+#          - cognito-idp:ListUsers
+#          - cognito-idp:ConfirmForgotPassword
+#        Resource: ${self:custom.publicUserPoolArn}
+#
+#  sendVerificationCode:
+#    handler: src/functions/AuthHandler.sendCode
+#    events:
+#      - http:
+#          path: /v1/users/{userId}/sendCode
+#          method: post
+#          authorizer:
+#            name: authorizer
+#            resultTtlInSeconds: 0
+#            type: request
+#    iamRoleStatements:
+#      - Effect: Allow
+#        Action:
+#          - cognito-idp:GetUserAttributeVerificationCode
+#        Resource: ${self:custom.publicUserPoolArn}
+#
+#  confirmVerificationCode:
+#    handler: src/functions/AuthHandler.confirmCode
+#    events:
+#      - http:
+#          path: /v1/users/{userId}/confirmCode
+#          method: post
+#          authorizer:
+#            name: authorizer
+#            resultTtlInSeconds: 0
+#            type: request
+#    iamRoleStatements:
+#      - Effect: Allow
+#        Action:
+#          - cognito-idp:VerifyUserAttribute
+#          - cognito-idp:GetUser
+#        Resource: ${self:custom.publicUserPoolArn}
+#
+#  updateUser:
+#    handler: src/functions/AuthHandler.updateUser
+#    events:
+#      - http:
+#          path: /api/v1/users/{userId}
+#          method: patch
+#          private: true
+#    iamRoleStatements:
+#      - Effect: Allow
+#        Action:
+#          - cognito-idp:AdminGetUser
+#          - cognito-idp:ListUsers
+#          - cognito-idp:AdminUpdateUserAttributes
+#        Resource: ${self:custom.publicUserPoolArn}
