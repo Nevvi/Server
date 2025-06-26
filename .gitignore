@@ -2,3 +2,7 @@
 .serverless
 node_modules
 .DS_STORE
+*.iml
+venv
+unzip_requirements.py
+*.zip

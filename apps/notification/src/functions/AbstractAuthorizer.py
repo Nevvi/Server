@@ -18,7 +18,6 @@ class TokenAttributes:
 
 
 def extract_token_from_header(headers: Dict[str, str]) -> str:
-    print("Extracting auth header from request")
     """Extract JWT token from Authorization header"""
     # API Gateway normalizes header names to lowercase
     auth_header = (
@@ -28,25 +27,29 @@ def extract_token_from_header(headers: Dict[str, str]) -> str:
             ''
     )
 
-    print(f"Got auth header: {auth_header}")
     if not auth_header:
         raise AuthorizerError("Missing Authorization header")
 
     parts = auth_header.split()
-    if len(parts) != 2 or parts[0].lower() != 'bearer':
-        raise AuthorizerError("Invalid Authorization header format. Expected 'Bearer <token>'")
 
-    return parts[1]
+    # Bearer token without Bearer prefix
+    if len(parts) == 1:
+        return parts[0]
+
+    # Bearer token with Bearer prefix
+    if len(parts) == 2 or parts[0].lower() == 'bearer':
+        return parts[1]
+
+    raise AuthorizerError("Invalid Authorization header format. Expected 'Bearer <token>'")
 
 
 def decode_jwt_token(token: str) -> TokenAttributes:
     """Decode and validate JWT token"""
-    print(f"Decoding JWT token: {token}")
     try:
-        payload = jwt.decode(
-            token,
+        payload = jwt.api_jwt.decode(
+            jwt=token,
             options={
-                'verify_signature': True,
+                'verify_signature': False,
                 'verify_exp': True,
                 'verify_iat': True,
                 'require_exp': True,
@@ -54,18 +57,11 @@ def decode_jwt_token(token: str) -> TokenAttributes:
             }
         )
 
-        print(f"Decoded token: {payload}")
-
         # Validate required claims
         if 'cognito:username' not in payload and 'sub' not in payload:
             raise AuthorizerError("Token missing username or sub claim")
 
         return TokenAttributes(user_id=payload['cognito:username'], sub=payload['sub'])
-
-    except jwt.ExpiredSignatureError:
-        raise AuthorizerError("Token has expired")
-    except jwt.InvalidTokenError as e:
-        raise AuthorizerError(f"Invalid token: {str(e)}")
     except Exception as e:
         raise AuthorizerError(f"Token validation error: {str(e)}")
 
@@ -76,19 +72,14 @@ class AbstractAuthorizer:
         auth_token = extract_token_from_header(headers)
         token_attributes = decode_jwt_token(auth_token)
 
-        print(f"Building policy from method arn: {event.methodArn}")
-        policy = self.build_policy(token_attributes.sub, event.methodArn)
-        print("Generating permissions for policy")
+        policy = self.build_policy(token_attributes.sub, event.get('methodArn'))
         self.generate_permissions(policy, token_attributes.user_id)
-        print("Building policy")
         auth_response = policy.build()
 
-        print(f"Generated auth response: {auth_response}")
         auth_response['context'] = {
             'userId': token_attributes.user_id
         }
 
-        print(f"Final auth response: {auth_response}")
         return auth_response
 
     def build_policy(self, token_sub: str, method_arn: str) -> AuthPolicy:

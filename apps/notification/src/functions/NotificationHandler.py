@@ -54,8 +54,8 @@ def send_notification(event, context):
         records: List[Any] = event.get("Records", [])
         for record in records:
             try:
-                details = json.loads(record.body)
-                user_id = details.get("user_id")
+                details = json.loads(record.get("body"))
+                user_id = details.get("userId")
                 title = details.get("title")
                 body = details.get("body")
                 print(f"Sending notification to {user_id}")

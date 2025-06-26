@@ -28,8 +28,7 @@ custom:
     domainName: ${param:domainName}
     basePath: ${param:basePath}
   pythonRequirements:
-    dockerizePip: false
-    layer: true
+    dockerizePip: true
 
 params:
   default:
@@ -64,13 +63,9 @@ provider:
 functions:
   notificationAuthorizer:
     handler: src/functions/NotificationAuthorizer.authorize
-    layers:
-      - Ref: PythonRequirementsLambdaLayer
 
   updateDeviceToken:
     handler: src/functions/NotificationHandler.update_device_token
-    layers:
-      - Ref: PythonRequirementsLambdaLayer
     events:
       - http:
           path: /v1/users/{userId}/notifications/token
@@ -82,8 +77,6 @@ functions:
 
   sendNotification:
     handler: src/functions/NotificationHandler.send_notification
-    layers:
-      - Ref: PythonRequirementsLambdaLayer
     events:
       - sqs:
           arn: ${param:notificationQueueArn}
