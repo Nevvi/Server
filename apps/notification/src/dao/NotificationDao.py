@@ -1,4 +1,5 @@
 import base64
+import logging
 from typing import Optional
 
 import firebase_admin
@@ -6,6 +7,8 @@ import json
 import os
 
 from firebase_admin import credentials, messaging
+
+logger = logging.getLogger(__name__)
 
 
 class NotificationDao:
@@ -25,8 +28,8 @@ class NotificationDao:
 
         try:
             response = messaging.send(message)
-            print(f'Successfully sent message: {response}')
+            logger.info(f'Successfully sent message: {response}')
             return response
         except Exception as e:
-            print(f'Error sending message: {e}')
+            logger.warning(f'Error sending message: {e}')
             return None
