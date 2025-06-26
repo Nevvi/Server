@@ -50,7 +50,7 @@ def send_notification(event, context):
     }
     """
     try:
-        print("Received request to send notification(s)")
+        logger.info("Received request to send notification(s)")
         records: List[Any] = event.get("Records", [])
         for record in records:
             try:
@@ -58,12 +58,12 @@ def send_notification(event, context):
                 user_id = details.get("userId")
                 title = details.get("title")
                 body = details.get("body")
-                print(f"Sending notification to {user_id}")
+                logger.info(f"Sending notification to {user_id}")
                 service.send_notification(user_id=user_id, title=title, body=body)
             except Exception as e:
-                print("Caught error sending notification", e)
+                logger.exception("Caught error sending notification", e)
     except Exception as e:
-        print("Caught error sending notifications", e)
+        logger.exception("Caught error sending notifications", e)
 
     # Always return true no matter what
     return True
