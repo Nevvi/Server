@@ -12,6 +12,7 @@ from src.service.authentication_service import AuthenticationService
 from src.service.user_service import UserService
 
 logging.basicConfig(level=logging.INFO)
+logging.getLogger().setLevel(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 auth_service = AuthenticationService()
@@ -30,7 +31,7 @@ def exception_handler(func):
             return create_response(e.status_code, {'error': e.message})
         except Exception as e:
             logger.error(f"Caught exception handling request: {e}")
-            return create_response(500, {'error': 'Internal server error'})
+            return create_response(500, {'error': str(e)})
 
     return wrapper
 

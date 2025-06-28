@@ -83,7 +83,8 @@ class AuthenticationService:
 
     def resend_signup_code(self, request: ResendSignupCodeRequest):
         user = self.authentication_dao.get_user_by_phone(phone_number=request.username)
-        if not user or user.get("UserStatus") == "UNCONFIRMED":
+        if not user or user.get("UserStatus") != "UNCONFIRMED":
+            print(f"User does not exist or is not unconfirmed")
             return
 
         self.authentication_dao.resend_confirmation_code(username=request.username)

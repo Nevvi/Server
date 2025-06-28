@@ -50,9 +50,10 @@ class AuthenticationDao:
                 "Name": "email", "Value": email
             })
 
+        formatted = format_phone_number(username)
         return self.client.admin_update_user_attributes(
             UserPoolId=self.user_pool_id,
-            Username=username,
+            Username=formatted,
             UserAttributes=attributes
         )
 
@@ -88,7 +89,7 @@ class AuthenticationDao:
 
     def refresh_login(self, refresh_token: str) -> InitiateAuthResponseTypeDef:
         return self.client.initiate_auth(
-            AuthFlow='USER_PASSWORD_AUTH',
+            AuthFlow='REFRESH_TOKEN_AUTH',
             ClientId=self.user_pool_client_id,
             AuthParameters={
                 "REFRESH_TOKEN": refresh_token
@@ -115,21 +116,24 @@ class AuthenticationDao:
         )
 
     def resend_confirmation_code(self, username: str) -> ResendConfirmationCodeResponseTypeDef:
+        formatted = format_phone_number(username)
         return self.client.resend_confirmation_code(
             ClientId=self.user_pool_client_id,
-            Username=username
+            Username=formatted
         )
 
     def forgot_password(self, username: str) -> ForgotPasswordResponseTypeDef:
+        formatted = format_phone_number(username)
         return self.client.forgot_password(
             ClientId=self.user_pool_client_id,
-            Username=username
+            Username=formatted
         )
 
     def confirm_forgot_password(self, username: str, code: str, password: str) -> Dict[str, Any]:
+        formatted = format_phone_number(username)
         return self.client.confirm_forgot_password(
             ClientId=self.user_pool_client_id,
-            Username=username,
+            Username=formatted,
             ConfirmationCode=code,
             Password=password
         )
