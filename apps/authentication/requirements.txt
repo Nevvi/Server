@@ -1,0 +1,8 @@
+pydantic==2.11.7
+email-validator==2.2.0
+boto3==1.38.44
+phonenumbers==9.0.8
+PyJWT==2.10.1
+requests==2.32.4
+types-boto3==1.38.44
+types-boto3-cognito-idp==1.38.16

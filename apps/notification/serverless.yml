@@ -5,11 +5,11 @@ service: notification
 frameworkVersion: '4'
 
 plugins:
-  - serverless-python-requirements
-  - serverless-prune-plugin
-  - serverless-iam-roles-per-function
   - serverless-domain-manager
+  - serverless-iam-roles-per-function
   - serverless-plugin-split-stacks
+  - serverless-prune-plugin
+  - serverless-python-requirements
 
 package:
   patterns:
@@ -62,10 +62,10 @@ provider:
 
 functions:
   notificationAuthorizer:
-    handler: src/functions/NotificationAuthorizer.authorize
+    handler: src/functions/notification_authorizer.authorize
 
   updateDeviceToken:
-    handler: src/functions/NotificationHandler.update_device_token
+    handler: src/functions/notification_handler.update_device_token
     events:
       - http:
           path: /v1/users/{userId}/notifications/token
@@ -76,7 +76,7 @@ functions:
             type: request
 
   sendNotification:
-    handler: src/functions/NotificationHandler.send_notification
+    handler: src/functions/notification_handler.send_notification
     events:
       - sqs:
           arn: ${param:notificationQueueArn}

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from src.dao.DeviceDao import DeviceDocument
+from src.dao.device_dao import DeviceDocument
 
 
 @dataclass

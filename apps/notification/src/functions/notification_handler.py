@@ -2,9 +2,11 @@ import json
 import logging
 from typing import List, Any
 
-from src.error.Errors import HttpError
-from src.model.request.UpdateTokenRequest import UpdateTokenRequest
-from src.service.NotificationService import NotificationService
+from pydantic import ValidationError
+
+from src.model.errors import HttpError
+from src.model.requests import UpdateTokenRequest
+from src.service.notification_service import NotificationService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -12,7 +14,6 @@ service = NotificationService()
 
 
 def update_device_token(event, context):
-    """Create a new user"""
     try:
         path_params = event.get('pathParameters') or {}
         body = json.loads(event.get('body', '{}'))
@@ -20,9 +21,11 @@ def update_device_token(event, context):
         request = UpdateTokenRequest(user_id=path_params.get("userId"), token=body.get("token"))
         service.update_token(request=request)
 
-        logger.info(f"Updated token for user with ID: {request.user_id}")
+        logger.info(f"Updated token for user: {request.user_id}")
         return create_response(200, {})
-
+    except ValidationError as e:
+        logger.error(f"Caught validation error: {e}")
+        return create_response(400, {'error': str(e)})
     except HttpError as e:
         logger.error(f"Caught HTTP error: {e}")
         return create_response(e.status_code, {'error': e.message})
@@ -70,7 +73,6 @@ def send_notification(event, context):
 
 
 def create_response(status_code, body, headers=None):
-    """Create HTTP response"""
     if headers is None:
         headers = {
             'Content-Type': 'application/json',

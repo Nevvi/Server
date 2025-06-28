@@ -1,9 +1,12 @@
+import logging
 from dataclasses import dataclass
 from typing import Dict
 
 import jwt
 
-from src.functions.AuthPolicy import AuthPolicy, ApiOptions
+from src.functions.auth_policy import AuthPolicy, ApiOptions
+
+logger = logging.getLogger(__name__)
 
 
 class AuthorizerError(Exception):
@@ -68,19 +71,23 @@ def decode_jwt_token(token: str) -> TokenAttributes:
 
 class AbstractAuthorizer:
     def authorize(self, event):
-        headers = event.get("headers", {})
-        auth_token = extract_token_from_header(headers)
-        token_attributes = decode_jwt_token(auth_token)
+        try:
+            headers = event.get("headers", {})
+            auth_token = extract_token_from_header(headers)
+            token_attributes = decode_jwt_token(auth_token)
 
-        policy = self.build_policy(token_attributes.sub, event.get('methodArn'))
-        self.generate_permissions(policy, token_attributes.user_id)
-        auth_response = policy.build()
+            policy = self.build_policy(token_attributes.sub, event.get('methodArn'))
+            self.generate_permissions(policy, token_attributes.user_id)
+            auth_response = policy.build()
 
-        auth_response['context'] = {
-            'userId': token_attributes.user_id
-        }
+            auth_response['context'] = {
+                'userId': token_attributes.user_id
+            }
 
-        return auth_response
+            return auth_response
+        except Exception:
+            logger.exception("Caught exception while authorizing token")
+            raise Exception("Unauthorized")
 
     def build_policy(self, token_sub: str, method_arn: str) -> AuthPolicy:
         principal_id = f"user|${token_sub}"
