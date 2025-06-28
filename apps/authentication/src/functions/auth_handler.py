@@ -150,7 +150,7 @@ def update_user(event, context):
     body = json.loads(event.get('body', '{}'))
     request = UpdateRequest(email=body.get("email"))
     updated_user = auth_service.update_user(user_id=path_params.get("userId"), request=request)
-    return create_response(200, updated_user)
+    return create_response(200, updated_user.to_dict())
 
 
 def create_response(status_code, body, headers=None):

@@ -50,10 +50,9 @@ class AuthenticationDao:
                 "Name": "email", "Value": email
             })
 
-        formatted = format_phone_number(username)
         return self.client.admin_update_user_attributes(
             UserPoolId=self.user_pool_id,
-            Username=formatted,
+            Username=username,
             UserAttributes=attributes
         )
 

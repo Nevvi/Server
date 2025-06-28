@@ -58,18 +58,18 @@ provider:
   region: ${opt:region, 'us-east-1'}
   apiName: authentication-${self:provider.stage}
   stackName: authentication-${self:provider.stage}
-#  apiGateway:
-#    apiKeys:
-#      - name: authentication-internal-api-key-${self:provider.stage}
-#        value: ${param:authenticationApiKey}
-#        description: API key for internal endpoints
-#    usagePlan:
-#      quota:
-#        limit: 10000
-#        period: MONTH
-#      throttle:
-#        rateLimit: 100
-#        burstLimit: 200
+  apiGateway:
+    apiKeys:
+      - name: authentication-internal-api-key-${self:provider.stage}
+        value: ${param:authenticationApiKey}
+        description: API key for internal endpoints
+    usagePlan:
+      quota:
+        limit: 10000
+        period: MONTH
+      throttle:
+        rateLimit: 100
+        burstLimit: 200
   deploymentBucket:
     name: nevvi-serverless-deployment-bucket
   deploymentPrefix: ${self:provider.stage}
