@@ -1,15 +1,20 @@
+org: nevvi
+app: nevvi
 service: user
 
-frameworkVersion: '3'
-variablesResolutionMode: 20210326
+frameworkVersion: '4'
 
 plugins:
-  - serverless-prune-plugin
-  - serverless-iam-roles-per-function
-  - serverless-webpack
   - serverless-domain-manager
+  - serverless-iam-roles-per-function
   - serverless-plugin-split-stacks
+  - serverless-prune-plugin
+  - serverless-python-requirements
 
+package:
+  patterns:
+    - '!./**'           # exclude everything first
+    - './src/**'        # include your source directory
 
 params:
   default:
@@ -23,6 +28,7 @@ params:
     notificationQueueUrl: ${ssm:/nevvi/sqs/notifications-dev/url}
     refreshSuggestionsQueueArn: ${ssm:/nevvi/sqs/refresh-suggestions-dev/arn}
     refreshSuggestionsQueueUrl: ${ssm:/nevvi/sqs/refresh-suggestions-dev/url}
+    userImagesBucketArn: ${ssm:/nevvi/s3/nevvi-user-images-dev/arn}
     userImagesBucketName: nevvi-user-images-dev
   development:
     basePath: user
@@ -37,6 +43,7 @@ params:
     domainName: api.nevvi.net
     refreshSuggestionsQueueArn: ${ssm:/nevvi/sqs/refresh-suggestions/arn}
     refreshSuggestionsQueueUrl: ${ssm:/nevvi/sqs/refresh-suggestions/url}
+    userImagesBucketArn: ${ssm:/nevvi/s3/nevvi-user-images/arn}
     userImagesBucketName: nevvi-user-images
 
 custom:
@@ -50,11 +57,8 @@ custom:
   customDomain:
     domainName: ${param:domainName}
     basePath: ${param:basePath}
-  userImagesBucketName: ${param:userImagesBucketName}
-  userImagesBucketArn: ${ssm:/nevvi/s3/${self:custom.userImagesBucketName}/arn}
-  mongoUri: ${param:mongoUri}
-  notificationQueueArn: ${param:notificationQueueArn}
-  refreshSuggestionsQueueArn: ${param:refreshSuggestionsQueueArn}
+  pythonRequirements:
+    dockerizePip: true
 
 provider:
   name: aws
@@ -87,7 +91,7 @@ provider:
   environment:
     MONGO_URI: ${param:mongoUri}
     DEFAULT_PROFILE_IMAGE: ${param:defaultProfileImage}
-    IMAGE_BUCKET: ${self:custom.userImagesBucketName}
+    IMAGE_BUCKET: ${param:userImagesBucketName}
     EMAIL_FROM_ARN: arn:aws:ses:us-east-1:275527036335:identity/nevvi.net
     NOTIFICATION_QUEUE_URL: ${param:notificationQueueUrl}
     REFRESH_SUGGESTIONS_QUEUE_URL: ${param:refreshSuggestionsQueueUrl}
@@ -100,7 +104,7 @@ functions:
     handler: src/functions/UserAuthorizer.authorize
 
   getUser:
-    handler: src/functions/UserHandler.getUser
+    handler: src/functions/user_handler.getUser
     events:
       - http:
           path: /v1/users/{userId}
@@ -111,14 +115,14 @@ functions:
             type: request
 
   createUser:
-    handler: src/functions/UserHandler.createUser
+    handler: src/functions/user_handler.createUser
     events:
       - http:
           path: /api/v1/users
           method: post
           private: true
   deleteUser:
-    handler: src/functions/UserHandler.deleteUser
+    handler: src/functions/user_handler.deleteUser
     events:
       - http:
           path: /v1/users/{userId}
@@ -134,14 +138,14 @@ functions:
         Resource: arn:aws:ses:us-east-1:275527036335:identity/nevvi.net
 
   updateUserContact:
-    handler: src/functions/UserHandler.updateUserContact
+    handler: src/functions/user_handler.updateUserContact
     events:
       - http:
           path: /api/v1/users/{userId}/contact
           method: post
           private: true
   updateUser:
-    handler: src/functions/UserHandler.updateUser
+    handler: src/functions/user_handler.updateUser
     events:
       - http:
           path: /v1/users/{userId}
@@ -151,7 +155,7 @@ functions:
             resultTtlInSeconds: 0
             type: request
   updateUserImage:
-    handler: src/functions/UserHandler.updateUserImage
+    handler: src/functions/user_handler.updateUserImage
     events:
       - http:
           path: /v1/users/{userId}/image
@@ -165,10 +169,10 @@ functions:
         Action:
           - s3:*
         Resource:
-          - ${self:custom.userImagesBucketArn}
-          - ${self:custom.userImagesBucketArn}/*
+          - ${param:userImagesBucketArn}
+          - ${param:userImagesBucketArn}/*
   searchUsers:
-    handler: src/functions/UserHandler.searchUsers
+    handler: src/functions/user_handler.searchUsers
     events:
       - http:
           path: /v1/users/search
@@ -178,7 +182,7 @@ functions:
             resultTtlInSeconds: 0
             type: request
   notifyUsers:
-    handler: src/functions/UserHandler.notifyOutOfSyncUsers
+    handler: src/functions/user_handler.notifyOutOfSyncUsers
     events:
       - schedule:
           rate: cron(0 17 * * ? *) # noon est every day (17 UTC - 5 hours)
@@ -187,10 +191,10 @@ functions:
       - Effect: Allow
         Action:
           - sqs:SendMessage
-        Resource: ${self:custom.notificationQueueArn}
+        Resource: ${param:notificationQueueArn}
 
   notifyBirthdays:
-    handler: src/functions/UserHandler.notifyBirthdays
+    handler: src/functions/user_handler.notifyBirthdays
     events:
       - schedule:
           rate: cron(0 15 * * ? *) # 10am est every day (15 UTC - 5 hours)
@@ -199,7 +203,7 @@ functions:
       - Effect: Allow
         Action:
           - sqs:SendMessage
-        Resource: ${self:custom.notificationQueueArn}
+        Resource: ${param:notificationQueueArn}
 
   # Connection Requests
   createConnectionRequest:
@@ -216,11 +220,11 @@ functions:
       - Effect: Allow
         Action:
           - sqs:SendMessage
-        Resource: ${self:custom.notificationQueueArn}
+        Resource: ${param:notificationQueueArn}
       - Effect: Allow
         Action:
           - sqs:SendMessage
-        Resource: ${self:custom.refreshSuggestionsQueueArn}
+        Resource: ${param:refreshSuggestionsQueueArn}
 
   confirmConnectionRequest:
     handler: src/functions/ConnectionHandler.confirmConnection
@@ -236,11 +240,11 @@ functions:
       - Effect: Allow
         Action:
           - sqs:SendMessage
-        Resource: ${self:custom.notificationQueueArn}
+        Resource: ${param:notificationQueueArn}
       - Effect: Allow
         Action:
           - sqs:SendMessage
-        Resource: ${self:custom.refreshSuggestionsQueueArn}
+        Resource: ${param:refreshSuggestionsQueueArn}
 
   denyConnectionRequest:
     handler: src/functions/ConnectionHandler.denyConnection
@@ -256,7 +260,7 @@ functions:
       - Effect: Allow
         Action:
           - sqs:SendMessage
-        Resource: ${self:custom.refreshSuggestionsQueueArn}
+        Resource: ${param:refreshSuggestionsQueueArn}
 
   getPendingRequests:
     handler: src/functions/ConnectionHandler.getOpenRequests
@@ -290,7 +294,7 @@ functions:
       - Effect: Allow
         Action:
           - sqs:SendMessage
-        Resource: ${self:custom.refreshSuggestionsQueueArn}
+        Resource: ${param:refreshSuggestionsQueueArn}
 
   getSuggestedConnections:
     handler: src/functions/SuggestionHandler.getSuggestedConnections
@@ -328,7 +332,7 @@ functions:
       - Effect: Allow
         Action:
           - sqs:SendMessage
-        Resource: ${self:custom.refreshSuggestionsQueueArn}
+        Resource: ${param:refreshSuggestionsQueueArn}
 
   getConnections:
     handler: src/functions/ConnectionHandler.getConnections
