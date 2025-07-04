@@ -13,25 +13,33 @@ logger = logging.getLogger(__name__)
 service = NotificationService()
 
 
+def exception_handler(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except ValidationError as e:
+            logger.error(f"Caught validation error: {e}")
+            return create_response(400, str(e))
+        except HttpError as e:
+            logger.error(f"Caught HTTP error: {e}")
+            return create_response(e.status_code, e.message)
+        except Exception as e:
+            logger.error(f"Caught exception handling request: {e}")
+            return create_response(500, str(e))
+
+    return wrapper
+
+
+@exception_handler
 def update_device_token(event, context):
-    try:
-        path_params = event.get('pathParameters') or {}
-        body = json.loads(event.get('body', '{}'))
+    path_params = event.get('pathParameters') or {}
+    body = json.loads(event.get('body', '{}'))
 
-        request = UpdateTokenRequest(user_id=path_params.get("userId"), token=body.get("token"))
-        service.update_token(request=request)
+    request = UpdateTokenRequest(user_id=path_params.get("userId"), token=body.get("token"))
+    service.update_token(request=request)
 
-        logger.info(f"Updated token for user: {request.user_id}")
-        return create_response(200, {})
-    except ValidationError as e:
-        logger.error(f"Caught validation error: {e}")
-        return create_response(400, {'error': str(e)})
-    except HttpError as e:
-        logger.error(f"Caught HTTP error: {e}")
-        return create_response(e.status_code, {'error': e.message})
-    except Exception as e:
-        logger.error(f"Error creating user: {e}")
-        return create_response(500, {'error': 'Internal server error'})
+    logger.info(f"Updated token for user: {request.user_id}")
+    return create_response(200, {})
 
 
 def send_notification(event, context):
@@ -72,17 +80,8 @@ def send_notification(event, context):
     return True
 
 
-def create_response(status_code, body, headers=None):
-    if headers is None:
-        headers = {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
-        }
-
+def create_response(status_code, body):
     return {
         'statusCode': status_code,
-        'headers': headers,
-        'body': json.dumps(body) if isinstance(body, (dict, list)) else body
+        'body': json.dumps(body)
     }
