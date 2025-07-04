@@ -25,13 +25,13 @@ def exception_handler(func):
             return func(*args, **kwargs)
         except ValidationError as e:
             logger.error(f"Caught validation error: {e}")
-            return create_response(400, {'error': str(e)})
+            return create_response(400, str(e))
         except HttpError as e:
             logger.error(f"Caught HTTP error: {e}")
-            return create_response(e.status_code, {'error': e.message})
+            return create_response(e.status_code, e.message)
         except Exception as e:
             logger.error(f"Caught exception handling request: {e}")
-            return create_response(500, {'error': str(e)})
+            return create_response(500, str(e))
 
     return wrapper
 
@@ -153,17 +153,8 @@ def update_user(event, context):
     return create_response(200, updated_user.to_dict())
 
 
-def create_response(status_code, body, headers=None):
-    if headers is None:
-        headers = {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
-        }
-
+def create_response(status_code, body):
     return {
         'statusCode': status_code,
-        'headers': headers,
-        'body': json.dumps(body) if isinstance(body, (dict, list)) else body
+        'body': json.dumps(body)
     }
