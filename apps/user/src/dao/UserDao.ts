@@ -202,9 +202,13 @@ class UserDao {
             }
         ]
 
+        console.log(pipeline)
+
         const results = await this.db.collection(this.collectionName)
             .aggregate(pipeline)
             .toArray()
+
+        console.log(`Got ${results.length} results for pipeline`)
 
         return results.map(i => {
             const user = new SlimUser(new User(i))
