@@ -131,6 +131,8 @@ class UserService {
                 }).filter(num => num !== undefined) :
                 []
 
+            console.log(`Searching for phone numbers: ${formattedNumbers}`)
+
             // this could be a ton of numbers, chunk out the calls to avoid a massive db call
             const phoneNumberChunks: string[][] = chunk(formattedNumbers, 40)
             const chunkResults: [SlimUser[], number][] = await Promise.all(phoneNumberChunks.map(chunk => {
@@ -139,6 +141,8 @@ class UserService {
                     this.userDao.searchUserCount(userId, request.name, chunk)
                 ])
             }))
+
+            console.log(`Finished getting ${chunkResults.length} chunks`)
 
             chunkResults.forEach(([chunkUsers, chunkCount]) => {
                 users.push(...chunkUsers)

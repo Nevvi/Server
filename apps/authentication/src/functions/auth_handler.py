@@ -72,7 +72,7 @@ def login(event, context):
 @exception_handler
 def refresh_login(event, context):
     headers = event.get('headers', {})
-    refresh_token = headers.get("RefreshToken")
+    refresh_token = headers.get("RefreshToken") or headers.get("refreshtoken")
     request = RefreshLoginRequest(refresh_token=refresh_token)
     response = auth_service.refresh_login(request=request)
     return create_response(200, response.to_dict())
@@ -81,7 +81,7 @@ def refresh_login(event, context):
 @exception_handler
 def logout(event, context):
     headers = event.get('headers', {})
-    access_token = headers.get("AccessToken")
+    access_token = headers.get("AccessToken") or headers.get("accesstoken")
     request = LogoutRequest(access_token=access_token)
     auth_service.logout(request=request)
     return create_response(200, {})
@@ -128,7 +128,8 @@ def confirm_forgot_password(event, context):
 def send_code(event, context):
     query_params = event.get("queryStringParameters", {})
     headers = event.get('headers', {})
-    request = SendCodeRequest(access_token=headers.get("AccessToken"), attribute_name=query_params.get("attribute"))
+    access_token = headers.get("AccessToken") or headers.get("accesstoken")
+    request = SendCodeRequest(access_token=access_token, attribute_name=query_params.get("attribute"))
     response = auth_service.send_code(request=request)
     return create_response(200, response.to_dict())
 
@@ -137,7 +138,8 @@ def send_code(event, context):
 def confirm_code(event, context):
     query_params = event.get("queryStringParameters", {})
     headers = event.get('headers', {})
-    request = ConfirmCodeRequest(access_token=headers.get("AccessToken"),
+    access_token = headers.get("AccessToken") or headers.get("accesstoken")
+    request = ConfirmCodeRequest(access_token=access_token,
                                  attribute_name=query_params.get("attribute"),
                                  code=query_params.get("code"))
     auth_service.confirm_code(request=request)
