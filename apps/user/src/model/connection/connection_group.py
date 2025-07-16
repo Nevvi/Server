@@ -1,25 +1,22 @@
-from typing import Dict, Any
+from dataclasses import dataclass
+from typing import List
+
+from dao.connection_group_dao import ConnectionGroupDocument
+from model.document import View
 
 
-class ConnectionGroup:
-    def __init__(self, body: Dict[str, Any]):
-        self.id = body.get("id")
-        self.user_id = body.get("userId")
-        self.name = body.get("name")
-        self.connections = body.get("connections", [])
-        self.create_date = body.get("createDate")
-        self.create_by = body.get("createBy")
-        self.update_date = body.get("updateDate")
-        self.update_by = body.get("updateBy")
+@dataclass
+class ConnectionGroup(View):
+    id: str
+    user_id: str
+    name: str
+    connections: List[str]
 
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "id": self.id,
-            "userId": self.user_id,
-            "name": self.name,
-            "connections": self.connections,
-            "createDate": self.create_date,
-            "createBy": self.create_by,
-            "updateDate": self.update_date,
-            "updateBy": self.update_by
-        }
+    @staticmethod
+    def from_document(doc: ConnectionGroupDocument):
+        return ConnectionGroup(
+            id=doc.id,
+            name=doc.name,
+            user_id=doc.user_id,
+            connections=doc.connections
+        )

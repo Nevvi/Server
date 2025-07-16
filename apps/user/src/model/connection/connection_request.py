@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import Dict, Any
 
+from model.view import View
+
 
 class RequestStatus(str, Enum):
     PENDING = "PENDING"
@@ -8,7 +10,7 @@ class RequestStatus(str, Enum):
     REJECTED = "REJECTED"
 
 
-class ConnectionRequest:
+class ConnectionRequest(View):
     def __init__(self, body: Dict[str, Any]):
         self.requesting_user_id = body.get("requestingUserId")
         self.requested_user_id = body.get("requestedUserId")
@@ -21,18 +23,3 @@ class ConnectionRequest:
         self.create_by = body.get("createBy")
         self.update_date = body.get("updateDate")
         self.update_by = body.get("updateBy")
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "requestingUserId": self.requesting_user_id,
-            "requestedUserId": self.requested_user_id,
-            "requesterFirstName": self.requester_first_name,
-            "requesterLastName": self.requester_last_name,
-            "requesterImage": self.requester_image,
-            "requestingPermissionGroupName": self.requesting_permission_group_name,
-            "status": self.status.value,
-            "createDate": self.create_date,
-            "createBy": self.create_by,
-            "updateDate": self.update_date,
-            "updateBy": self.update_by
-        }

@@ -10,9 +10,3 @@ class PermissionGroup:
 
     def get_fields(self):
         return set(self.fields + DEFAULT_PERMISSION_GROUP_FIELDS)
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "name": self.name,
-            "fields": self.fields
-        }
