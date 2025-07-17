@@ -1,71 +1,140 @@
+import json
 import os
 from dataclasses import dataclass
-from typing import Dict, Any, Optional
+from typing import Optional, List, Self
 
-from dao.user_dao import UserDocument
+from dao.connection_dao import SearchedConnection
+from dao.user_dao import UserDocument, SearchedUser
 from model.constants import DEFAULT_PERMISSION_GROUPS
-from model.user.device_settings import DeviceSettings
-from model.user.address import Address
-from model.user.permission_group import PermissionGroup
+from model.requests import UpdateRequest
+from model.user.address import AddressView
+from model.user.device_settings import DeviceSettingsView
+from model.user.permission_group import PermissionGroupView
 from model.view import View
 
 
 @dataclass
-class SlimUser(View):
+class SlimUserView(View):
     id: str
-    first_name: str
-    last_name: str
+    firstName: str
+    lastName: str
     bio: str
-    profile_image: str
+    profileImage: str
 
-    # We reuse this model for connection and user searches which causes some fields that only exist in one scenario or the other
-    connected: bool
-    requested: bool
-    in_sync: bool
-    permission_group: Optional[str]
+    connected: Optional[bool] = False
+    requested: Optional[bool] = False
+    inSync: Optional[bool] = False
+    permissionGroup: Optional[str] = None
 
     @staticmethod
-    def from_doc(doc: UserDocument):
-        return SlimUser(
+    def from_user_doc(doc: UserDocument):
+        return SlimUserView(
+            id=doc.get("_id"),
+            firstName=doc.get("firstName"),
+            lastName=doc.get("lastName"),
+            bio=doc.get("bio"),
+            profileImage=doc.get("profileImage")
+        )
+
+    @staticmethod
+    def from_searched_user(doc: SearchedUser):
+        return SlimUserView(
             id=doc.id,
-            first_name=doc.first_name,
-            last_name=doc.last_name,
+            firstName=doc.firstName,
+            lastName=doc.lastName,
             bio=doc.bio,
-            profile_image=doc.profile_image,
-            connected=False,
-            requested=False,
-            in_sync=False,
-            permission_group=None
+            profileImage=doc.profileImage,
+            connected=doc.connected,
+            requested=doc.requested
+        )
+
+    @staticmethod
+    def from_searched_connection(doc: SearchedConnection):
+        return SlimUserView(
+            id=doc.id,
+            firstName=doc.firstName,
+            lastName=doc.lastName,
+            bio=doc.bio,
+            profileImage=doc.profileImage,
+            inSync=doc.inSync
         )
 
 
-class User(View):
-    def __init__(self, body: Dict[str, Any]):
-        # data fields
-        self.id = body.get("id")
-        self.first_name = body.get("firstName")
-        self.last_name = body.get("lastName")
-        self.bio = body.get("bio")
-        self.email = body.get("email")
-        self.email_confirmed = body.get("emailConfirmed", False)
-        self.birthday = body.get("birthday")
-        self.phone_number = body.get("phoneNumber")
-        self.phone_number_confirmed = body.get("phoneNumberConfirmed", False)
-        self.onboarding_completed = body.get("onboardingCompleted", True)
-        self.device_id = body.get("deviceId")
-        self.address = Address(body.get("address", {}))
-        self.mailing_address = Address(body.get("mailingAddress", {}))
-        self.device_settings = DeviceSettings(body.get("deviceSettings", {}))
-        self.profile_image = body.get("profileImage", os.environ["DEFAULT_PROFILE_IMAGE"])
-        self.blocked_users = body.get("blockedUser", [])
+@dataclass
+class UserView(View):
+    id: str
+    firstName: str
+    lastName: str
+    bio: str
+    email: str
+    emailConfirmed: bool
+    phoneNumber: str
+    phoneNumberConfirmed: bool
+    onboardingCompleted: bool
+    deviceId: str
+    address: AddressView
+    mailingAddress: AddressView
+    deviceSettings: DeviceSettingsView
+    profileImage: str
+    birthday: str
+    permissionGroups: List[PermissionGroupView]
+    blockedUsers: List[str]
 
-        if "permissionGroups" in body:
-            self.permission_groups = [PermissionGroup(pg) for pg in body.get("permissionGroups")]
-        else:
-            self.permission_groups = DEFAULT_PERMISSION_GROUPS
+    @staticmethod
+    def from_doc(doc: UserDocument):
+        address = AddressView.from_doc(doc.get("address", {}))
+        mailing_address = AddressView.from_doc(doc.get("mailingAddress", {}))
+        device_settings = DeviceSettingsView.from_doc(doc.get("deviceSettings", {}))
+        permission_groups = [PermissionGroupView.from_doc(pg) for pg in doc.get("permissionGroups", [])] \
+            if "permissionGroups" in doc else DEFAULT_PERMISSION_GROUPS
 
-        # audit fields
-        self.create_date = body.get("createDate")
-        self.create_by = body.get("createBy")
-        self.update_date = body.get("updateDate")
-        self.update_by = body.get("updateBy")
+        return UserView(
+            id=doc.get("_id"),
+            firstName=doc.get("firstName"),
+            lastName=doc.get("lastName"),
+            bio=doc.get("bio"),
+            email=doc.get("email"),
+            emailConfirmed=doc.get("emailConfirmed", False),
+            birthday=doc.get("birthday"),
+            phoneNumber=doc.get("phoneNumber"),
+            phoneNumberConfirmed=doc.get("phoneNumberConfirmed", False),
+            onboardingCompleted=doc.get("onboardingCompleted", True),
+            deviceId=doc.get("deviceId"),
+            address=address,
+            mailingAddress=mailing_address,
+            deviceSettings=device_settings,
+            permissionGroups=permission_groups,
+            profileImage=doc.get("profileImage", os.environ["DEFAULT_PROFILE_IMAGE"]),
+            blockedUsers=doc.get("blockedUsers", [])
+        )
+
+    def update(self, request: UpdateRequest):
+        self.firstName = request.first_name if request.first_name else self.firstName
+        self.lastName = request.last_name if request.last_name else self.lastName
+        self.bio = request.bio if request.bio else self.bio
+        self.email = request.email if request.email else self.email
+        self.birthday = request.birthday if request.birthday else self.birthday
+        self.onboardingCompleted = request.onboarding_completed if request.onboarding_completed else self.onboardingCompleted
+        self.deviceId = request.device_id if request.device_id else self.onboardingCompleted
+        self.address = AddressView.from_request(request.address) if request.address else self.address
+        self.mailingAddress = AddressView.from_request(request.mailing_address) if request.mailing_address else self.mailingAddress
+        self.deviceSettings = DeviceSettingsView.from_request(request.device_settings) if request.device_settings else self.deviceSettings
+        self.permissionGroups = [PermissionGroupView.from_request(pg) for pg in request.permission_groups] if request.permission_groups else self.permissionGroups
+
+    def did_connection_data_change(self, other: Self) -> bool:
+        if self.birthday != other.birthday:
+            return True
+
+        if (self.phoneNumber and self.phoneNumberConfirmed) != (other.phoneNumber and other.phoneNumberConfirmed):
+            return True
+
+        if (self.email and self.emailConfirmed) != (other.email and other.emailConfirmed):
+            return True
+
+        if self.address != other.address:
+            return True
+
+        if self.mailingAddress != other.mailingAddress:
+            return True
+
+        return False

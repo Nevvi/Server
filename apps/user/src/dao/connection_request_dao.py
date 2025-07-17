@@ -46,9 +46,9 @@ class ConnectionRequestDao:
         document = ConnectionRequestDocument(
             requestingUserId=requesting_user.id,
             requestedUserId=requested_user_id,
-            requesterImage=requesting_user.profile_image,
-            requesterFirstName=requesting_user.first_name,
-            requesterLastName=requesting_user.last_name,
+            requesterImage=requesting_user.profileImage,
+            requesterFirstName=requesting_user.firstName,
+            requesterLastName=requesting_user.lastName,
             requestingPermissionGroupName=permission_group_name,
             status=RequestStatus.PENDING,
             createDate=now,

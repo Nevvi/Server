@@ -1,12 +1,26 @@
-from typing import Dict, Any
+from dataclasses import dataclass
+from typing import List
 
-DEFAULT_PERMISSION_GROUP_FIELDS = ["id", "firstName", "lastName", "bio", "profileImage"]
+from dao.user_dao import PermissionGroupDocument
+from model.requests import PermissionGroupUpdate
+from model.view import View
 
 
-class PermissionGroup:
-    def __init__(self, body: Dict[str, Any]):
-        self.name = body.get("name")
-        self.fields = body.get("fields")
+@dataclass
+class PermissionGroupView(View):
+    name: str
+    fields: List[str]
 
-    def get_fields(self):
-        return set(self.fields + DEFAULT_PERMISSION_GROUP_FIELDS)
+    @staticmethod
+    def from_doc(doc: PermissionGroupDocument):
+        return PermissionGroupView(
+            name=doc.get("name"),
+            fields=doc.get("fields"),
+        )
+
+    @staticmethod
+    def from_request(update: PermissionGroupUpdate):
+        return PermissionGroupView(
+            name=update.name,
+            fields=update.fields,
+        )

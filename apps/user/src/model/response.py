@@ -1,27 +1,27 @@
 from dataclasses import dataclass
 from typing import List
 
-from model.user.address import Address
-from model.user.user import SlimUser
+from model.user.address import AddressView
+from model.user.user import SlimUserView
 from model.view import View
 
 
 @dataclass
 class SearchResponse(View):
-    users: List[SlimUser]
+    users: List[SlimUserView]
     count: int
 
 
 @dataclass
-class UserConnectionResponse(View):
+class UserConnectionResponse:
     id: str
-    first_name: str
-    last_name: str
+    firstName: str
+    lastName: str
     bio: str
     email: str
-    phone_number: str
-    address: Address
-    mailing_address: Address
-    profile_image: str
+    phoneNumber: str
+    address: AddressView
+    mailingAddress: AddressView
+    profileImage: str
     birthday: str
-    permission_group: str
+    permissionGroup: str

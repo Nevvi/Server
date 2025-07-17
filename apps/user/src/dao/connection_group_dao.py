@@ -1,16 +1,21 @@
 import os
 import uuid
+from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import List, Optional, TypedDict
+from typing import List, Optional, TypedDict, Dict, Any
 
 import pymongo
 from pymongo.errors import DuplicateKeyError
 from pymongo.synchronous.collection import Collection
 
-from dao.user_dao import UserDocument
+from dao.user_dao import SearchedUser
 from model.errors import ConnectionGroupExistsError
-from model.response import SearchResponse
-from model.user.user import SlimUser
+
+
+@dataclass
+class ConnectionGroupSearch:
+    connections: List[SearchedUser]
+    count: int
 
 
 class ConnectionGroupDocument(TypedDict):
@@ -81,7 +86,8 @@ class ConnectionGroupDao:
 
         return res.modified_count == 1
 
-    def get_connections(self, user_id: str, group_id: str, limit: int, skip: int, name: Optional[str] = None):
+    def get_connections(self, user_id: str, group_id: str, limit: int, skip: int,
+                        name: Optional[str] = None) -> ConnectionGroupSearch:
         pipeline = [
             {
                 '$match': {
@@ -138,20 +144,27 @@ class ConnectionGroupDao:
             }
         })
 
-        res = self.collection.aggregate(pipeline).next()
-        connections = [conn for conn in res.get("connections", []) if len(conn.get("connectedUser", [])) == 1]
-        users = []
-        # TODO - this needs to be cleaned up
-        for conn in connections:
-            user = SlimUser.from_doc(UserDocument.from_dict(conn.get("connectedUser", [])[0]))
-            user.connected = True
-            users.append(user)
+        res: Dict[str, Any] = self.collection.aggregate(pipeline).next()
+
+        def transform(result: Dict[str, Any]) -> SearchedUser:
+            return SearchedUser(
+                id=result.get("_id"),
+                firstName=result.get("firstName"),
+                lastName=result.get("lastName"),
+                bio=result.get("bio"),
+                profileImage=result.get("profileImage"),
+                connected=True,
+                requested=True
+            )
+
+        connections = [transform(conn.get("connectedUser")[0]) for conn in res.get("connections", []) if
+                       len(conn.get("connectedUser", [])) == 1]
 
         user_count = 0
         if res and len(res.get("connectionCount", [])) == 1:
-            user_count = res.get("connectionCount")[0].get("connectionCount")
+            user_count = res.get("connectionCount")[0].get("connectionCount", 0)
 
-        return SearchResponse(users, user_count)
+        return ConnectionGroupSearch(connections, user_count)
 
 
 if __name__ == '__main__':

@@ -2,21 +2,21 @@ from dataclasses import dataclass
 from typing import List
 
 from dao.connection_group_dao import ConnectionGroupDocument
-from model.document import View
+from model.view import View
 
 
 @dataclass
-class ConnectionGroup(View):
+class ConnectionGroupView(View):
     id: str
-    user_id: str
+    userId: str
     name: str
     connections: List[str]
 
     @staticmethod
     def from_document(doc: ConnectionGroupDocument):
-        return ConnectionGroup(
-            id=doc.id,
-            name=doc.name,
-            user_id=doc.user_id,
-            connections=doc.connections
+        return ConnectionGroupView(
+            id=doc.get("_id"),
+            name=doc.get("name"),
+            userId=doc.get("userId"),
+            connections=doc.get("connections")
         )

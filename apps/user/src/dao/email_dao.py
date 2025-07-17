@@ -16,7 +16,7 @@ class EmailDao:
         self.ses: SESClient = boto3.client("ses")
         self.from_arn = os.environ["EMAIL_FROM_ARN"]
 
-    def send_email(self, subject: str, body: str, destination: str, attachment_base64: Optional[str]):
+    def send_email(self, subject: str, body: str, destination: str, attachment_base64: Optional[str] = None):
         # Create message container
         msg = MIMEMultipart('mixed')
         msg['Subject'] = subject
