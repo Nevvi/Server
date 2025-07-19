@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from dao.user_dao import DeviceSettingsDocument
+from model.document import DeviceSettingsDocument
 from model.requests import DeviceSettingsUpdate
 from model.view import View
 

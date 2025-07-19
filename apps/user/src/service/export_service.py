@@ -6,14 +6,14 @@ import xlsxwriter
 
 from dao.email_dao import EmailDao
 from model.response import UserConnectionResponse
-from model.user.user import User
+from model.user.user import UserView
 
 
 class ExportService:
     def __init__(self):
         self.email_dao = EmailDao()
 
-    def send_export(self, group_name: str, user: User, connections: List[UserConnectionResponse]):
+    def send_export(self, group_name: str, user: UserView, connections: List[UserConnectionResponse]):
         data = list(map(self.__transform_connection, connections))
 
         output = BytesIO()

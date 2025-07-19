@@ -1,30 +1,15 @@
 import os
 import uuid
-from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import List, Optional, TypedDict, Dict, Any
+from typing import List, Optional, Dict, Any
 
 import pymongo
 from pymongo.errors import DuplicateKeyError
 from pymongo.synchronous.collection import Collection
 
 from dao.user_dao import SearchedUser
+from model.document import ConnectionGroupDocument, ConnectionGroupSearch
 from model.errors import ConnectionGroupExistsError
-
-
-@dataclass
-class ConnectionGroupSearch:
-    connections: List[SearchedUser]
-    count: int
-
-
-class ConnectionGroupDocument(TypedDict):
-    _id: str
-    userId: str
-    name: str
-    connections: List[str]
-    createDate: str
-    updateDate: str
 
 
 class ConnectionGroupDao:

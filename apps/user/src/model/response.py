@@ -25,3 +25,6 @@ class UserConnectionResponse:
     profileImage: str
     birthday: str
     permissionGroup: str
+
+
+EMPTY_SEARCH_RESPONSE = SearchResponse(count=0, users=[])

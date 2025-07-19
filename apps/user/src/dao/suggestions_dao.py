@@ -1,20 +1,11 @@
 import os
-from dataclasses import dataclass
 from typing import List, Dict, Any
 
 import pymongo
 
+from model.document import SuggestedUser
+
 MIN_SHARED_CONNECTIONS = 2
-
-
-@dataclass
-class SuggestedUser:
-    id: str
-    firstName: str
-    lastName: str
-    bio: str
-    profileImage: str
-    blockedUsers: List[str]
 
 
 class SuggestionsDao:

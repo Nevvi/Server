@@ -1,71 +1,15 @@
 import os
-from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import List, TypedDict, Optional, Dict, Any
+from typing import List, Optional, Dict, Any
 
 import pymongo
 from dateutil.parser import parse
 from pymongo.errors import DuplicateKeyError
 from pymongo.synchronous.collection import Collection
 
+from model.document import UserDocument, DeviceSettingsDocument, SearchedUser, AddressDocument, PermissionGroupDocument
 from model.errors import UserAlreadyExistsError, UserNotFoundError
-from model.user.user import User
-
-
-@dataclass
-class SearchedUser:
-    id: str
-    firstName: str
-    lastName: str
-    bio: str
-    profileImage: str
-    connected: bool
-    requested: bool
-
-
-class AddressDocument(TypedDict):
-    street: str
-    unit: str
-    city: str
-    state: str
-    zipCode: str
-
-
-class DeviceSettingsDocument(TypedDict):
-    autoSync: bool
-    notifyOutOfSync: bool
-    notifyBirthdays: bool
-
-
-class PermissionGroupDocument(TypedDict):
-    name: str
-    fields: List[str]
-
-
-class UserDocument(TypedDict):
-    _id: str
-    phoneNumber: str
-    phoneNumberConfirmed: bool
-    onboardingCompleted: bool
-    permissionGroups: List[PermissionGroupDocument]
-    blockedUsers: List[str]
-    deviceSettings: DeviceSettingsDocument
-
-    firstName: Optional[str]
-    lastName: Optional[str]
-    bio: Optional[str]
-    nameLower: Optional[str]
-    email: Optional[str]
-    emailConfirmed: Optional[bool]
-    deviceId: Optional[str]
-    address: Optional[AddressDocument]
-    mailingAddress: Optional[AddressDocument]
-    profileImage: Optional[str]
-    birthday: Optional[str]
-    birthdayMonth: Optional[int]
-    birthdayDayOfMonth: Optional[int]
-    createDate: str
-    updateDate: str
+from model.user.user import UserView
 
 
 class UserDao:
@@ -116,12 +60,16 @@ class UserDao:
 
         return doc
 
-    def update_user(self, user: User) -> UserDocument:
+    def update_user(self, user: UserView, upsert: bool = False) -> UserDocument:
         user.updateDate = datetime.now(timezone.utc).isoformat()
-        name_lower = f"{user.firstName}_{user.lastName}" if user.firstName and user.lastName else None
+        name_lower = f"{user.firstName}_{user.lastName}".lower() if user.firstName and user.lastName else None
         birthdate = parse(user.birthday) if user.birthday else None
         birthday_month = birthdate.month if birthdate else None
         birthday_day = birthdate.day if birthdate else None
+        address = AddressDocument(**user.address.__dict__)
+        mailing_address = AddressDocument(**user.mailingAddress.__dict__)
+        device_settings = DeviceSettingsDocument(**user.deviceSettings.__dict__)
+        permission_groups = [PermissionGroupDocument(**pg.__dict__) for pg in user.permissionGroups]
 
         doc = UserDocument(
             _id=user.id,
@@ -135,10 +83,10 @@ class UserDao:
             phoneNumberConfirmed=user.phoneNumberConfirmed,
             onboardingCompleted=user.onboardingCompleted,
             deviceId=user.deviceId,
-            address=user.address,
-            mailingAddress=user.mailingAddress,
-            deviceSettings=user.deviceSettings,
-            permissionGroups=user.permissionGroups,
+            address=address,
+            mailingAddress=mailing_address,
+            deviceSettings=device_settings,
+            permissionGroups=permission_groups,
             blockedUsers=user.blockedUsers,
             profileImage=user.profileImage,
             birthday=user.birthday,
@@ -148,8 +96,8 @@ class UserDao:
             updateDate=user.updateDate
         )
 
-        res = self.collection.replace_one(filter={"_id": user.id}, replacement=doc)
-        if res.modified_count == 0:
+        res = self.collection.replace_one(filter={"_id": user.id}, replacement=doc, upsert=upsert)
+        if not upsert and res.modified_count == 0:
             raise UserNotFoundError()
 
         return doc
@@ -288,7 +236,11 @@ class UserDao:
             }
         ]
 
-        return list(self.collection.aggregate(pipeline))
+        res: List[Dict[str, Any]] = list(self.collection.aggregate(pipeline))
+
+        blocked_users = [UserDocument(**u.get("blockedUser")[0]) for u in res if len(u.get("blockedUser")) == 1]
+
+        return blocked_users
 
     def get_users_by_birthday(self, birthday: datetime) -> List[UserDocument]:
         return list(self.collection.find(filter={
@@ -308,7 +260,7 @@ class UserDao:
         if phone_numbers is not None and len(phone_numbers):
             query["phoneNumber"] = {"$in": phone_numbers}
         elif name and len(name):
-            name_search = '_'.join([part for part in name.split(' ') if len(part)])
-            query["nameLower"] = name_search
+            name_search = '_'.join([part for part in name.lower().split(' ') if len(part)])
+            query["nameLower"] = {"$regex": name_search}
 
         return query

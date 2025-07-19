@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from dao.connection_dao import ConnectionDocument
+from model.document import ConnectionDocument
 from model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME
 from model.user.address import AddressView
 from model.user.user import UserView

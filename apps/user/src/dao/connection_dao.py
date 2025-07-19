@@ -1,22 +1,14 @@
 import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import TypedDict, Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any
 
 import pymongo
 from pymongo.errors import DuplicateKeyError
 from pymongo.synchronous.collection import Collection
 
+from model.document import ConnectionDocument
 from model.errors import ConnectionExistsError
-
-
-class ConnectionDocument(TypedDict):
-    userId: str
-    connectedUserId: str
-    permissionGroupName: str
-    inSync: bool
-    createDate: str
-    updateDate: str
 
 
 @dataclass

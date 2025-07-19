@@ -1,34 +1,25 @@
 import os
 from datetime import datetime, timezone
-from typing import List, Optional, TypedDict
+from typing import List, Optional
 
 import pymongo
 from pymongo.errors import DuplicateKeyError
 from pymongo.synchronous.collection import Collection
 
 from model.connection.connection_request import RequestStatus
+from model.document import ConnectionRequestDocument
 from model.errors import ConnectionRequestExistsError
-from model.user.user import User
-
-
-class ConnectionRequestDocument(TypedDict):
-    requestingUserId: str
-    requestedUserId: str
-    requesterFirstName: str
-    requesterLastName: str
-    requesterImage: str
-    requestingPermissionGroupName: str
-    status: RequestStatus
-    createDate: str
-    updateDate: str
+from model.user.user import UserView
 
 
 class ConnectionRequestDao:
     def __init__(self):
         client = pymongo.MongoClient(os.environ.get("MONGO_URI"))
-        self.collection: Collection[ConnectionRequestDocument] = client.get_database("nevvi").get_collection("connection_requests")
+        self.collection: Collection[ConnectionRequestDocument] = client.get_database("nevvi").get_collection(
+            "connection_requests")
 
-    def get_connection_request(self, requesting_user_id: str, requested_user_id: str) -> Optional[ConnectionRequestDocument]:
+    def get_connection_request(self, requesting_user_id: str, requested_user_id: str) -> Optional[
+        ConnectionRequestDocument]:
         return self.collection.find_one(filter={
             "requestingUserId": requesting_user_id,
             "requestedUserId": requested_user_id,
@@ -40,7 +31,7 @@ class ConnectionRequestDao:
             "status": status
         }))
 
-    def create_connection_request(self, requesting_user: User, requested_user_id: str,
+    def create_connection_request(self, requesting_user: UserView, requested_user_id: str,
                                   permission_group_name: str) -> ConnectionRequestDocument:
         now = datetime.now(timezone.utc).isoformat()
         document = ConnectionRequestDocument(

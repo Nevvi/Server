@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from dao.user_dao import AddressDocument
+from model.document import AddressDocument
 from model.requests import AddressUpdate
 from model.view import View
 

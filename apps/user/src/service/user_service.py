@@ -5,10 +5,10 @@ from dao.authentication_dao import AuthenticationDao
 from dao.connection_dao import ConnectionDao
 from dao.image_dao import ImageDao
 from dao.user_dao import UserDao
-from model.constants import EMPTY_SEARCH_RESPONSE, DEFAULT_ALL_PERMISSION_GROUP_NAME
+from model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME
 from model.errors import UserNotFoundError, InvalidRequestError
 from model.requests import RegisterRequest, SearchRequest, UpdateRequest, UpdateContactRequest
-from model.response import SearchResponse
+from model.response import SearchResponse, EMPTY_SEARCH_RESPONSE
 from model.user.user import UserView, SlimUserView
 
 
@@ -64,13 +64,16 @@ class UserService:
                 updated_user.emailConfirmed = False
 
         # Update the user in the db and mark all their connections as out of sync if applicable
-        updated_user_doc = self.user_dao.update_user(user=updated_user)
+        updated_user = self.save_user(user=updated_user)
         if user.did_connection_data_change(other=updated_user):
             print("Connection data changed for user")
             marked = self.connection_dao.mark_connections(user_id=user.id)
             print(f"Marked {marked} connections as out of sync")
 
-        return UserView.from_doc(updated_user_doc)
+        return updated_user
+
+    def save_user(self, user: UserView) -> UserView:
+        return UserView.from_doc(self.user_dao.update_user(user=user))
 
     def update_user_contact(self, user: UserView, request: UpdateContactRequest) -> UserView:
         user.email = request.email if request.email else user.email

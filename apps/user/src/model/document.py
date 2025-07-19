@@ -1,20 +1,106 @@
 from dataclasses import dataclass
-from typing import Mapping, Optional
+from typing import TypedDict, Optional, List
 
-from util.json_utils import convert_keys_to_camelcase, convert_keys_to_snake_case
+from model.enums import RequestStatus
 
 
 @dataclass
-class Document:
-    create_date: str
-    create_by: str
-    update_date: str
-    update_by: str
+class SearchedUser:
+    id: str
+    firstName: str
+    lastName: str
+    bio: str
+    profileImage: str
+    connected: bool
+    requested: bool
 
-    @classmethod
-    def from_dict(cls, obj: Mapping[str, any]):
-        converted = convert_keys_to_snake_case(obj)
-        return cls(**converted)
 
-    def to_dict(self) -> Mapping[str, any]:
-        return convert_keys_to_camelcase(self.__dict__, preserved_keys=["_id"])
+class AddressDocument(TypedDict):
+    street: str
+    unit: str
+    city: str
+    state: str
+    zipCode: str
+
+
+class DeviceSettingsDocument(TypedDict):
+    autoSync: bool
+    notifyOutOfSync: bool
+    notifyBirthdays: bool
+
+
+class PermissionGroupDocument(TypedDict):
+    name: str
+    fields: List[str]
+
+
+class UserDocument(TypedDict):
+    _id: str
+    phoneNumber: str
+    phoneNumberConfirmed: bool
+    onboardingCompleted: bool
+    permissionGroups: List[PermissionGroupDocument]
+    blockedUsers: List[str]
+    deviceSettings: DeviceSettingsDocument
+
+    firstName: Optional[str]
+    lastName: Optional[str]
+    bio: Optional[str]
+    nameLower: Optional[str]
+    email: Optional[str]
+    emailConfirmed: Optional[bool]
+    deviceId: Optional[str]
+    address: Optional[AddressDocument]
+    mailingAddress: Optional[AddressDocument]
+    profileImage: Optional[str]
+    birthday: Optional[str]
+    birthdayMonth: Optional[int]
+    birthdayDayOfMonth: Optional[int]
+    createDate: str
+    updateDate: str
+
+
+class ConnectionDocument(TypedDict):
+    userId: str
+    connectedUserId: str
+    permissionGroupName: str
+    inSync: bool
+    createDate: str
+    updateDate: str
+
+
+@dataclass
+class ConnectionGroupSearch:
+    connections: List[SearchedUser]
+    count: int
+
+
+class ConnectionGroupDocument(TypedDict):
+    _id: str
+    userId: str
+    name: str
+    connections: List[str]
+    createDate: str
+    updateDate: str
+
+
+class ConnectionRequestDocument(TypedDict):
+    requestingUserId: str
+    requestedUserId: str
+    requesterFirstName: str
+    requesterLastName: str
+    requesterImage: str
+    requestingPermissionGroupName: str
+    status: RequestStatus
+    createDate: str
+    updateDate: str
+
+
+@dataclass
+class SuggestedUser:
+    id: str
+    firstName: str
+    lastName: str
+    bio: str
+    profileImage: str
+    blockedUsers: List[str]

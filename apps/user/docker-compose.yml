@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # LocalStack for AWS services (SQS, SES, S3)
+  localstack:
+    image: localstack/localstack:3.0
+    ports:
+      - "4566:4566"
+      - "4510-4559:4510-4559"
+    environment:
+      - SERVICES=sqs,ses,s3
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:-}
+    volumes:
+      - "./localstack-data:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+  # MongoDB
+  mongodb:
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=testuser
+      - MONGO_INITDB_ROOT_PASSWORD=testpass
+      - MONGO_INITDB_DATABASE=nevvi
+    volumes:
+      - mongodb_data:/data/db
+
+  # WireMock for external API mocking
+  wiremock:
+    image: wiremock/wiremock:3.3.1
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./wiremock/mappings:/home/wiremock/mappings
+      - ./wiremock/files:/home/wiremock/__files
+    command: ["--global-response-templating", "--verbose"]
+
+volumes:
+  mongodb_data:

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
-from dao.connection_group_dao import ConnectionGroupDocument
+from model.document import ConnectionGroupDocument
 from model.view import View
 
 

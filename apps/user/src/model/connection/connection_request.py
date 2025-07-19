@@ -1,16 +1,10 @@
 import os
 from dataclasses import dataclass
-from enum import Enum
 
-from dao.connection_request_dao import ConnectionRequestDocument
 from model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME
+from model.document import ConnectionRequestDocument
+from model.enums import RequestStatus
 from model.view import View
-
-
-class RequestStatus(str, Enum):
-    PENDING = "PENDING"
-    APPROVED = "APPROVED"
-    REJECTED = "REJECTED"
 
 
 @dataclass

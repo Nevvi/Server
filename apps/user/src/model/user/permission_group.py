@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from typing import List
 
-from dao.user_dao import PermissionGroupDocument
+from model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME, DEFAULT_CONTACT_INFO_PERMISSION_GROUP_NAME
+from model.document import PermissionGroupDocument
 from model.requests import PermissionGroupUpdate
 from model.view import View
 
@@ -24,3 +25,9 @@ class PermissionGroupView(View):
             name=update.name,
             fields=update.fields,
         )
+
+
+DEFAULT_PERMISSION_GROUPS = [
+    PermissionGroupView(name=DEFAULT_ALL_PERMISSION_GROUP_NAME, fields=[]),
+    PermissionGroupView(name=DEFAULT_CONTACT_INFO_PERMISSION_GROUP_NAME, fields=["email", "phoneNumber"])
+]
