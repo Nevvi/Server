@@ -20,3 +20,10 @@ class ConnectionGroupView(View):
             userId=doc.get("userId"),
             connections=doc.get("connections")
         )
+
+    def add_user(self, user_id: str):
+        self.connections.append(user_id)
+        self.connections = list(set(self.connections))
+
+    def remove_user(self, user_id: str):
+        self.connections = [c for c in self.connections if c != user_id]

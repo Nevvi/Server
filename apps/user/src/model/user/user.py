@@ -99,8 +99,15 @@ class UserView(View):
 
         return False
 
+    def add_blocked_user(self, blocked_user_id: str):
+        self.blockedUsers.append(blocked_user_id)
+        self.blockedUsers = list(set(self.blockedUsers))
+
     def remove_blocked_user(self, blocked_user_id: str):
         self.blockedUsers = [b for b in self.blockedUsers if b != blocked_user_id]
+
+    def get_permission_group(self, name: str) -> Optional[PermissionGroupView]:
+        return next((pg for pg in self.permissionGroups if pg.name == name), None)
 
 
 @dataclass

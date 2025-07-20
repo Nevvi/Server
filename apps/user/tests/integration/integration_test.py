@@ -15,7 +15,6 @@ from pymongo.errors import CollectionInvalid
 
 from model.connection.connection import ConnectionView
 from model.connection.connection_request import ConnectionRequestView
-from model.requests import RequestConnectionRequest
 from model.user.address import AddressView
 from model.user.device_settings import DeviceSettingsView
 from model.user.user import UserView
@@ -68,16 +67,16 @@ class IntegrationTest:
         self.mongo_client = MongoClient(os.environ["MONGO_URI"])
         self.mongo_db = self.mongo_client.get_database("nevvi")
 
-        # Create and/pr cleanup resources
-        self._create_resources()
-        self._cleanup_resources()
-
         self.user_service = UserService()
         self.connection_service = ConnectionService()
         self.export_service = ExportService()
         self.notification_service = NotificationService()
         self.suggestion_service = SuggestionService()
         self.admin_service = AdminService()
+
+        # Create and/pr cleanup resources
+        self._cleanup_resources()
+        self._create_resources()
 
         yield
 
@@ -93,6 +92,8 @@ class IntegrationTest:
             self.mongo_db.create_collection("connection_suggestions")
         except CollectionInvalid:
             pass
+
+        self.user = self.create_user()
 
     def _setup_sqs_queue(self, queue: str):
         try:
@@ -214,8 +215,8 @@ class IntegrationTest:
 
         blocked_users = blocked_users if blocked_users else []
 
-        first_name if first_name else generate_random_string(12)
-        last_name if last_name else generate_random_string(12)
+        first_name = first_name if first_name else generate_random_string(12)
+        last_name = last_name if last_name else generate_random_string(12)
         email = f"{first_name}.{last_name}@nevvi.net"
 
         now = datetime.now(timezone.utc).isoformat()
@@ -251,8 +252,8 @@ class IntegrationTest:
 
         return ConnectionView.from_doc(connection)
 
-    def create_connection_request(self, user_id: str, connected_user_id: str) -> ConnectionRequestView:
-        request = RequestConnectionRequest(requestingUserId=user_id,
-                                           requestedUserId=connected_user_id,
-                                           permissionGroupName="ALL")
-        return self.connection_service.request_connection(request=request)
+    def create_connection_request(self, user: UserView, connected_user_id: str) -> ConnectionRequestView:
+        doc = self.connection_service.connection_request_dao.create_connection_request(requesting_user=user,
+                                                                                       requested_user_id=connected_user_id,
+                                                                                       permission_group_name="ALL")
+        return ConnectionRequestView.from_doc(doc)

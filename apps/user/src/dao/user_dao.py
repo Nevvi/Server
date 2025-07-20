@@ -98,7 +98,7 @@ class UserDao:
 
         res = self.collection.replace_one(filter={"_id": user.id}, replacement=doc, upsert=upsert)
         if not upsert and res.modified_count == 0:
-            raise UserNotFoundError()
+            raise UserNotFoundError(user.id)
 
         return doc
 

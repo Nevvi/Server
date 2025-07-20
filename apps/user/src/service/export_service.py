@@ -5,7 +5,7 @@ from typing import List, Dict, Any
 import xlsxwriter
 
 from dao.email_dao import EmailDao
-from model.response import UserConnectionResponse
+from model.connection.connection import UserConnectionView
 from model.user.user import UserView
 
 
@@ -13,7 +13,7 @@ class ExportService:
     def __init__(self):
         self.email_dao = EmailDao()
 
-    def send_export(self, group_name: str, user: UserView, connections: List[UserConnectionResponse]):
+    def send_export(self, group_name: str, user: UserView, connections: List[UserConnectionView]):
         data = list(map(self.__transform_connection, connections))
 
         output = BytesIO()
@@ -37,15 +37,15 @@ class ExportService:
                                   attachment_base64=base64_encoded_excel)
 
     @staticmethod
-    def __transform_connection(connection: UserConnectionResponse) -> Dict[str, Any]:
+    def __transform_connection(connection: UserConnectionView) -> Dict[str, Any]:
         return {
             "firstName": connection.firstName,
             "lastName": connection.lastName,
             "email": connection.email,
             "phone": connection.phoneNumber,
-            "street": connection.address.get("street"),
-            "unit": connection.address.get("unit"),
-            "city": connection.address.get("city"),
-            "state": connection.address.get("state"),
-            "zipCode": connection.address.get("zipCode")
+            "street": connection.address.street,
+            "unit": connection.address.unit,
+            "city": connection.address.city,
+            "state": connection.address.state,
+            "zipCode": connection.address.zipCode
         }

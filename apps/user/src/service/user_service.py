@@ -84,7 +84,7 @@ class UserService:
     def update_user_image(self, user_id: str, image: any, image_name: str, content_type: str) -> UserView:
         user = self.get_user(user_id=user_id)
         if not user:
-            raise UserNotFoundError()
+            raise UserNotFoundError(user_id)
 
         user.profileImage = self.image_dao.upload_image(user_id=user_id, image=image, file_name=image_name,
                                                         content_type=content_type)

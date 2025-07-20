@@ -13,8 +13,8 @@ class InvalidRequestError(HttpError):
 
 
 class UserNotFoundError(HttpError):
-    def __init__(self):
-        HttpError.__init__(self, status_code=404, message="No user found with that id")
+    def __init__(self, id: str):
+        HttpError.__init__(self, status_code=404, message=f"No user found with id: {id}")
 
 
 class UserAlreadyExistsError(HttpError):
