@@ -1,0 +1,96 @@
+name: Test User
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'apps/user/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+        env:
+          MONGO_INITDB_ROOT_USERNAME: admin
+          MONGO_INITDB_ROOT_PASSWORD: password
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      wiremock:
+        image: wiremock/wiremock:latest
+        ports:
+          - 8080:8080
+        options: >-
+          --health-cmd "curl -f http://localhost:8080/__admin/health || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('apps/user/**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          cd apps/user
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Start LocalStack
+        run: |
+          pip install localstack
+          docker run -d \
+            --name localstack \
+            -p 4566:4566 \
+            -p 4510-4559:4510-4559 \
+            -e SERVICES=s3,sqs,ses \
+            -e DEBUG=1 \
+            -e DATA_DIR=/tmp/localstack/data \
+            -e DOCKER_HOST=unix:///var/run/docker.sock \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            localstack/localstack:latest
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for LocalStack..."
+          timeout 60 bash -c 'until curl -s http://localhost:4566/_localstack/health | grep -q "\"running\""; do sleep 2; done'
+          
+          echo "Waiting for MongoDB..."
+          timeout 60 bash -c 'until mongosh --host localhost:27017 --eval "db.runCommand({ping: 1})" --quiet; do sleep 2; done'
+          
+          echo "Waiting for WireMock..."
+          timeout 60 bash -c 'until curl -s http://localhost:8080/__admin/health; do sleep 2; done'
+          
+          echo "All services are ready!"
+
+      - name: Run tests
+        run: |
+          cd apps/user
+          pytest tests/ -v --tb=short
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop localstack || true
+          docker rm localstack || true

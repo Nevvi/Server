@@ -16,10 +16,10 @@ yyyymmdd = Annotated[str, AfterValidator(val_date)]
 
 
 class AddressUpdate(BaseModel):
-    street: Optional[str] = Field(...)
-    unit: Optional[str] = Field(...)
-    city: Optional[str] = Field(...)
-    state: Optional[str] = Field(...)
+    street: Optional[str] = Field()
+    unit: Optional[str] = Field()
+    city: Optional[str] = Field()
+    state: Optional[str] = Field()
     zip_code: Optional[str] = Field(alias="zipCode")
 
 
@@ -30,16 +30,16 @@ class DeviceSettingsUpdate(BaseModel):
 
 
 class PermissionGroupUpdate(BaseModel):
-    name: str = Field(...)
-    fields: List[str] = Field(...)
+    name: str = Field()
+    fields: List[str] = Field()
 
 
 class UpdateRequest(BaseModel):
-    email: Optional[EmailStr] = Field(...)
+    email: Optional[EmailStr] = Field()
     first_name: Optional[str] = Field(alias="firstName")
     last_name: Optional[str] = Field(alias="lastName")
-    bio: Optional[str] = Field(...)
-    address: Optional[AddressUpdate] = Field(...)
+    bio: Optional[str] = Field()
+    address: Optional[AddressUpdate] = Field()
     mailing_address: Optional[AddressUpdate] = Field(alias="mailingAddress")
     device_settings: Optional[DeviceSettingsUpdate] = Field(alias="deviceSettings")
     permission_groups: Optional[List[PermissionGroupUpdate]] = Field(alias="permissionGroups")
@@ -55,20 +55,20 @@ class UpdateRequest(BaseModel):
 
 
 class RegisterRequest(BaseModel):
-    id: str = Field(...)
+    id: str = Field()
     phone_number: str = Field(alias="phoneNumber")
 
 
 class UpdateContactRequest(BaseModel):
-    email: Optional[EmailStr] = Field(...)
+    email: Optional[EmailStr] = Field()
     email_confirmed: Optional[bool] = Field(alias="emailConfirmed")
 
 
 class UpdateConnectionRequest(BaseModel):
     user_id: str = Field(alias="userId")
     other_user_id: str = Field(alias="otherUserId")
-    permission_group_name: Optional[str] = Field(alias="permissionGroupName")
-    in_sync: Optional[bool] = Field(alias="inSync")
+    permission_group_name: Optional[str] = Field(alias="permissionGroupName", default=None)
+    in_sync: Optional[bool] = Field(alias="inSync", default=None)
 
 
 class SearchRequest(BaseModel):
@@ -82,16 +82,16 @@ class SearchRequest(BaseModel):
 
 class SearchGroupsRequest(BaseModel):
     user_id: str = Field(alias="userId")
-    name: Optional[str] = Field(...)
+    name: Optional[str] = Field()
     limit: Optional[int] = Field(default=25, gt=0, le=500)
     skip: Optional[int] = Field(default=0, gt=0)
 
 
 class SearchConnectionsRequest(BaseModel):
     user_id: str = Field(alias="userId")
-    name: Optional[str] = Field(...)
-    permission_group: Optional[str] = Field(alias="permissionGroup")
-    in_sync: Optional[bool] = Field(alias="inSync")
+    name: Optional[str] = Field(default=None)
+    permission_group: Optional[str] = Field(alias="permissionGroup", default=None)
+    in_sync: Optional[bool] = Field(alias="inSync", default=None)
     limit: Optional[int] = Field(default=25, gt=0, le=25)
     skip: Optional[int] = Field(default=0, gt=0)
 
@@ -131,9 +131,9 @@ class BlockConnectionRequest(BaseModel):
 
 
 class DeleteAccountRequest(BaseModel):
-    id: str = Field(...)
+    id: str = Field()
 
 
 class CreateGroupRequest(BaseModel):
     user_id: str = Field(alias="userId")
-    name: str = Field(...)
+    name: str = Field()

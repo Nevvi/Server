@@ -45,10 +45,10 @@ class UserConnectionView(View):
         def can_show_field(field: str) -> bool:
             return show_all_fields or field in permission_group.fields
 
-        email = user.email if user.emailConfirmed and can_show_field("email") else None
+        email = user.email if user.email and user.emailConfirmed and can_show_field("email") else None
         phone_number = user.phoneNumber if can_show_field("phoneNumber") else None
         address = user.address if can_show_field("address") else None
-        mailing_address = user.mailingAddress if can_show_field("address") else None
+        mailing_address = user.mailingAddress if can_show_field("mailingAddress") else None
         birthday = user.birthday if can_show_field("birthday") else None
 
         return UserConnectionView(

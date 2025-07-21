@@ -90,7 +90,7 @@ class AbstractAuthorizer:
             raise Exception("Unauthorized")
 
     def build_policy(self, token_sub: str, method_arn: str) -> AuthPolicy:
-        principal_id = f"user|${token_sub}"
+        principal_id = f"user|{token_sub}"
         tmp = method_arn.split(':')
         api_gateway_arn_tmp = tmp[5].split('/')
         aws_account_id = tmp[4]

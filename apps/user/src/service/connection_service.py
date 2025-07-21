@@ -112,7 +112,7 @@ class ConnectionService:
         if not requested_user:
             raise UserNotFoundError(request.requested_user_id)
 
-        if existing_request != RequestStatus.PENDING:
+        if existing_request.status != RequestStatus.PENDING:
             raise InvalidRequestError("Request is not in a pending status")
 
         # All checks pass!
@@ -134,7 +134,7 @@ class ConnectionService:
                                               connected_user_id=request.requesting_user_id,
                                               permission_group_name=request.permission_group_name)
 
-        request_text = f"${requested_user.firstName} accepted your request!"
+        request_text = f"{requested_user.firstName} accepted your request!"
         self.notification_service.send_notification(user_id=request.requesting_user_id, message=request_text)
 
         self.suggestion_service.remove_suggestion(user_id=request.requesting_user_id,
@@ -155,7 +155,7 @@ class ConnectionService:
         if not requested_user:
             raise UserNotFoundError(request.user_id)
 
-        if existing_request != RequestStatus.PENDING:
+        if existing_request.status != RequestStatus.PENDING:
             raise InvalidRequestError("Request is not in a pending status")
 
         # All checks pass!
@@ -217,7 +217,7 @@ class ConnectionService:
 
         return self.get_user_connection(user_id=request.user_id, other_user_id=request.other_user_id)
 
-    def block_connection(self, request: BlockConnectionRequest) -> bool:
+    def block_connection(self, request: BlockConnectionRequest):
         existing_request = self.get_connection_request(requesting_user=request.other_user_id,
                                                        requested_user=request.user_id)
         if not existing_request:

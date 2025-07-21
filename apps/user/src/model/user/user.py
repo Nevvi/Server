@@ -41,7 +41,7 @@ class UserView(View):
         mailing_address = AddressView.from_doc(doc.get("mailingAddress") or {})
         device_settings = DeviceSettingsView.from_doc(doc.get("deviceSettings") or {})
         permission_groups = [PermissionGroupView.from_doc(pg) for pg in doc.get("permissionGroups", [])] \
-            if "permissionGroups" in doc else DEFAULT_PERMISSION_GROUPS
+            if "permissionGroups" in doc and len(doc.get("permissionGroups")) else DEFAULT_PERMISSION_GROUPS
 
         return UserView(
             id=doc.get("_id"),

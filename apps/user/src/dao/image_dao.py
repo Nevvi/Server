@@ -10,7 +10,7 @@ class ImageDao:
         self.bucket = os.environ["IMAGE_BUCKET"]
 
     def upload_image(self, user_id: str, image, file_name: str, content_type: str) -> str:
-        key = f"users/${user_id}/images/${file_name}"
+        key = f"users/{user_id}/images/{file_name}"
         self.s3.upload_fileobj(
             Fileobj=image,
             Bucket=self.bucket,
@@ -24,7 +24,7 @@ class ImageDao:
         objects = self.s3.list_objects_v2(
             Bucket=self.bucket,
             Delimiter='/',
-            Prefix=f"users/${user_id}/images/"
+            Prefix=f"users/{user_id}/images/"
         )
 
         keys_to_remove = [obj.get("Key") for obj in objects.get("Contents", []) if excluded_key not in obj.get("Key")]

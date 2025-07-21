@@ -100,8 +100,16 @@ class TestUserIntegration(IntegrationTest):
         assert res.emailConfirmed
 
     def test_update_user_image(self):
-        #TODO
-        pass
+        image = self.create_test_image()
+        image_name = "test_image_name.png"
+        content_type = "image/png"
+
+        assert image_name not in self.user.profileImage
+
+        updated_user = self.user_service.update_user_image(user_id=self.user.id, image=image, image_name=image_name,
+                                                           content_type=content_type)
+
+        assert updated_user.profileImage == f"https://{self.image_bucket}.s3.amazonaws.com/users/{self.user.id}/images/{image_name}"
 
     def test_get_blocked_users(self):
         test_user_one = self.create_user()

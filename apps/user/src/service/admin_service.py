@@ -11,7 +11,7 @@ class AdminService:
 
     def delete_account(self, request: DeleteAccountRequest):
         subject = "Delete user account"
-        body = f"Request to delete user ${request.id}"
+        body = f"Request to delete user {request.id}"
 
         self.email_dao.send_email(subject=subject, body=body, destination=self.admin_email)
         

@@ -31,8 +31,8 @@ class ExportService:
         output.seek(0)
         excel_bytes = output.read()
         base64_encoded_excel = base64.b64encode(excel_bytes).decode('UTF-8')
-        subject = f"${group_name} export"
-        body = f"Hello ${user.firstName},\n\nAttached is the export for the ${len(connections)} connection(s) in the ${group_name} group"
+        subject = f"{group_name} export"
+        body = f"Hello {user.firstName},\n\nAttached is the export for the {len(connections)} connection(s) in the {group_name} group"
         self.email_dao.send_email(subject=subject, body=body, destination=user.email,
                                   attachment_base64=base64_encoded_excel)
 
