@@ -16,8 +16,9 @@ jobs:
         ports:
           - 27017:27017
         env:
-          MONGO_INITDB_ROOT_USERNAME: admin
-          MONGO_INITDB_ROOT_PASSWORD: password
+          MONGO_INITDB_ROOT_USERNAME: testuser
+          MONGO_INITDB_ROOT_PASSWORD: testpass
+          MONGO_INITDB_DATABASE: nevvi
         options: >-
           --health-cmd "mongosh --eval 'db.runCommand({ping: 1})'"
           --health-interval 10s
