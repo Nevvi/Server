@@ -56,6 +56,8 @@ jobs:
           cd apps/user
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          # Install AWS CLI for LocalStack verification
+          pip install awscli
 
       - name: Start LocalStack
         run: |
@@ -65,24 +67,29 @@ jobs:
             -p 4566:4566 \
             -p 4510-4559:4510-4559 \
             -e SERVICES=s3,sqs,ses \
-            -e DEBUG=1 \
-            -e DATA_DIR=/tmp/localstack/data \
-            -e DOCKER_HOST=unix:///var/run/docker.sock \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            localstack/localstack:latest
+            -e DEBUG=0 \
+            -e LS_LOG=warn \
+            -e EAGER_SERVICE_LOADING=1 \
+            -e SKIP_INFRA_DOWNLOADS=1 \
+            localstack/localstack:3.0
 
-      - name: Wait for services to be ready
+      - name: Wait for localstack
         run: |
           echo "Waiting for LocalStack..."
-          timeout 60 bash -c 'until curl -s http://localhost:4566/_localstack/health | grep -q "\"running\""; do sleep 2; done'
-          
-          echo "Waiting for MongoDB..."
-          timeout 60 bash -c 'until mongosh --host localhost:27017 --eval "db.runCommand({ping: 1})" --quiet; do sleep 2; done'
-          
-          echo "Waiting for WireMock..."
-          timeout 60 bash -c 'until curl -s http://localhost:8080/__admin/health; do sleep 2; done'
-          
-          echo "All services are ready!"
+          # Wait up to 3 minutes for LocalStack to be ready
+          timeout 180 bash -c '
+            while true; do
+              if curl -s http://localhost:4566/_localstack/health > /dev/null 2>&1; then
+                echo "LocalStack health endpoint responding"
+                if curl -s http://localhost:4566/_localstack/health | grep -q "available\|running"; then
+                  echo "LocalStack is ready!"
+                  break
+                fi
+              fi
+              echo "Still waiting for LocalStack..."
+              sleep 5
+            done
+          '
 
       - name: Run tests
         run: |
