@@ -16,11 +16,11 @@ yyyymmdd = Annotated[str, AfterValidator(val_date)]
 
 
 class AddressUpdate(BaseModel):
-    street: Optional[str] = Field()
-    unit: Optional[str] = Field()
-    city: Optional[str] = Field()
-    state: Optional[str] = Field()
-    zip_code: Optional[str] = Field(alias="zipCode")
+    street: Optional[str] = Field(default=None)
+    unit: Optional[str] = Field(default=None)
+    city: Optional[str] = Field(default=None)
+    state: Optional[str] = Field(default=None)
+    zip_code: Optional[str] = Field(alias="zipCode", default=None)
 
 
 class DeviceSettingsUpdate(BaseModel):
@@ -35,17 +35,17 @@ class PermissionGroupUpdate(BaseModel):
 
 
 class UpdateRequest(BaseModel):
-    email: Optional[EmailStr] = Field()
-    first_name: Optional[str] = Field(alias="firstName")
-    last_name: Optional[str] = Field(alias="lastName")
-    bio: Optional[str] = Field()
-    address: Optional[AddressUpdate] = Field()
-    mailing_address: Optional[AddressUpdate] = Field(alias="mailingAddress")
-    device_settings: Optional[DeviceSettingsUpdate] = Field(alias="deviceSettings")
-    permission_groups: Optional[List[PermissionGroupUpdate]] = Field(alias="permissionGroups")
-    birthday: Optional[yyyymmdd]
-    onboarding_completed: Optional[bool] = Field(alias="onboardingCompleted")
-    device_id: Optional[str] = Field(alias="deviceId")
+    email: Optional[EmailStr] = Field(default=None)
+    first_name: Optional[str] = Field(alias="firstName", default=None)
+    last_name: Optional[str] = Field(alias="lastName", default=None)
+    bio: Optional[str] = Field(default=None)
+    address: Optional[AddressUpdate] = Field(default=None)
+    mailing_address: Optional[AddressUpdate] = Field(alias="mailingAddress", default=None)
+    device_settings: Optional[DeviceSettingsUpdate] = Field(alias="deviceSettings", default=None)
+    permission_groups: Optional[List[PermissionGroupUpdate]] = Field(alias="permissionGroups", default=None)
+    birthday: Optional[yyyymmdd] = Field(default=None)
+    onboarding_completed: Optional[bool] = Field(alias="onboardingCompleted", default=None)
+    device_id: Optional[str] = Field(alias="deviceId", default=None)
 
     @field_validator('permission_groups')
     def validate_unique_list(cls, permission_groups):
@@ -60,8 +60,8 @@ class RegisterRequest(BaseModel):
 
 
 class UpdateContactRequest(BaseModel):
-    email: Optional[EmailStr] = Field()
-    email_confirmed: Optional[bool] = Field(alias="emailConfirmed")
+    email: Optional[EmailStr] = Field(default=None)
+    email_confirmed: Optional[bool] = Field(alias="emailConfirmed", default=None)
 
 
 class UpdateConnectionRequest(BaseModel):
@@ -82,7 +82,7 @@ class SearchRequest(BaseModel):
 
 class SearchGroupsRequest(BaseModel):
     user_id: str = Field(alias="userId")
-    name: Optional[str] = Field()
+    name: Optional[str] = Field(default=None)
     limit: Optional[int] = Field(default=25, gt=0, le=500)
     skip: Optional[int] = Field(default=0, gt=0)
 

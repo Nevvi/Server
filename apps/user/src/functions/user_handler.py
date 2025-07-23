@@ -1,88 +1,131 @@
 import json
 import logging
-from typing import List, Any
 
 from pydantic import ValidationError
 
-from src.model.errors import HttpError
-from src.model.requests import UpdateTokenRequest
-from src.service.notification_service import NotificationService
+from model.user.user import UserView
+from service.admin_service import AdminService
+from service.notification_service import NotificationService
+from service.user_service import UserService
+from src.model.errors import HttpError, UserNotFoundError
+from src.model.requests import RegisterRequest, DeleteAccountRequest, UpdateContactRequest, UpdateRequest, SearchRequest
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-service = NotificationService()
+
+user_service = UserService()
+admin_service = AdminService()
+notification_service = NotificationService()
 
 
-def update_device_token(event, context):
-    try:
-        path_params = event.get('pathParameters') or {}
-        body = json.loads(event.get('body', '{}'))
+def exception_handler(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except ValidationError as e:
+            logger.error(f"Caught validation error: {e}")
+            return create_response(400, str(e))
+        except HttpError as e:
+            logger.error(f"Caught HTTP error: {e}")
+            return create_response(e.status_code, e.message)
+        except Exception as e:
+            logger.error(f"Caught exception handling request: {e}")
+            return create_response(500, str(e))
 
-        request = UpdateTokenRequest(user_id=path_params.get("userId"), token=body.get("token"))
-        service.update_token(request=request)
-
-        logger.info(f"Updated token for user: {request.user_id}")
-        return create_response(200, {})
-    except ValidationError as e:
-        logger.error(f"Caught validation error: {e}")
-        return create_response(400, {'error': str(e)})
-    except HttpError as e:
-        logger.error(f"Caught HTTP error: {e}")
-        return create_response(e.status_code, {'error': e.message})
-    except Exception as e:
-        logger.error(f"Error creating user: {e}")
-        return create_response(500, {'error': 'Internal server error'})
+    return wrapper
 
 
-def send_notification(event, context):
-    """
-    {
-        Records: [
-            {
-                messageId: '3893134d-697c-48ca-9479-3f733bf732db',
-                receiptHandle: ...,
-                body: '{ "userId": "abc-123", "title": "Hello, World", "body": "Hey from server!" }',
-                attributes: [Object],
-                messageAttributes: {},
-                md5OfBody: 'df2118f71df5bb86a3bfdc377505861b',
-                eventSource: 'aws:sqs',
-                eventSourceARN: 'arn:aws:sqs:us-east-1:275527036335:notifications-dev',
-                awsRegion: 'us-east-1'
-            }
-        ]
-    }
-    """
-    try:
-        logger.info("Received request to send notification(s)")
-        records: List[Any] = event.get("Records", [])
-        for record in records:
-            try:
-                details = json.loads(record.get("body"))
-                user_id = details.get("userId")
-                title = details.get("title")
-                body = details.get("body")
-                logger.info(f"Sending notification to {user_id}")
-                service.send_notification(user_id=user_id, title=title, body=body)
-            except Exception as e:
-                logger.exception("Caught error sending notification", e)
-    except Exception as e:
-        logger.exception("Caught error sending notifications", e)
-
-    # Always return true no matter what
-    return True
+@exception_handler
+def get_user(event, context):
+    path_params = event.get('pathParameters') or {}
+    user = get_user_by_id(id=path_params.get("userId"))
+    return create_response(200, user)
 
 
-def create_response(status_code, body, headers=None):
-    if headers is None:
-        headers = {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
-        }
+@exception_handler
+def create_user(event, context):
+    body = json.loads(event.get('body', '{}'))
+    user = user_service.create_user(request=RegisterRequest(**body))
+    return create_response(200, user)
 
+
+@exception_handler
+def delete_user(event, context):
+    path_params = event.get('pathParameters') or {}
+    user = admin_service.delete_account(request=DeleteAccountRequest(id=path_params.get("userId")))
+    return create_response(200, user)
+
+
+@exception_handler
+def update_user(event, context):
+    path_params = event.get('pathParameters') or {}
+    existing_user = get_user_by_id(path_params.get("userId"))
+
+    body = json.loads(event.get('body', '{}'))
+    request = UpdateRequest(**body)
+
+    updated_user = user_service.update_user(user=existing_user, request=request)
+    return create_response(200, updated_user)
+
+
+@exception_handler
+def search_users(event, context):
+    user_id = event.requestContext.authorizer.id
+    query_params = json.loads(event.get('queryStringParameters', '{}'))
+    request = SearchRequest(
+        name=query_params.get("name"),
+        email=query_params.get("email"),
+        phoneNumber=query_params.get("phoneNumber"),
+        phoneNumbers=query_params.get("phoneNumbers").split(",") if "phoneNumbers" in query_params else None,
+        limit=int(query_params.get("limit")) if "limit" in query_params else None,
+        skip=int(query_params.get("skip")) if "skip" in query_params else None,
+    )
+
+    users = user_service.search_users(user_id=user_id, request=request)
+    return create_response(200, users)
+
+
+@exception_handler
+def update_user_contact(event, context):
+    path_params = event.get('pathParameters') or {}
+    existing_user = get_user_by_id(path_params.get("userId"))
+
+    body = json.loads(event.get('body', '{}'))
+    request = UpdateContactRequest(**body)
+
+    updated_user = user_service.update_user_contact(user=existing_user, request=request)
+    return create_response(200, updated_user)
+
+
+@exception_handler
+def update_user_image(event, context):
+    # TODO
+    pass
+
+
+@exception_handler
+def notify_out_of_sync_users(event, context):
+    notified = notification_service.notify_out_of_sync_users()
+    return create_response(200, {"users": notified})
+
+
+@exception_handler
+def notify_birthdays(event, context):
+    notified = notification_service.notify_birthdays()
+    return create_response(200, {"users": notified})
+
+
+def get_user_by_id(id: str) -> UserView:
+    user = user_service.get_user(user_id=id)
+
+    if not user:
+        raise UserNotFoundError(id)
+
+    return user
+
+
+def create_response(status_code, body):
     return {
         'statusCode': status_code,
-        'headers': headers,
-        'body': json.dumps(body) if isinstance(body, (dict, list)) else body
+        'body': json.dumps(body)
     }
