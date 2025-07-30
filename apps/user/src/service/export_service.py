@@ -4,9 +4,9 @@ from typing import List, Dict, Any
 
 import xlsxwriter
 
-from dao.email_dao import EmailDao
-from model.connection.connection import UserConnectionView
-from model.user.user import UserView
+from src.dao.email_dao import EmailDao
+from src.model.connection.connection import UserConnectionView
+from src.model.user.user import UserView
 
 
 class ExportService:

@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from typing import List
 
-from dao.connection_dao import ConnectionSearchResponse
-from model.document import ConnectionGroupSearch
-from model.user.address import AddressView
-from model.user.user import SlimUserView
-from model.view import View
+from src.dao.connection_dao import ConnectionSearchResponse
+from src.model.document import ConnectionGroupSearch
+from src.model.user.address import AddressView
+from src.model.user.user import SlimUserView
+from src.model.view import View
 
 
 @dataclass

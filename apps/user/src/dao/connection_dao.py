@@ -7,8 +7,8 @@ import pymongo
 from pymongo.errors import DuplicateKeyError
 from pymongo.synchronous.collection import Collection
 
-from model.document import ConnectionDocument
-from model.errors import ConnectionExistsError
+from src.model.document import ConnectionDocument
+from src.model.errors import ConnectionExistsError
 
 
 @dataclass
@@ -115,8 +115,12 @@ class ConnectionDao:
             }
         })
 
+        print(pipeline)
+
         # { "connections": [...], "connectionCount": { "connectionCount": int }
         res: Dict[str, Any] = self.collection.aggregate(pipeline).next()
+
+        print(res)
 
         def transform(result: Dict[str, Any]) -> SearchedConnection:
             connection_data = result.get("connectedUser")[0]

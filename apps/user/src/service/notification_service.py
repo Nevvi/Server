@@ -1,6 +1,6 @@
-from dao.connection_dao import ConnectionDao
-from dao.notification_dao import NotificationDao
-from dao.user_dao import UserDao
+from src.dao.connection_dao import ConnectionDao
+from src.dao.notification_dao import NotificationDao
+from src.dao.user_dao import UserDao
 
 
 class NotificationService:

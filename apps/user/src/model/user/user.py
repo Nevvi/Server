@@ -4,13 +4,13 @@ from typing import Optional, List
 
 from typing_extensions import Self
 
-from dao.connection_dao import SearchedConnection
-from model.document import UserDocument, SearchedUser
-from model.requests import UpdateRequest
-from model.user.address import AddressView
-from model.user.device_settings import DeviceSettingsView
-from model.user.permission_group import PermissionGroupView, DEFAULT_PERMISSION_GROUPS
-from model.view import View
+from src.dao.connection_dao import SearchedConnection
+from src.model.document import UserDocument, SearchedUser
+from src.model.requests import UpdateRequest
+from src.model.user.address import AddressView
+from src.model.user.device_settings import DeviceSettingsView
+from src.model.user.permission_group import PermissionGroupView, DEFAULT_PERMISSION_GROUPS
+from src.model.view import View
 
 
 @dataclass

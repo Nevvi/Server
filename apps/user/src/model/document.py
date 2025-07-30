@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import TypedDict, Optional, List
 
-from model.enums import RequestStatus
+from src.model.enums import RequestStatus
 
 
 @dataclass

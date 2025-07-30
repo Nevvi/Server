@@ -7,9 +7,9 @@ from dateutil.parser import parse
 from pymongo.errors import DuplicateKeyError
 from pymongo.synchronous.collection import Collection
 
-from model.document import UserDocument, DeviceSettingsDocument, SearchedUser, AddressDocument, PermissionGroupDocument
-from model.errors import UserAlreadyExistsError, UserNotFoundError
-from model.user.user import UserView
+from src.model.document import UserDocument, DeviceSettingsDocument, SearchedUser, AddressDocument, PermissionGroupDocument
+from src.model.errors import UserAlreadyExistsError, UserNotFoundError
+from src.model.user.user import UserView
 
 
 class UserDao:
@@ -189,6 +189,8 @@ class UserDao:
                 }
             }
         ]
+
+        print(pipeline)
 
         results: List[Dict[str, Any]] = list(self.collection.aggregate(pipeline))
 

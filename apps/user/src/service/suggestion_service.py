@@ -1,8 +1,8 @@
-from dao.connection_dao import ConnectionDao
-from dao.connection_request_dao import ConnectionRequestDao
-from dao.refresh_suggestions_dao import RefreshSuggestionsDao
-from dao.suggestions_dao import SuggestionsDao
-from dao.user_dao import UserDao
+from src.dao.connection_dao import ConnectionDao
+from src.dao.connection_request_dao import ConnectionRequestDao
+from src.dao.refresh_suggestions_dao import RefreshSuggestionsDao
+from src.dao.suggestions_dao import SuggestionsDao
+from src.dao.user_dao import UserDao
 
 
 class SuggestionService:

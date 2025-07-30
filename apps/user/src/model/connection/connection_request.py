@@ -1,10 +1,10 @@
 import os
 from dataclasses import dataclass
 
-from model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME
-from model.document import ConnectionRequestDocument
-from model.enums import RequestStatus
-from model.view import View
+from src.model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME
+from src.model.document import ConnectionRequestDocument
+from src.model.enums import RequestStatus
+from src.model.view import View
 
 
 @dataclass

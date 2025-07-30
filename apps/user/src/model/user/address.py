@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from model.document import AddressDocument
-from model.requests import AddressUpdate
-from model.view import View
+from src.model.document import AddressDocument
+from src.model.requests import AddressUpdate
+from src.model.view import View
 
 
 @dataclass

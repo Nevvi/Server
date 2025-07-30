@@ -11,12 +11,12 @@ class AuthenticationDao:
         self.api_key = os.environ["AUTHENTICATION_API_KEY"]
 
     def update_user(self, user_id: str, email: str) -> any:
-        logger.info(f"Updating user {id} with email {email} against the authentication api")
+        print(f"Updating user {user_id} with email {email} against the authentication api")
         url = f"{self.base_url}/api/v1/users/{user_id}"
         body = {
             "email": email
         }
-        res = requests.post(url=url, json=body, headers=self._get_headers())
+        res = requests.patch(url=url, json=body, headers=self._get_headers())
         if res.status_code > 201:
             raise Exception("Failed to update user")
 

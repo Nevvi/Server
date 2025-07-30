@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from model.document import DeviceSettingsDocument
-from model.requests import DeviceSettingsUpdate
-from model.view import View
+from src.model.document import DeviceSettingsDocument
+from src.model.requests import DeviceSettingsUpdate
+from src.model.view import View
 
 
 @dataclass

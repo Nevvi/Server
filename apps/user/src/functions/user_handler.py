@@ -1,14 +1,13 @@
 import json
 import logging
 
-from pydantic import ValidationError
-
-from model.user.user import UserView
-from service.admin_service import AdminService
-from service.notification_service import NotificationService
-from service.user_service import UserService
-from src.model.errors import HttpError, UserNotFoundError
+from src.functions.handler_utils import create_response, exception_handler
+from src.model.errors import UserNotFoundError
 from src.model.requests import RegisterRequest, DeleteAccountRequest, UpdateContactRequest, UpdateRequest, SearchRequest
+from src.model.user.user import UserView
+from src.service.admin_service import AdminService
+from src.service.notification_service import NotificationService
+from src.service.user_service import UserService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,23 +15,6 @@ logger = logging.getLogger(__name__)
 user_service = UserService()
 admin_service = AdminService()
 notification_service = NotificationService()
-
-
-def exception_handler(func):
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except ValidationError as e:
-            logger.error(f"Caught validation error: {e}")
-            return create_response(400, str(e))
-        except HttpError as e:
-            logger.error(f"Caught HTTP error: {e}")
-            return create_response(e.status_code, e.message)
-        except Exception as e:
-            logger.error(f"Caught exception handling request: {e}")
-            return create_response(500, str(e))
-
-    return wrapper
 
 
 @exception_handler
@@ -70,15 +52,15 @@ def update_user(event, context):
 
 @exception_handler
 def search_users(event, context):
-    user_id = event.requestContext.authorizer.id
-    query_params = json.loads(event.get('queryStringParameters', '{}'))
+    user_id = event.get("requestContext").get("authorizer").get("userId")
+    query_params = event.get('queryStringParameters') or {}
     request = SearchRequest(
         name=query_params.get("name"),
         email=query_params.get("email"),
         phoneNumber=query_params.get("phoneNumber"),
         phoneNumbers=query_params.get("phoneNumbers").split(",") if "phoneNumbers" in query_params else None,
-        limit=int(query_params.get("limit")) if "limit" in query_params else None,
-        skip=int(query_params.get("skip")) if "skip" in query_params else None,
+        limit=int(query_params.get("limit")) if "limit" in query_params else 25,
+        skip=int(query_params.get("skip")) if "skip" in query_params else 0,
     )
 
     users = user_service.search_users(user_id=user_id, request=request)
@@ -104,6 +86,13 @@ def update_user_image(event, context):
 
 
 @exception_handler
+def get_rejected_users(event, context):
+    path_params = event.get('pathParameters') or {}
+    requests = user_service.get_blocked_users(user_id=path_params.get("userId"))
+    return create_response(200, requests)
+
+
+@exception_handler
 def notify_out_of_sync_users(event, context):
     notified = notification_service.notify_out_of_sync_users()
     return create_response(200, {"users": notified})
@@ -122,10 +111,3 @@ def get_user_by_id(id: str) -> UserView:
         raise UserNotFoundError(id)
 
     return user
-
-
-def create_response(status_code, body):
-    return {
-        'statusCode': status_code,
-        'body': json.dumps(body)
-    }

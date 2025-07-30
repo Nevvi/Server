@@ -1,7 +1,7 @@
 import os
 
-from dao.email_dao import EmailDao
-from model.requests import DeleteAccountRequest
+from src.dao.email_dao import EmailDao
+from src.model.requests import DeleteAccountRequest
 
 
 class AdminService:

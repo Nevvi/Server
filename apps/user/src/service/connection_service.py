@@ -1,26 +1,26 @@
 import asyncio
 from typing import List, Optional
 
-from dao.authentication_dao import AuthenticationDao
-from dao.connection_dao import ConnectionDao
-from dao.connection_group_dao import ConnectionGroupDao
-from dao.connection_request_dao import ConnectionRequestDao
-from dao.image_dao import ImageDao
-from model.connection.connection import UserConnectionView
-from model.connection.connection_group import ConnectionGroupView
-from model.connection.connection_request import ConnectionRequestView
-from model.enums import RequestStatus
-from model.errors import InvalidRequestError, UserNotFoundError, ConnectionRequestExistsError, AlreadyConnectedError, \
+from src.dao.authentication_dao import AuthenticationDao
+from src.dao.connection_dao import ConnectionDao
+from src.dao.connection_group_dao import ConnectionGroupDao
+from src.dao.connection_request_dao import ConnectionRequestDao
+from src.dao.image_dao import ImageDao
+from src.model.connection.connection import UserConnectionView
+from src.model.connection.connection_group import ConnectionGroupView
+from src.model.connection.connection_request import ConnectionRequestView
+from src.model.enums import RequestStatus
+from src.model.errors import InvalidRequestError, UserNotFoundError, ConnectionRequestExistsError, AlreadyConnectedError, \
     ConnectionRequestDoesNotExistError, ConnectionDoesNotExistError, GroupDoesNotExistError, UserAlreadyInGroupError, \
     UserNotInGroupError
-from model.requests import RequestConnectionRequest, ConfirmConnectionRequest, DenyConnectionRequest, \
+from src.model.requests import RequestConnectionRequest, ConfirmConnectionRequest, DenyConnectionRequest, \
     SearchConnectionsRequest, UpdateConnectionRequest, BlockConnectionRequest, CreateGroupRequest, \
     SearchGroupsRequest, AddConnectionToGroupRequest, RemoveConnectionFromGroupRequest
-from model.response import SearchResponse
-from service.export_service import ExportService
-from service.notification_service import NotificationService
-from service.suggestion_service import SuggestionService
-from service.user_service import UserService
+from src.model.response import SearchResponse
+from src.service.export_service import ExportService
+from src.service.notification_service import NotificationService
+from src.service.suggestion_service import SuggestionService
+from src.service.user_service import UserService
 
 
 class ConnectionService:
@@ -191,6 +191,7 @@ class ConnectionService:
                                                   permission_group=request.permission_group,
                                                   limit=request.limit,
                                                   skip=request.skip)
+        print(res)
         return SearchResponse.from_response(res)
 
     def get_user_connection(self, user_id: str, other_user_id: str) -> UserConnectionView:

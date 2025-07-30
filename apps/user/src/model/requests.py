@@ -77,14 +77,14 @@ class SearchRequest(BaseModel):
     phone_number: Optional[str] = Field(alias="phoneNumber", default=None)
     phone_numbers: Optional[List[str]] = Field(alias="phoneNumbers", default=None)
     limit: Optional[int] = Field(default=10, gt=0, le=25)
-    skip: Optional[int] = Field(default=0, gt=0)
+    skip: Optional[int] = Field(default=0, gte=0)
 
 
 class SearchGroupsRequest(BaseModel):
     user_id: str = Field(alias="userId")
     name: Optional[str] = Field(default=None)
     limit: Optional[int] = Field(default=25, gt=0, le=500)
-    skip: Optional[int] = Field(default=0, gt=0)
+    skip: Optional[int] = Field(default=0, gte=0)
 
 
 class SearchConnectionsRequest(BaseModel):
@@ -93,7 +93,7 @@ class SearchConnectionsRequest(BaseModel):
     permission_group: Optional[str] = Field(alias="permissionGroup", default=None)
     in_sync: Optional[bool] = Field(alias="inSync", default=None)
     limit: Optional[int] = Field(default=25, gt=0, le=25)
-    skip: Optional[int] = Field(default=0, gt=0)
+    skip: Optional[int] = Field(default=0, gte=0)
 
 
 class RequestConnectionRequest(BaseModel):

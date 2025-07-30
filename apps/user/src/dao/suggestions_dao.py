@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 
 import pymongo
 
-from model.document import SuggestedUser
+from src.model.document import SuggestedUser
 
 MIN_SHARED_CONNECTIONS = 2
 

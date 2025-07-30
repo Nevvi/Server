@@ -6,10 +6,10 @@ import pymongo
 from pymongo.errors import DuplicateKeyError
 from pymongo.synchronous.collection import Collection
 
-from model.connection.connection_request import RequestStatus
-from model.document import ConnectionRequestDocument
-from model.errors import ConnectionRequestExistsError
-from model.user.user import UserView
+from src.model.connection.connection_request import RequestStatus
+from src.model.document import ConnectionRequestDocument
+from src.model.errors import ConnectionRequestExistsError
+from src.model.user.user import UserView
 
 
 class ConnectionRequestDao:

@@ -7,9 +7,9 @@ import pymongo
 from pymongo.errors import DuplicateKeyError
 from pymongo.synchronous.collection import Collection
 
-from dao.user_dao import SearchedUser
-from model.document import ConnectionGroupDocument, ConnectionGroupSearch
-from model.errors import ConnectionGroupExistsError
+from src.dao.user_dao import SearchedUser
+from src.model.document import ConnectionGroupDocument, ConnectionGroupSearch
+from src.model.errors import ConnectionGroupExistsError
 
 
 class ConnectionGroupDao:

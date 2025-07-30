@@ -1,15 +1,15 @@
 import copy
 from typing import Optional, List
 
-from dao.authentication_dao import AuthenticationDao
-from dao.connection_dao import ConnectionDao
-from dao.image_dao import ImageDao
-from dao.user_dao import UserDao
-from model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME
-from model.errors import UserNotFoundError, InvalidRequestError
-from model.requests import RegisterRequest, SearchRequest, UpdateRequest, UpdateContactRequest
-from model.response import SearchResponse, EMPTY_SEARCH_RESPONSE
-from model.user.user import UserView, SlimUserView
+from src.dao.authentication_dao import AuthenticationDao
+from src.dao.connection_dao import ConnectionDao
+from src.dao.image_dao import ImageDao
+from src.dao.user_dao import UserDao
+from src.model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME
+from src.model.errors import UserNotFoundError, InvalidRequestError
+from src.model.requests import RegisterRequest, SearchRequest, UpdateRequest, UpdateContactRequest
+from src.model.response import SearchResponse, EMPTY_SEARCH_RESPONSE
+from src.model.user.user import UserView, SlimUserView
 
 
 class UserService:
@@ -28,6 +28,7 @@ class UserService:
         return UserView.from_doc(user)
 
     def search_users(self, user_id: str, request: SearchRequest) -> SearchResponse:
+        print(request)
         if request.email:
             user = self.user_dao.get_user_by_email(email=request.email)
             return SearchResponse(count=1, users=[SlimUserView.from_user_doc(user)]) if user else EMPTY_SEARCH_RESPONSE
@@ -60,6 +61,7 @@ class UserService:
         if request.email and request.email != user.email:
             print("Updating user email")
             updated_auth_user = self.authentication_dao.update_user(user_id=user.id, email=request.email)
+            print(updated_auth_user)
             if not updated_auth_user.get("emailVerified", False):
                 updated_user.emailConfirmed = False
 

@@ -2,8 +2,8 @@ import json
 import logging
 from typing import List, Any
 
-from functions.user_handler import exception_handler, create_response
-from service.suggestion_service import SuggestionService
+from src.functions.handler_utils import create_response, exception_handler
+from src.service.suggestion_service import SuggestionService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import List
 
-from model.document import ConnectionGroupDocument
-from model.view import View
+from src.model.document import ConnectionGroupDocument
+from src.model.view import View
 
 
 @dataclass
