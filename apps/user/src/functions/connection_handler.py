@@ -17,7 +17,7 @@ def request_connection(event, context):
     path_params = event.get('pathParameters') or {}
     body = json.loads(event.get('body', '{}'))
 
-    request = RequestConnectionRequest(userId=path_params.get("userId"), **body)
+    request = RequestConnectionRequest(requestingUserId=path_params.get("userId"), **body)
     res = connection_service.request_connection(request=request)
     return create_response(200, res)
 
@@ -27,7 +27,7 @@ def confirm_connection(event, context):
     path_params = event.get('pathParameters') or {}
     body = json.loads(event.get('body', '{}'))
 
-    request = ConfirmConnectionRequest(userId=path_params.get("userId"), **body)
+    request = ConfirmConnectionRequest(requestedUserId=path_params.get("userId"), **body)
     res = connection_service.confirm_connection(request=request)
     return create_response(200, res)
 
@@ -79,7 +79,9 @@ def update_connection(event, context):
     path_params = event.get('pathParameters') or {}
     body = json.loads(event.get('body', '{}'))
 
-    request = UpdateConnectionRequest(userId=path_params.get("userId"), **body)
+    request = UpdateConnectionRequest(userId=path_params.get("userId"),
+                                      otherUserId=path_params.get("connectedUserId"),
+                                      **body)
     res = connection_service.update_connection(request=request)
     return create_response(200, res)
 

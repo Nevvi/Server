@@ -9,15 +9,19 @@ class ImageDao:
         self.s3: S3Client = boto3.client("s3")
         self.bucket = os.environ["IMAGE_BUCKET"]
 
-    def upload_image(self, user_id: str, image, file_name: str, content_type: str) -> str:
-        key = f"users/{user_id}/images/{file_name}"
-        self.s3.upload_fileobj(
-            Fileobj=image,
+    def upload_image(self, user_id: str, image: any) -> str:
+        key = f"users/{user_id}/images/{image['filename']}"
+        self.s3.put_object(
             Bucket=self.bucket,
             Key=key,
-            ExtraArgs={'ContentType': content_type, 'ACL': 'public-read'}
+            Body=image["data"],
+            ACL="public-read",
+            ContentType=image["content_type"],
+            Metadata={
+                'original-filename': image["filename"],
+                'file-size': str(image['size'])
+            }
         )
-
         return f"https://{self.bucket}.s3.amazonaws.com/{key}"
 
     def remove_old_images(self, user_id: str, excluded_key: str):

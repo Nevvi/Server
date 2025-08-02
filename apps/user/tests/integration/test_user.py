@@ -1,8 +1,7 @@
 import uuid
 
 from integration.integration_test import IntegrationTest
-from model.requests import RegisterRequest, SearchRequest, UpdateContactRequest
-from model.user.user import SlimUserView
+from model.requests import RegisterRequest, SearchRequest, UpdateContactRequest, UpdateRequest
 
 
 class TestUserIntegration(IntegrationTest):
@@ -20,8 +19,47 @@ class TestUserIntegration(IntegrationTest):
         assert user == new_user
 
     def test_update_user_with_connections(self):
-        # TODO
-        pass
+        test_user_one = self.create_user(first_name="Jane", last_name="Doe")
+
+        # Connection initially created as in sync
+        connection = self.create_connection(user_id=test_user_one.id, connected_user_id=self.user.id)
+        assert connection.inSync
+
+        update_request = UpdateRequest(bio="Some bio")
+        updated = self.user_service.update_user(user=self.user, request=update_request)
+        assert updated.bio == "Some bio"
+
+        # Updating the bio does NOT mark the connection out of sync
+        updated_connection = self.get_connection(user_id=test_user_one.id, connected_user_id=self.user.id)
+        assert updated_connection.inSync
+
+        update_request = UpdateRequest(birthday="1999-01-01")
+        updated = self.user_service.update_user(user=self.user, request=update_request)
+        assert updated.birthday == "1999-01-01"
+
+        # Updating the birthday marked the connection out of sync
+        updated_connection = self.get_connection(user_id=test_user_one.id, connected_user_id=self.user.id)
+        assert not updated_connection.inSync
+
+    def test_update_user_email_calls_auth_service(self):
+        # User initially created with confirmed email
+        assert self.user.emailConfirmed
+
+        self.setup_wiremock_stub(method="PATCH",
+                                 url=f"/authentication/api/v1/users/{self.user.id}",
+                                 response_body={
+                                     "emailVerified": False
+                                 })
+
+        update_request = UpdateRequest(email="test.email@nevvi.net")
+        updated = self.user_service.update_user(user=self.user, request=update_request)
+
+        # Updating the email calls the auth service and sets to unconfirmed
+        self.assert_wiremock_called(method="PATCH",
+                                    url_pattern=f"/authentication/api/v1/users/{self.user.id}",
+                                    times=1)
+        assert updated.email == "test.email@nevvi.net"
+        assert not updated.emailConfirmed
 
     def test_searching_users(self):
         test_user_one = self.create_user(first_name="Jane", last_name="Doe")
@@ -32,8 +70,8 @@ class TestUserIntegration(IntegrationTest):
         res = self.user_service.search_users(user_id=self.user.id, request=request)
         assert res.count == 2
         assert len(res.users) == 2
-        assert SlimUserView.from_user(test_user_one) in res.users
-        assert SlimUserView.from_user(test_user_two) in res.users
+        self.assert_user_found(test_user_one, res.users)
+        self.assert_user_found(test_user_two, res.users)
 
         # Match multiple by name (paginated)
         request = SearchRequest(name="Doe", skip=1, limit=1)
@@ -46,21 +84,21 @@ class TestUserIntegration(IntegrationTest):
         res = self.user_service.search_users(user_id=self.user.id, request=request)
         assert res.count == 1
         assert len(res.users) == 1
-        assert SlimUserView.from_user(test_user_two) in res.users
+        self.assert_user_found(test_user_two, res.users)
 
         # Match single by email
         request = SearchRequest(email=test_user_one.email)
         res = self.user_service.search_users(user_id=self.user.id, request=request)
         assert res.count == 1
         assert len(res.users) == 1
-        assert SlimUserView.from_user(test_user_one) in res.users
+        self.assert_user_found(test_user_one, res.users)
 
         # Match single by phone
         request = SearchRequest(phoneNumber=test_user_one.phoneNumber)
         res = self.user_service.search_users(user_id=self.user.id, request=request)
         assert res.count == 1
         assert len(res.users) == 1
-        assert SlimUserView.from_user(test_user_one) in res.users
+        self.assert_user_found(test_user_one, res.users)
 
         # Match none
         request = SearchRequest(name="Nomatch")
@@ -101,15 +139,12 @@ class TestUserIntegration(IntegrationTest):
 
     def test_update_user_image(self):
         image = self.create_test_image()
-        image_name = "test_image_name.png"
-        content_type = "image/png"
 
-        assert image_name not in self.user.profileImage
+        assert image['filename'] not in self.user.profileImage
 
-        updated_user = self.user_service.update_user_image(user_id=self.user.id, image=image, image_name=image_name,
-                                                           content_type=content_type)
+        updated_user = self.user_service.update_user_image(user_id=self.user.id, image=image)
 
-        assert updated_user.profileImage == f"https://{self.image_bucket}.s3.amazonaws.com/users/{self.user.id}/images/{image_name}"
+        assert updated_user.profileImage == f"https://{self.image_bucket}.s3.amazonaws.com/users/{self.user.id}/images/{image['filename']}"
 
     def test_get_blocked_users(self):
         test_user_one = self.create_user()
@@ -119,5 +154,5 @@ class TestUserIntegration(IntegrationTest):
         res = self.user_service.get_blocked_users(user_id=user.id)
 
         assert len(res) == 2
-        assert SlimUserView.from_user(test_user_one) in res
-        assert SlimUserView.from_user(test_user_two) in res
+        self.assert_user_found(test_user_one, res)
+        self.assert_user_found(test_user_two, res)

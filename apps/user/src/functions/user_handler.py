@@ -1,5 +1,7 @@
+import base64
 import json
 import logging
+import re
 
 from src.functions.handler_utils import create_response, exception_handler
 from src.model.errors import UserNotFoundError
@@ -81,8 +83,28 @@ def update_user_contact(event, context):
 
 @exception_handler
 def update_user_image(event, context):
-    # TODO
-    pass
+    path_params = event.get('pathParameters') or {}
+    # Validate content type
+    content_type = event.get('headers', {}).get('content-type', '')
+    if not content_type.startswith('multipart/form-data'):
+        return create_response(400, 'Content-Type must be multipart/form-data')
+
+    # Extract boundary
+    boundary = extract_boundary(content_type)
+    if not boundary:
+        return create_response(400, 'No boundary found in content-type')
+
+    # Decode body
+    body = decode_body(event)
+
+    # Parse multipart data
+    image_file = parse_multipart_image(body, boundary)
+    if not image_file:
+        return create_response(400, 'No valid image file found in request')
+
+    updated_user = user_service.update_user_image(user_id=path_params.get("userId"), image=image_file)
+
+    return create_response(200, updated_user)
 
 
 @exception_handler
@@ -111,3 +133,77 @@ def get_user_by_id(id: str) -> UserView:
         raise UserNotFoundError(id)
 
     return user
+
+
+def extract_boundary(content_type):
+    """Extract boundary from content-type header"""
+    for part in content_type.split(';'):
+        part = part.strip()
+        if part.startswith('boundary='):
+            return part.split('=', 1)[1].strip('"')
+    return None
+
+
+def decode_body(event):
+    """Decode request body"""
+    body = event.get('body', '')
+    if event.get('isBase64Encoded', False):
+        return base64.b64decode(body)
+    return body.encode('utf-8')
+
+
+def parse_multipart_image(body, boundary):
+    """Parse multipart data and extract image file"""
+    boundary_bytes = f'--{boundary}'.encode()
+    parts = body.split(boundary_bytes)
+
+    for part in parts[1:-1]:  # Skip first empty and last closing boundary
+        if not part.strip():
+            continue
+
+        # Split headers and data
+        if b'\r\n\r\n' not in part:
+            continue
+
+        headers_part, data_part = part.split(b'\r\n\r\n', 1)
+
+        # Parse headers
+        file_info = parse_part_headers(headers_part.decode('utf-8'))
+
+        # Check if this is an image file
+        if (file_info.get('filename') and
+                file_info.get('content_type') in ['image/png', 'image/jpeg', 'image/jpg']):
+            # Clean up data (remove trailing boundary markers)
+            data_part = data_part.rstrip(b'\r\n')
+
+            return {
+                'filename': file_info['filename'],
+                'content_type': file_info['content_type'],
+                'data': data_part,
+                'size': len(data_part)
+            }
+
+    return None
+
+
+def parse_part_headers(headers_text):
+    """Parse headers from a multipart section"""
+    file_info = {}
+
+    for line in headers_text.strip().split('\r\n'):
+        if line.startswith('Content-Disposition:'):
+            # Extract filename and field name
+            if 'filename=' in line:
+                filename_match = re.search(r'filename=["\']?([^"\';\r\n]+)["\']?', line)
+                if filename_match:
+                    file_info['filename'] = filename_match.group(1)
+
+            if 'name=' in line:
+                name_match = re.search(r'name=["\']?([^"\';\r\n]+)["\']?', line)
+                if name_match:
+                    file_info['field_name'] = name_match.group(1)
+
+        elif line.startswith('Content-Type:'):
+            file_info['content_type'] = line.split(':', 1)[1].strip()
+
+    return file_info

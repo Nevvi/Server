@@ -115,12 +115,8 @@ class ConnectionDao:
             }
         })
 
-        print(pipeline)
-
         # { "connections": [...], "connectionCount": { "connectionCount": int }
         res: Dict[str, Any] = self.collection.aggregate(pipeline).next()
-
-        print(res)
 
         def transform(result: Dict[str, Any]) -> SearchedConnection:
             connection_data = result.get("connectedUser")[0]

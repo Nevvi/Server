@@ -28,7 +28,6 @@ class UserService:
         return UserView.from_doc(user)
 
     def search_users(self, user_id: str, request: SearchRequest) -> SearchResponse:
-        print(request)
         if request.email:
             user = self.user_dao.get_user_by_email(email=request.email)
             return SearchResponse(count=1, users=[SlimUserView.from_user_doc(user)]) if user else EMPTY_SEARCH_RESPONSE
@@ -61,7 +60,6 @@ class UserService:
         if request.email and request.email != user.email:
             print("Updating user email")
             updated_auth_user = self.authentication_dao.update_user(user_id=user.id, email=request.email)
-            print(updated_auth_user)
             if not updated_auth_user.get("emailVerified", False):
                 updated_user.emailConfirmed = False
 
@@ -83,14 +81,13 @@ class UserService:
         user = self.user_dao.update_user(user=user)
         return UserView.from_doc(user)
 
-    def update_user_image(self, user_id: str, image: any, image_name: str, content_type: str) -> UserView:
+    def update_user_image(self, user_id: str, image: any) -> UserView:
         user = self.get_user(user_id=user_id)
         if not user:
             raise UserNotFoundError(user_id)
 
-        user.profileImage = self.image_dao.upload_image(user_id=user_id, image=image, file_name=image_name,
-                                                        content_type=content_type)
-        self.image_dao.remove_old_images(user_id=user_id, excluded_key=image_name)
+        user.profileImage = self.image_dao.upload_image(user_id=user_id, image=image)
+        self.image_dao.remove_old_images(user_id=user_id, excluded_key=image["filename"])
 
         updated_user = self.user_dao.update_user(user=user)
         return UserView.from_doc(updated_user)

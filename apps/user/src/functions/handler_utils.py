@@ -30,7 +30,14 @@ def exception_handler(func):
 
 
 def create_response(status_code, body):
+    if isinstance(body, list) and len(body) and isinstance(body[0], View):
+        res = json.dumps([dataclasses.asdict(e) for e in body])
+    elif isinstance(body, View):
+        res = json.dumps(dataclasses.asdict(body))
+    else:
+        res = json.dumps(body)
+
     return {
         'statusCode': status_code,
-        'body': json.dumps(dataclasses.asdict(body)) if isinstance(body, View) else json.dumps(body)
+        'body': res
     }

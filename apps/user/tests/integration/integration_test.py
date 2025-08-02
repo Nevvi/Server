@@ -7,6 +7,7 @@ import string
 import time
 import uuid
 from datetime import datetime, timezone
+from typing import Any, List
 
 import boto3
 import pytest
@@ -21,7 +22,7 @@ from model.connection.connection_request import ConnectionRequestView
 from model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME
 from model.user.address import AddressView
 from model.user.device_settings import DeviceSettingsView
-from model.user.user import UserView
+from model.user.user import UserView, SlimUserView
 from service.admin_service import AdminService
 from service.connection_service import ConnectionService
 from service.export_service import ExportService
@@ -198,12 +199,12 @@ class IntegrationTest:
         ).get("Messages", [])
         assert len(messages) == 0
 
-    def setup_wiremock_stub(self, method, url_pattern, response_body, status_code=200, headers=None):
+    def setup_wiremock_stub(self, method, url, response_body, status_code=200, headers=None):
         """Setup a WireMock stub for external API calls"""
         stub_data = {
             "request": {
                 "method": method.upper(),
-                "urlPattern": url_pattern
+                "url": url
             },
             "response": {
                 "status": status_code,
@@ -276,11 +277,19 @@ class IntegrationTest:
 
     def create_connection(self, user_id: str, connected_user_id: str,
                           permission_group: str = DEFAULT_ALL_PERMISSION_GROUP_NAME) -> ConnectionView:
-        connection = self.connection_service.connection_dao.create_connection(user_id=user_id,
-                                                                              connected_user_id=connected_user_id,
-                                                                              permission_group_name=permission_group)
+        self.connection_service.connection_dao.create_connection(user_id=user_id,
+                                                                 connected_user_id=connected_user_id,
+                                                                 permission_group_name=permission_group)
 
-        return ConnectionView.from_doc(connection)
+        self.connection_service.connection_dao.update_connection(user_id=user_id,
+                                                                 connected_user_id=connected_user_id,
+                                                                 in_sync=True)
+
+        return self.get_connection(user_id=user_id, connected_user_id=connected_user_id)
+
+    def get_connection(self, user_id: str, connected_user_id: str) -> ConnectionView:
+        return ConnectionView.from_doc(self.connection_service.connection_dao.get_connection(user_id=user_id,
+                                                                                             connected_user_id=connected_user_id))
 
     def create_connection_request(self, user: UserView, connected_user_id: str) -> ConnectionRequestView:
         doc = self.connection_service.connection_request_dao.create_connection_request(requesting_user=user,
@@ -298,7 +307,13 @@ class IntegrationTest:
                                                               connected_user_id=connected_user_id)
 
     @staticmethod
-    def create_test_image() -> io.BytesIO:
+    def assert_user_found(user: UserView, users: List[SlimUserView]):
+        # Something weird about __eq__ method for SlimUserView causes us to compare dicts
+        user_dicts = [u.__dict__ for u in users]
+        assert SlimUserView.from_user(user).__dict__ in user_dicts
+
+    @staticmethod
+    def create_test_image(image_name: str = "test_image_name.png", content_type: str = "image/png") -> dict[str, Any]:
         # basic 1x1 PNG
         image_data = base64.b64decode(
             'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=='
@@ -306,4 +321,9 @@ class IntegrationTest:
 
         buffer = io.BytesIO(image_data)
         buffer.seek(0)  # Reset position to beginning
-        return buffer
+        return {
+            'filename': image_name,
+            'content_type': content_type,
+            'data': buffer,
+            'size': len(image_data)
+        }

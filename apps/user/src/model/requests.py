@@ -98,12 +98,12 @@ class SearchConnectionsRequest(BaseModel):
 
 class RequestConnectionRequest(BaseModel):
     requesting_user_id: str = Field(alias="requestingUserId")
-    requested_user_id: str = Field(alias="requestedUserId")
+    requested_user_id: str = Field(alias="otherUserId")
     permission_group_name: str = Field(alias="permissionGroupName")
 
 
 class ConfirmConnectionRequest(BaseModel):
-    requesting_user_id: str = Field(alias="requestingUserId")
+    requesting_user_id: str = Field(alias="otherUserId")
     requested_user_id: str = Field(alias="requestedUserId")
     permission_group_name: str = Field(alias="permissionGroupName")
 

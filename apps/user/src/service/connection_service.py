@@ -60,10 +60,10 @@ class ConnectionService:
         # If this user previous blocked that user we need to remove them from the list of blocked users
         # and any previously rejected requests
         if requested_user.id in requesting_user.blockedUsers:
-            requested_user.remove_blocked_user(blocked_user_id=requested_user.id)
-            self.user_service.save_user(user=requested_user)
-            self.connection_request_dao.delete_connection_request(requesting_user_id=requesting_user.id,
-                                                                  requested_user_id=requested_user.id)
+            requesting_user.remove_blocked_user(blocked_user_id=requested_user.id)
+            self.user_service.save_user(user=requesting_user)
+            self.connection_request_dao.delete_connection_request(requesting_user_id=requested_user.id,
+                                                                  requested_user_id=requesting_user.id)
 
         # if an existing request exists in any state then do nothing
         # PENDING - one already exists, don't create another
@@ -191,22 +191,21 @@ class ConnectionService:
                                                   permission_group=request.permission_group,
                                                   limit=request.limit,
                                                   skip=request.skip)
-        print(res)
         return SearchResponse.from_response(res)
 
     def get_user_connection(self, user_id: str, other_user_id: str) -> UserConnectionView:
-        connection_to_me = self.connection_dao.get_connection(user_id=user_id, connected_user_id=other_user_id)
-        connection_to_them = self.connection_dao.get_connection(user_id=other_user_id, connected_user_id=user_id)
-        if not connection_to_me or not connection_to_them:
+        connection_to_them = self.connection_dao.get_connection(user_id=user_id, connected_user_id=other_user_id)
+        connection_to_me = self.connection_dao.get_connection(user_id=other_user_id, connected_user_id=user_id)
+        if not connection_to_them or not connection_to_me:
             raise ConnectionDoesNotExistError()
 
         other_user = self.user_service.get_user(user_id=other_user_id)
         if not other_user:
             raise UserNotFoundError(other_user_id)
 
-        their_permission_group_name = connection_to_them.get("permissionGroupName")
         return UserConnectionView.from_connected_user(user=other_user,
-                                                      permission_group_name=their_permission_group_name)
+                                                      connection_to_me=connection_to_me,
+                                                      connection_to_them=connection_to_them)
 
     def update_connection(self, request: UpdateConnectionRequest) -> UserConnectionView:
         success = self.connection_dao.update_connection(user_id=request.user_id,

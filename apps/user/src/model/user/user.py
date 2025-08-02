@@ -71,15 +71,28 @@ class UserView(View):
         self.bio = request.bio if request.bio else self.bio
         self.email = request.email if request.email else self.email
         self.birthday = request.birthday if request.birthday else self.birthday
-        self.onboardingCompleted = request.onboarding_completed if request.onboarding_completed else self.onboardingCompleted
-        self.deviceId = request.device_id if request.device_id else self.onboardingCompleted
-        self.address = AddressView.from_request(request.address) if request.address else self.address
-        self.mailingAddress = AddressView.from_request(
-            request.mailing_address) if request.mailing_address else self.mailingAddress
-        self.deviceSettings = DeviceSettingsView.from_request(
-            request.device_settings) if request.device_settings else self.deviceSettings
-        self.permissionGroups = [PermissionGroupView.from_request(pg) for pg in
-                                 request.permission_groups] if request.permission_groups else self.permissionGroups
+
+        self.onboardingCompleted = request.onboarding_completed \
+            if request.onboarding_completed \
+            else self.onboardingCompleted
+
+        self.deviceId = request.device_id if request.device_id else self.deviceId
+
+        self.address = AddressView.from_request(request.address) \
+            if request.address and request.address.street \
+            else self.address
+
+        self.mailingAddress = AddressView.from_request(request.mailing_address) \
+            if request.mailing_address and request.mailing_address.street \
+            else self.mailingAddress
+
+        self.deviceSettings = DeviceSettingsView.from_request(request.device_settings) \
+            if request.device_settings \
+            else self.deviceSettings
+
+        self.permissionGroups = [PermissionGroupView.from_request(pg) for pg in request.permission_groups] \
+            if request.permission_groups \
+            else self.permissionGroups
 
     def did_connection_data_change(self, other: Self) -> bool:
         if self.birthday != other.birthday:
@@ -163,5 +176,6 @@ class SlimUserView(View):
             lastName=doc.lastName,
             bio=doc.bio,
             profileImage=doc.profileImage,
-            inSync=doc.inSync
+            inSync=doc.inSync,
+            permissionGroup=doc.permissionGroupName
         )

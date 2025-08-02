@@ -17,7 +17,8 @@ class TestConnectionIntegration(IntegrationTest):
         pending_requests = self.connection_service.get_pending_requests(user_id=test_user.id)
         assert len(pending_requests) == 0
 
-        request = RequestConnectionRequest(requestingUserId=self.user.id, requestedUserId=test_user.id,
+        request = RequestConnectionRequest(requestingUserId=self.user.id,
+                                           otherUserId=test_user.id,
                                            permissionGroupName=DEFAULT_ALL_PERMISSION_GROUP_NAME)
         res = self.connection_service.request_connection(request=request)
         assert res.status == RequestStatus.PENDING
@@ -39,7 +40,8 @@ class TestConnectionIntegration(IntegrationTest):
         assert self.connection_service.get_connections(SearchConnectionsRequest(userId=self.user.id)).count == 0
         assert self.connection_service.get_connections(SearchConnectionsRequest(userId=test_user.id)).count == 0
 
-        request = ConfirmConnectionRequest(requestingUserId=self.user.id, requestedUserId=test_user.id,
+        request = ConfirmConnectionRequest(otherUserId=self.user.id,
+                                           requestedUserId=test_user.id,
                                            permissionGroupName=DEFAULT_ALL_PERMISSION_GROUP_NAME)
         self.connection_service.confirm_connection(request=request)
 
@@ -217,6 +219,3 @@ class TestConnectionIntegration(IntegrationTest):
 
         # We can't assert the email that was actually sent, but can assume without an exception that something happened
         asyncio.run(self.connection_service.export_group(user_id=self.user.id, group_id=new_group.id))
-
-
-

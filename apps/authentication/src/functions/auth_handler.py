@@ -131,7 +131,7 @@ def send_code(event, context):
     access_token = headers.get("AccessToken") or headers.get("accesstoken")
     request = SendCodeRequest(access_token=access_token, attribute_name=query_params.get("attribute"))
     response = auth_service.send_code(request=request)
-    return create_response(200, response.to_dict())
+    return create_response(200, response)
 
 
 @exception_handler
@@ -142,7 +142,8 @@ def confirm_code(event, context):
     request = ConfirmCodeRequest(access_token=access_token,
                                  attribute_name=query_params.get("attribute"),
                                  code=query_params.get("code"))
-    auth_service.confirm_code(request=request)
+    user_id = auth_service.confirm_code(request=request)
+    user_service.confirm_user_email(id=user_id)
     return create_response(200, {"message": "Success"})
 
 

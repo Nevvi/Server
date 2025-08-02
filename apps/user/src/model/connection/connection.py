@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from src.model.document import ConnectionDocument
 from src.model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME
+from src.model.document import ConnectionDocument
 from src.model.user.address import AddressView
 from src.model.user.user import UserView
 from src.model.view import View
@@ -37,10 +37,12 @@ class UserConnectionView(View):
     permissionGroup: str
 
     @staticmethod
-    def from_connected_user(user: UserView, permission_group_name: str):
-        permission_group = next((pg for pg in user.permissionGroups if pg.name == permission_group_name), None)
-
-        show_all_fields = permission_group is None or permission_group_name == DEFAULT_ALL_PERMISSION_GROUP_NAME
+    def from_connected_user(user: UserView, connection_to_me: ConnectionDocument,
+                            connection_to_them: ConnectionDocument):
+        # Only show the user data that I have access to, dictated by what permission group the other user has set for me
+        my_permission_group_name = connection_to_me.get("permissionGroupName")
+        permission_group = next((pg for pg in user.permissionGroups if pg.name == my_permission_group_name), None)
+        show_all_fields = permission_group is None or my_permission_group_name == DEFAULT_ALL_PERMISSION_GROUP_NAME
 
         def can_show_field(field: str) -> bool:
             return show_all_fields or field in permission_group.fields
@@ -51,6 +53,8 @@ class UserConnectionView(View):
         mailing_address = user.mailingAddress if can_show_field("mailingAddress") else None
         birthday = user.birthday if can_show_field("birthday") else None
 
+        # We still want to return our configured permission group for the other user so that it can be updated
+        their_permission_group_name = connection_to_them.get("permissionGroupName")
         return UserConnectionView(
             id=user.id,
             firstName=user.firstName,
@@ -62,5 +66,5 @@ class UserConnectionView(View):
             address=address,
             mailingAddress=mailing_address,
             birthday=birthday,
-            permissionGroup=permission_group_name
+            permissionGroup=their_permission_group_name
         )

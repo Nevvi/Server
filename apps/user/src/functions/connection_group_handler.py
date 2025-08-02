@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 
@@ -40,8 +41,8 @@ def delete_group(event, context):
 @exception_handler
 def export_group(event, context):
     path_params = event.get('pathParameters') or {}
-    res = connection_service.export_group(user_id=path_params.get("userId"),
-                                          group_id=path_params.get("groupId"))
+    res = asyncio.run(connection_service.export_group(user_id=path_params.get("userId"),
+                                                      group_id=path_params.get("groupId")))
     return create_response(200, res)
 
 
@@ -68,7 +69,7 @@ def add_connection(event, context):
 
     request = AddConnectionToGroupRequest(userId=path_params.get("userId"),
                                           groupId=path_params.get("groupId"),
-                                          connected_user_id=body.get("userId"))
+                                          connectedUserId=body.get("userId"))
     res = connection_service.add_connection_to_group(request=request)
     return create_response(200, res)
 
@@ -80,6 +81,6 @@ def remove_connection(event, context):
 
     request = RemoveConnectionFromGroupRequest(userId=path_params.get("userId"),
                                                groupId=path_params.get("groupId"),
-                                               connected_user_id=body.get("userId"))
+                                               connectedUserId=body.get("userId"))
     res = connection_service.remove_connection_from_group(request=request)
     return create_response(200, res)
