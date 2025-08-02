@@ -8,3 +8,4 @@ unzip_requirements.py
 *.zip
 .pytest_cache
 localstack-data
+wiremock
