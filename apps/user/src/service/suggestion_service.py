@@ -1,3 +1,6 @@
+from typing import List
+
+from model.connection.connection import SuggestedConnectionView
 from src.dao.connection_dao import ConnectionDao
 from src.dao.connection_request_dao import ConnectionRequestDao
 from src.dao.refresh_suggestions_dao import RefreshSuggestionsDao
@@ -13,9 +16,9 @@ class SuggestionService:
         self.suggestions_dao = SuggestionsDao()
         self.refresh_suggestions_dao = RefreshSuggestionsDao()
 
-    # TODO - map to view class?
-    def get_suggested_users(self, user_id: str) -> list:
-        return self.suggestions_dao.get_suggestions(user_id=user_id)
+    def get_suggested_users(self, user_id: str) -> List[SuggestedConnectionView]:
+        suggestions = self.suggestions_dao.get_suggestions(user_id=user_id)
+        return [SuggestedConnectionView.from_doc(s) for s in suggestions]
 
     def remove_suggestion(self, user_id: str, suggested_user_id: str):
         self.suggestions_dao.remove_suggestions(user_id=user_id, suggested_user_id=suggested_user_id)

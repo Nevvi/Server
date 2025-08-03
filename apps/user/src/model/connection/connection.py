@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from src.model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME
-from src.model.document import ConnectionDocument
+from src.model.document import ConnectionDocument, SuggestedUser
 from src.model.user.address import AddressView
 from src.model.user.user import UserView
 from src.model.view import View
@@ -67,4 +67,23 @@ class UserConnectionView(View):
             mailingAddress=mailing_address,
             birthday=birthday,
             permissionGroup=their_permission_group_name
+        )
+
+
+@dataclass
+class SuggestedConnectionView(View):
+    userId: str
+    firstName: str
+    lastName: str
+    bio: str
+    profileImage: str
+
+    @staticmethod
+    def from_doc(doc: SuggestedUser):
+        return SuggestedConnectionView(
+            userId=doc.id,
+            firstName=doc.firstName,
+            lastName=doc.lastName,
+            profileImage=doc.profileImage,
+            bio=doc.bio,
         )

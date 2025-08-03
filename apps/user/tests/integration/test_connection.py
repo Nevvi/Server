@@ -33,6 +33,11 @@ class TestConnectionIntegration(IntegrationTest):
         }
         assert self.assert_sqs_message_sent(expected_body=expected_notification, queue_url=self.notification_queue)
 
+        expected_message = {
+            "userId": self.user.id,
+        }
+        assert self.assert_sqs_message_sent(expected_body=expected_message, queue_url=self.suggestions_queue)
+
     def test_confirm_connection(self):
         test_user = self.create_user()
         self.create_connection_request(user=self.user, connected_user_id=test_user.id)
@@ -55,6 +60,11 @@ class TestConnectionIntegration(IntegrationTest):
         }
         assert self.assert_sqs_message_sent(expected_body=expected_notification, queue_url=self.notification_queue)
 
+        expected_message = {
+            "userId": self.user.id,
+        }
+        assert self.assert_sqs_message_sent(expected_body=expected_message, queue_url=self.suggestions_queue)
+
     def test_deny_connection(self):
         test_user = self.create_user()
         self.create_connection_request(user=test_user, connected_user_id=self.user.id)
@@ -71,6 +81,11 @@ class TestConnectionIntegration(IntegrationTest):
         assert self.connection_service.get_connections(SearchConnectionsRequest(userId=test_user.id)).count == 0
         assert len(self.connection_service.get_pending_requests(user_id=self.user.id)) == 0
         self.assert_no_sqs_messages_sent(queue_url=self.notification_queue)
+
+        expected_message = {
+            "userId": self.user.id,
+        }
+        assert self.assert_sqs_message_sent(expected_body=expected_message, queue_url=self.suggestions_queue)
 
     def test_get_user_connection(self):
         test_user_one = self.create_user()

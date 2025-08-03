@@ -2,6 +2,7 @@ import os
 from typing import List, Dict, Any
 
 import pymongo
+from pymongo.synchronous.collection import Collection
 
 from src.model.document import SuggestedUser
 
@@ -151,7 +152,7 @@ class SuggestionsDao:
             },
         ]
 
-        return self.__execute_and_transform(pipeline)
+        return self.__execute_and_transform(pipeline, self.user_collection)
 
     def get_suggestions(self, user_id: str) -> List[SuggestedUser]:
         pipeline: List[Dict[str, Any]] = [
@@ -159,14 +160,16 @@ class SuggestionsDao:
                 '$match': {
                     '_id': user_id
                 }
-            }, {
+            },
+            {
                 '$lookup': {
                     'from': 'connections',
                     'localField': '_id',
                     'foreignField': 'userId',
                     'as': 'connections'
                 }
-            }, {
+            },
+            {
                 '$project': {
                     'suggestions': {
                         '$filter': {
@@ -182,12 +185,14 @@ class SuggestionsDao:
                         }
                     }
                 }
-            }, {
+            },
+            {
                 '$unwind': {
                     'path': '$suggestions',
                     'preserveNullAndEmptyArrays': False
                 }
-            }, {
+            },
+            {
                 '$lookup': {
                     'from': 'users',
                     'localField': 'suggestions',
@@ -197,7 +202,7 @@ class SuggestionsDao:
             }
         ]
 
-        return self.__execute_and_transform(pipeline)
+        return self.__execute_and_transform(pipeline, self.suggestion_collection)
 
     def update_suggestions(self, user_id: str, suggestions: List[str]):
         self.suggestion_collection.update_one(
@@ -225,8 +230,9 @@ class SuggestionsDao:
 
         return res.modified_count == 1
 
-    def __execute_and_transform(self, pipeline: List[Dict[str, Any]]) -> List[SuggestedUser]:
-        results = list(self.user_collection.aggregate(pipeline))
+    @staticmethod
+    def __execute_and_transform(pipeline: List[Dict[str, Any]], collection: Collection) -> List[SuggestedUser]:
+        results = list(collection.aggregate(pipeline))
         suggested_users = [s.get("suggestedUser")[0] for s in results if len(s.get("suggestedUser", [])) == 1]
 
         def transform(result: Dict[str, Any]) -> SuggestedUser:
