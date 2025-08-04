@@ -1,15 +1,34 @@
+org: nevvi
+app: nevvi
 service: user
 
-frameworkVersion: '3'
-variablesResolutionMode: 20210326
+frameworkVersion: '4'
 
 plugins:
-  - serverless-prune-plugin
-  - serverless-iam-roles-per-function
-  - serverless-webpack
   - serverless-domain-manager
+  - serverless-iam-roles-per-function
   - serverless-plugin-split-stacks
+  - serverless-prune-plugin
+  - serverless-python-requirements
 
+package:
+  patterns:
+    - '!./**'           # exclude everything first
+    - './src/**'        # include your source directory
+
+custom:
+  splitStacks:
+    perFunction: false
+    perType: true
+    perGroupFunction: false
+  prune:
+    automatic: true
+    number: 2
+  customDomain:
+    domainName: ${param:domainName}
+    basePath: ${param:basePath}
+  pythonRequirements:
+    dockerizePip: true
 
 params:
   default:
@@ -23,6 +42,7 @@ params:
     notificationQueueUrl: ${ssm:/nevvi/sqs/notifications-dev/url}
     refreshSuggestionsQueueArn: ${ssm:/nevvi/sqs/refresh-suggestions-dev/arn}
     refreshSuggestionsQueueUrl: ${ssm:/nevvi/sqs/refresh-suggestions-dev/url}
+    userImagesBucketArn: ${ssm:/nevvi/s3/nevvi-user-images-dev/arn}
     userImagesBucketName: nevvi-user-images-dev
   development:
     basePath: user
@@ -37,28 +57,12 @@ params:
     domainName: api.nevvi.net
     refreshSuggestionsQueueArn: ${ssm:/nevvi/sqs/refresh-suggestions/arn}
     refreshSuggestionsQueueUrl: ${ssm:/nevvi/sqs/refresh-suggestions/url}
+    userImagesBucketArn: ${ssm:/nevvi/s3/nevvi-user-images/arn}
     userImagesBucketName: nevvi-user-images
-
-custom:
-  splitStacks:
-    perFunction: false
-    perType: true
-    perGroupFunction: false
-  prune:
-    automatic: true
-    number: 2
-  customDomain:
-    domainName: ${param:domainName}
-    basePath: ${param:basePath}
-  userImagesBucketName: ${param:userImagesBucketName}
-  userImagesBucketArn: ${ssm:/nevvi/s3/${self:custom.userImagesBucketName}/arn}
-  mongoUri: ${param:mongoUri}
-  notificationQueueArn: ${param:notificationQueueArn}
-  refreshSuggestionsQueueArn: ${param:refreshSuggestionsQueueArn}
 
 provider:
   name: aws
-  runtime: nodejs16.x
+  runtime: python3.12
   lambdaHashingVersion: 20201221
   stage: ${opt:stage, 'test'}
   region: ${opt:region, 'us-east-1'}
@@ -87,7 +91,7 @@ provider:
   environment:
     MONGO_URI: ${param:mongoUri}
     DEFAULT_PROFILE_IMAGE: ${param:defaultProfileImage}
-    IMAGE_BUCKET: ${self:custom.userImagesBucketName}
+    IMAGE_BUCKET: ${param:userImagesBucketName}
     EMAIL_FROM_ARN: arn:aws:ses:us-east-1:275527036335:identity/nevvi.net
     NOTIFICATION_QUEUE_URL: ${param:notificationQueueUrl}
     REFRESH_SUGGESTIONS_QUEUE_URL: ${param:refreshSuggestionsQueueUrl}
@@ -97,10 +101,12 @@ provider:
 
 functions:
   userAuthorizer:
-    handler: src/functions/UserAuthorizer.authorize
+    handler: src/functions/user_authorizer.authorize
+
+  # region user
 
   getUser:
-    handler: src/functions/UserHandler.getUser
+    handler: src/functions/user_handler.get_user
     events:
       - http:
           path: /v1/users/{userId}
@@ -111,14 +117,15 @@ functions:
             type: request
 
   createUser:
-    handler: src/functions/UserHandler.createUser
+    handler: src/functions/user_handler.create_user
     events:
       - http:
           path: /api/v1/users
           method: post
           private: true
+
   deleteUser:
-    handler: src/functions/UserHandler.deleteUser
+    handler: src/functions/user_handler.delete_user
     events:
       - http:
           path: /v1/users/{userId}
@@ -134,14 +141,15 @@ functions:
         Resource: arn:aws:ses:us-east-1:275527036335:identity/nevvi.net
 
   updateUserContact:
-    handler: src/functions/UserHandler.updateUserContact
+    handler: src/functions/user_handler.update_user_contact
     events:
       - http:
           path: /api/v1/users/{userId}/contact
           method: post
           private: true
+
   updateUser:
-    handler: src/functions/UserHandler.updateUser
+    handler: src/functions/user_handler.update_user
     events:
       - http:
           path: /v1/users/{userId}
@@ -150,8 +158,9 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
+
   updateUserImage:
-    handler: src/functions/UserHandler.updateUserImage
+    handler: src/functions/user_handler.update_user_image
     events:
       - http:
           path: /v1/users/{userId}/image
@@ -165,10 +174,11 @@ functions:
         Action:
           - s3:*
         Resource:
-          - ${self:custom.userImagesBucketArn}
-          - ${self:custom.userImagesBucketArn}/*
+          - ${param:userImagesBucketArn}
+          - ${param:userImagesBucketArn}/*
+
   searchUsers:
-    handler: src/functions/UserHandler.searchUsers
+    handler: src/functions/user_handler.search_users
     events:
       - http:
           path: /v1/users/search
@@ -177,8 +187,9 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
+
   notifyUsers:
-    handler: src/functions/UserHandler.notifyOutOfSyncUsers
+    handler: src/functions/user_handler.notify_out_of_sync_users
     events:
       - schedule:
           rate: cron(0 17 * * ? *) # noon est every day (17 UTC - 5 hours)
@@ -187,10 +198,10 @@ functions:
       - Effect: Allow
         Action:
           - sqs:SendMessage
-        Resource: ${self:custom.notificationQueueArn}
+        Resource: ${param:notificationQueueArn}
 
   notifyBirthdays:
-    handler: src/functions/UserHandler.notifyBirthdays
+    handler: src/functions/user_handler.notify_birthdays
     events:
       - schedule:
           rate: cron(0 15 * * ? *) # 10am est every day (15 UTC - 5 hours)
@@ -199,11 +210,24 @@ functions:
       - Effect: Allow
         Action:
           - sqs:SendMessage
-        Resource: ${self:custom.notificationQueueArn}
+        Resource: ${param:notificationQueueArn}
 
-  # Connection Requests
+  getRejectedUsers:
+    handler: src/functions/user_handler.get_rejected_users
+    events:
+      - http:
+          path: /v1/users/{userId}/connections/rejected
+          method: get
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+
+  # endregion
+
+  # region connection requests
   createConnectionRequest:
-    handler: src/functions/ConnectionHandler.requestConnection
+    handler: src/functions/connection_handler.request_connection
     events:
       - http:
           path: /v1/users/{userId}/connections/requests
@@ -216,14 +240,14 @@ functions:
       - Effect: Allow
         Action:
           - sqs:SendMessage
-        Resource: ${self:custom.notificationQueueArn}
+        Resource: ${param:notificationQueueArn}
       - Effect: Allow
         Action:
           - sqs:SendMessage
-        Resource: ${self:custom.refreshSuggestionsQueueArn}
+        Resource: ${param:refreshSuggestionsQueueArn}
 
   confirmConnectionRequest:
-    handler: src/functions/ConnectionHandler.confirmConnection
+    handler: src/functions/connection_handler.confirm_connection
     events:
       - http:
           path: /v1/users/{userId}/connections/requests/confirm
@@ -236,14 +260,14 @@ functions:
       - Effect: Allow
         Action:
           - sqs:SendMessage
-        Resource: ${self:custom.notificationQueueArn}
+        Resource: ${param:notificationQueueArn}
       - Effect: Allow
         Action:
           - sqs:SendMessage
-        Resource: ${self:custom.refreshSuggestionsQueueArn}
+        Resource: ${param:refreshSuggestionsQueueArn}
 
   denyConnectionRequest:
-    handler: src/functions/ConnectionHandler.denyConnection
+    handler: src/functions/connection_handler.deny_connection
     events:
       - http:
           path: /v1/users/{userId}/connections/requests/deny
@@ -256,10 +280,10 @@ functions:
       - Effect: Allow
         Action:
           - sqs:SendMessage
-        Resource: ${self:custom.refreshSuggestionsQueueArn}
+        Resource: ${param:refreshSuggestionsQueueArn}
 
   getPendingRequests:
-    handler: src/functions/ConnectionHandler.getOpenRequests
+    handler: src/functions/connection_handler.get_open_requests
     events:
       - http:
           path: /v1/users/{userId}/connections/requests/pending
@@ -269,19 +293,12 @@ functions:
             resultTtlInSeconds: 0
             type: request
 
-  getRejectedRequests:
-    handler: src/functions/ConnectionHandler.getRejectedUsers
-    events:
-      - http:
-          path: /v1/users/{userId}/connections/rejected
-          method: get
-          authorizer:
-            name: userAuthorizer
-            resultTtlInSeconds: 0
-            type: request
+  # endregion
+
+  # region suggestions
 
   refreshAllSuggestions:
-    handler: src/functions/SuggestionHandler.refreshAllSuggestions
+    handler: src/functions/suggestion_handler.refresh_all_suggestions
     events:
       - schedule:
           rate: cron(0 11 * * ? *) # 6am est every day (11 UTC - 5 hours)
@@ -290,21 +307,10 @@ functions:
       - Effect: Allow
         Action:
           - sqs:SendMessage
-        Resource: ${self:custom.refreshSuggestionsQueueArn}
-
-  getSuggestedConnections:
-    handler: src/functions/SuggestionHandler.getSuggestedConnections
-    events:
-      - http:
-          path: /v1/users/{userId}/connections/suggested
-          method: get
-          authorizer:
-            name: userAuthorizer
-            resultTtlInSeconds: 0
-            type: request
+        Resource: ${param:refreshSuggestionsQueueArn}
 
   getSuggestions:
-    handler: src/functions/SuggestionHandler.getSuggestedConnections
+    handler: src/functions/suggestion_handler.get_suggested_connections
     events:
       - http:
           path: /v1/users/{userId}/suggestions
@@ -315,7 +321,7 @@ functions:
             type: request
 
   ignoreSuggestion:
-    handler: src/functions/SuggestionHandler.ignoreSuggestion
+    handler: src/functions/suggestion_handler.ignore_suggestion
     events:
       - http:
           path: /v1/users/{userId}/suggestions/{suggestionId}
@@ -328,10 +334,20 @@ functions:
       - Effect: Allow
         Action:
           - sqs:SendMessage
-        Resource: ${self:custom.refreshSuggestionsQueueArn}
+        Resource: ${param:refreshSuggestionsQueueArn}
+
+  refreshSuggestions:
+    handler: src/functions/suggestion_handler.refresh_suggestions
+    events:
+      - sqs:
+          arn: ${param:refreshSuggestionsQueueArn}
+
+  # endregion
+
+  # region connections
 
   getConnections:
-    handler: src/functions/ConnectionHandler.getConnections
+    handler: src/functions/connection_handler.get_connections
     events:
       - http:
           path: /v1/users/{userId}/connections
@@ -342,7 +358,7 @@ functions:
             type: request
 
   getConnection:
-    handler: src/functions/ConnectionHandler.getConnection
+    handler: src/functions/connection_handler.get_connection
     events:
       - http:
           path: /v1/users/{userId}/connections/{connectedUserId}
@@ -353,7 +369,7 @@ functions:
             type: request
 
   updateConnection:
-    handler: src/functions/ConnectionHandler.updateConnection
+    handler: src/functions/connection_handler.update_connection
     events:
       - http:
           path: /v1/users/{userId}/connections/{connectedUserId}
@@ -364,7 +380,7 @@ functions:
             type: request
 
   blockConnection:
-    handler: src/functions/ConnectionHandler.blockConnection
+    handler: src/functions/connection_handler.block_connection
     events:
       - http:
           path: /v1/users/{userId}/connections/{connectedUserId}
@@ -374,9 +390,11 @@ functions:
             resultTtlInSeconds: 0
             type: request
 
-  # Connection Groups
+  # endregion
+
+  # region connection groups
   createConnectionGroup:
-    handler: src/functions/ConnectionGroupHandler.createGroup
+    handler: src/functions/connection_group_handler.create_group
     events:
       - http:
           path: /v1/users/{userId}/connection-groups
@@ -387,7 +405,7 @@ functions:
             type: request
 
   getConnectionGroups:
-    handler: src/functions/ConnectionGroupHandler.getGroups
+    handler: src/functions/connection_group_handler.get_groups
     events:
       - http:
           path: /v1/users/{userId}/connection-groups
@@ -398,7 +416,7 @@ functions:
             type: request
 
   deleteConnectionGroup:
-    handler: src/functions/ConnectionGroupHandler.deleteGroup
+    handler: src/functions/connection_group_handler.delete_group
     events:
       - http:
           path: /v1/users/{userId}/connection-groups/{groupId}
@@ -409,7 +427,7 @@ functions:
             type: request
 
   exportConnectionGroup:
-    handler: src/functions/ConnectionGroupHandler.exportGroup
+    handler: src/functions/connection_group_handler.export_group
     events:
       - http:
           path: /v1/users/{userId}/connection-groups/{groupId}/export
@@ -425,7 +443,7 @@ functions:
         Resource: arn:aws:ses:us-east-1:275527036335:identity/*
 
   getConnectionsInGroup:
-    handler: src/functions/ConnectionGroupHandler.getConnections
+    handler: src/functions/connection_group_handler.get_connections
     events:
       - http:
           path: /v1/users/{userId}/connection-groups/{groupId}/connections
@@ -436,7 +454,7 @@ functions:
             type: request
 
   addToConnectionGroup:
-    handler: src/functions/ConnectionGroupHandler.addConnection
+    handler: src/functions/connection_group_handler.add_connection
     events:
       - http:
           path: /v1/users/{userId}/connection-groups/{groupId}/connections
@@ -447,7 +465,7 @@ functions:
             type: request
 
   removeFromConnectionGroup:
-    handler: src/functions/ConnectionGroupHandler.removeConnection
+    handler: src/functions/connection_group_handler.remove_connection
     events:
       - http:
           path: /v1/users/{userId}/connection-groups/{groupId}/connections
@@ -457,8 +475,4 @@ functions:
             resultTtlInSeconds: 0
             type: request
 
-  refreshSuggestions:
-    handler: src/functions/SuggestionHandler.refreshSuggestions
-    events:
-      - sqs:
-          arn: ${param:refreshSuggestionsQueueArn}
+  # endregion

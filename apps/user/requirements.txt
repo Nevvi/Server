@@ -1,0 +1,14 @@
+boto3==1.39.4
+email-validator==2.2.0
+phonenumbers==9.0.8
+pymongo==4.13.2
+PyJWT==2.10.1
+pydantic==2.11.7
+pytest==7.4.3
+pytest-asyncio==0.21.1
+requests==2.32.4
+types-boto3-ses==1.39.0
+types-boto3-sqs==1.39.0
+types-boto3-s3==1.39.2
+typing-extensions==4.14.1
+xlsxwriter==3.2.5

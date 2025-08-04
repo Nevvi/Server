@@ -1,15 +1,15 @@
 import logging
 from typing import Optional, List
 
-from types_boto3_cognito_idp.type_defs import AttributeTypeTypeDef
+from types_boto3_cognito_idp.type_defs import AttributeTypeTypeDef, GetUserAttributeVerificationCodeResponseTypeDef
 
 from src.dao.authentication_dao import AuthenticationDao
-from src.model.errors import InvalidRequestError, UserNotFoundError, UserEmailAlreadyExistsError
+from src.model.errors import InvalidRequestError, UserNotFoundError, UserEmailAlreadyExistsError, \
+    PasswordResetRequiredError
 from src.model.requests import RegisterRequest, ConfirmSignupRequest, LoginRequest, RefreshLoginRequest, \
     LogoutRequest, ResendSignupCodeRequest, ForgotPasswordRequest, ResetPasswordRequest, SendCodeRequest, \
     ConfirmCodeRequest, UpdateRequest
-from src.model.response import LoginResponse, RegisterResponse, RefreshLoginResponse, SendCodeResponse, \
-    ForgotPasswordResponse
+from src.model.response import LoginResponse, RegisterResponse, RefreshLoginResponse, ForgotPasswordResponse
 from src.model.user import User
 
 logger = logging.getLogger(__name__)
@@ -61,6 +61,9 @@ class AuthenticationService:
         if not auth_result:
             raise InvalidRequestError("Failed to login")
 
+        if auth_result.get("ChallengeName") == "NEW_PASSWORD_REQUIRED":
+            raise PasswordResetRequiredError()
+
         user = self.authentication_dao.get_user_by_phone(phone_number=request.username)
         if not user:
             print(f"Failed to get user by phone, trying by email instead")
@@ -106,15 +109,16 @@ class AuthenticationService:
                                                         password=request.password,
                                                         code=request.code)
 
-    def send_code(self, request: SendCodeRequest) -> SendCodeResponse:
-        res = self.authentication_dao.send_verification_code(access_token=request.access_token,
-                                                             attribute_name=request.attribute_name)
-        return SendCodeResponse(res)
+    def send_code(self, request: SendCodeRequest) -> GetUserAttributeVerificationCodeResponseTypeDef:
+        return self.authentication_dao.send_verification_code(access_token=request.access_token,
+                                                              attribute_name=request.attribute_name)
 
-    def confirm_code(self, request: ConfirmCodeRequest):
+    def confirm_code(self, request: ConfirmCodeRequest) -> str:
         self.authentication_dao.verify_code(access_token=request.access_token,
                                             attribute_name=request.attribute_name,
                                             code=request.code)
+        user = self.authentication_dao.get_user_by_token(access_token=request.access_token)
+        return user.get("Username")
 
     def update_user(self, user_id: str, request: UpdateRequest) -> User:
         # Only one email can exist per user
