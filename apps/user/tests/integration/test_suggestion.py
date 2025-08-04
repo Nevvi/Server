@@ -1,7 +1,7 @@
 from integration.integration_test import IntegrationTest
 
 
-class TestConnectionIntegration(IntegrationTest):
+class TestSuggestionIntegration(IntegrationTest):
 
     def test_refresh_suggestions_not_enough_overlap(self):
         test_user_one = self.create_user()
@@ -53,7 +53,7 @@ class TestConnectionIntegration(IntegrationTest):
         # User one and two (our connections) are also connected to user three. User three should be suggested now
         suggestions = self.suggestion_service.get_suggested_users(user_id=self.user.id)
         assert len(suggestions) == 1
-        assert suggestions[0].userId == test_user_three.id
+        assert suggestions[0].id == test_user_three.id
 
     def test_refresh_suggestions_with_enough_overlap_already_requested(self):
         test_user_one = self.create_user()
