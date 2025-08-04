@@ -1,6 +1,6 @@
 from typing import List
 
-from model.connection.connection import SuggestedConnectionView
+from src.model.user.user import SlimUserView
 from src.dao.connection_dao import ConnectionDao
 from src.dao.connection_request_dao import ConnectionRequestDao
 from src.dao.refresh_suggestions_dao import RefreshSuggestionsDao
@@ -16,9 +16,9 @@ class SuggestionService:
         self.suggestions_dao = SuggestionsDao()
         self.refresh_suggestions_dao = RefreshSuggestionsDao()
 
-    def get_suggested_users(self, user_id: str) -> List[SuggestedConnectionView]:
+    def get_suggested_users(self, user_id: str) -> List[SlimUserView]:
         suggestions = self.suggestions_dao.get_suggestions(user_id=user_id)
-        return [SuggestedConnectionView.from_doc(s) for s in suggestions]
+        return [SlimUserView.from_suggested_user(s) for s in suggestions]
 
     def remove_suggestion(self, user_id: str, suggested_user_id: str):
         self.suggestions_dao.remove_suggestions(user_id=user_id, suggested_user_id=suggested_user_id)
@@ -44,6 +44,7 @@ class SuggestionService:
 
     def refresh_suggestions(self, user_id: str):
         possible_suggestions = self.suggestions_dao.find_possible_suggestions(user_id=user_id)
+        print(f"{len(possible_suggestions)} possible suggestions for user {user_id}")
         valid_suggestions = [s for s in possible_suggestions if user_id not in s.blockedUsers]
 
         relevant_suggestions = []

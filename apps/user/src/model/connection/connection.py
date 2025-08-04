@@ -68,22 +68,3 @@ class UserConnectionView(View):
             birthday=birthday,
             permissionGroup=their_permission_group_name
         )
-
-
-@dataclass
-class SuggestedConnectionView(View):
-    userId: str
-    firstName: str
-    lastName: str
-    bio: str
-    profileImage: str
-
-    @staticmethod
-    def from_doc(doc: SuggestedUser):
-        return SuggestedConnectionView(
-            userId=doc.id,
-            firstName=doc.firstName,
-            lastName=doc.lastName,
-            profileImage=doc.profileImage,
-            bio=doc.bio,
-        )

@@ -235,6 +235,8 @@ class SuggestionsDao:
         results = list(collection.aggregate(pipeline))
         suggested_users = [s.get("suggestedUser")[0] for s in results if len(s.get("suggestedUser", [])) == 1]
 
+        print(suggested_users)
+
         def transform(result: Dict[str, Any]) -> SuggestedUser:
             return SuggestedUser(
                 id=result.get("_id"),

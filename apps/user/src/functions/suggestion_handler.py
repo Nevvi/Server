@@ -32,7 +32,7 @@ def refresh_all_suggestions(event, context):
     return create_response(200, {"success": True})
 
 
-def refresh_suggestions(event):
+def refresh_suggestions(event, context):
     """
     {
         Records: [
@@ -51,13 +51,13 @@ def refresh_suggestions(event):
     }
     """
     try:
-        logger.info("Received request to refresh suggestion(s)")
+        print("Received request to refresh suggestion(s)")
         records: List[Any] = event.get("Records", [])
         for record in records:
             try:
                 details = json.loads(record.get("body"))
                 user_id = details.get("userId")
-                logger.info(f"Refreshing suggestions for {user_id}")
+                print(f"Refreshing suggestions for {user_id}")
                 suggestion_service.refresh_suggestions(user_id=user_id)
             except Exception as e:
                 logger.exception("Caught error refreshing suggestions", e)

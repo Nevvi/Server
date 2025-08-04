@@ -5,7 +5,7 @@ from typing import Optional, List
 from typing_extensions import Self
 
 from src.dao.connection_dao import SearchedConnection
-from src.model.document import UserDocument, SearchedUser
+from src.model.document import UserDocument, SearchedUser, SuggestedUser
 from src.model.requests import UpdateRequest
 from src.model.user.address import AddressView
 from src.model.user.device_settings import DeviceSettingsView
@@ -178,4 +178,14 @@ class SlimUserView(View):
             profileImage=doc.profileImage,
             inSync=doc.inSync,
             permissionGroup=doc.permissionGroupName
+        )
+
+    @staticmethod
+    def from_suggested_user(doc: SuggestedUser):
+        return SlimUserView(
+            id=doc.id,
+            firstName=doc.firstName,
+            lastName=doc.lastName,
+            bio=doc.bio,
+            profileImage=doc.profileImage,
         )
