@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from src.model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME
-from src.model.document import ConnectionDocument, SuggestedUser
+from src.model.document import ConnectionDocument
 from src.model.user.address import AddressView
 from src.model.user.user import UserView
 from src.model.view import View

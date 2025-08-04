@@ -59,7 +59,7 @@ class UserView(View):
             mailingAddress=mailing_address,
             deviceSettings=device_settings,
             permissionGroups=permission_groups,
-            profileImage=doc.get("profileImage", os.environ["DEFAULT_PROFILE_IMAGE"]),
+            profileImage=doc.get("profileImage") or os.environ["DEFAULT_PROFILE_IMAGE"],
             blockedUsers=doc.get("blockedUsers", []),
             createDate=doc.get("createDate"),
             updateDate=doc.get("updateDate")
