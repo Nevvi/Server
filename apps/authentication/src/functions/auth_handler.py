@@ -2,9 +2,7 @@ import json
 import logging
 import os
 
-from pydantic import ValidationError
-
-from src.model.errors import HttpError
+from src.functions.handler_utils import create_response, exception_handler
 from src.model.requests import LoginRequest, RegisterRequest, ConfirmSignupRequest, RefreshLoginRequest, LogoutRequest, \
     ResendSignupCodeRequest, ForgotPasswordRequest, ResetPasswordRequest, SendCodeRequest, ConfirmCodeRequest, \
     UpdateRequest
@@ -17,23 +15,6 @@ logger = logging.getLogger(__name__)
 
 auth_service = AuthenticationService()
 user_service = UserService()
-
-
-def exception_handler(func):
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except ValidationError as e:
-            logger.error(f"Caught validation error: {e}")
-            return create_response(400, str(e))
-        except HttpError as e:
-            logger.error(f"Caught HTTP error: {e}")
-            return create_response(e.status_code, e.message)
-        except Exception as e:
-            logger.error(f"Caught exception handling request: {e}")
-            return create_response(500, str(e))
-
-    return wrapper
 
 
 @exception_handler
@@ -49,7 +30,7 @@ def register(event, context):
     request = RegisterRequest(username=body.get("username"), password=body.get("password"))
     response = auth_service.register(request=request)
     logger.info(f"Created new user: {request.username}")
-    return create_response(200, response.to_dict())
+    return create_response(200, response)
 
 
 @exception_handler
@@ -66,7 +47,7 @@ def login(event, context):
     request = LoginRequest(username=body.get("username"), password=body.get("password"))
     response = auth_service.login(request=request)
     logger.info(f"Logged in user: {request.username}")
-    return create_response(200, response.to_dict())
+    return create_response(200, response)
 
 
 @exception_handler
@@ -75,7 +56,7 @@ def refresh_login(event, context):
     refresh_token = headers.get("RefreshToken") or headers.get("refreshtoken")
     request = RefreshLoginRequest(refresh_token=refresh_token)
     response = auth_service.refresh_login(request=request)
-    return create_response(200, response.to_dict())
+    return create_response(200, response)
 
 
 @exception_handler
@@ -100,7 +81,7 @@ def confirm(event, context):
         create_response(500, {})
 
     logger.info("Creating user profile")
-    user_service.create_user(id=user.user_id, phone_number=user.phone_number)
+    user_service.create_user(id=user.userId, phone_number=user.phoneNumber)
     return create_response(200, {})
 
 
@@ -153,11 +134,4 @@ def update_user(event, context):
     body = json.loads(event.get('body', '{}'))
     request = UpdateRequest(email=body.get("email"))
     updated_user = auth_service.update_user(user_id=path_params.get("userId"), request=request)
-    return create_response(200, updated_user.to_dict())
-
-
-def create_response(status_code, body):
-    return {
-        'statusCode': status_code,
-        'body': json.dumps(body)
-    }
+    return create_response(200, updated_user)

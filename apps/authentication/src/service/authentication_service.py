@@ -1,7 +1,7 @@
 import logging
-from typing import Optional, List
+from typing import Optional
 
-from types_boto3_cognito_idp.type_defs import AttributeTypeTypeDef, GetUserAttributeVerificationCodeResponseTypeDef
+from types_boto3_cognito_idp.type_defs import GetUserAttributeVerificationCodeResponseTypeDef
 
 from src.dao.authentication_dao import AuthenticationDao
 from src.model.errors import InvalidRequestError, UserNotFoundError, UserEmailAlreadyExistsError, \
@@ -15,43 +15,24 @@ from src.model.user import User
 logger = logging.getLogger(__name__)
 
 
-def _map_to_user(attributes: List[AttributeTypeTypeDef]) -> User:
-    user_id: str = next((a for a in attributes if a["Name"] == "sub"))["Value"]
-    phone_number: str = next((a for a in attributes if a["Name"] == "phone_number"))["Value"]
-    phone_number_verified: bool = bool(next((a for a in attributes if a["Name"] == "phone_number_verified"))["Value"])
-
-    email_attribute = next((a for a in attributes if a["Name"] == "email"), None)
-    email_verified_attribute = next((a for a in attributes if a["Name"] == "email_verified"), None)
-    name_attribute = next((a for a in attributes if a["Name"] == "name"), None)
-
-    return User(
-        user_id=user_id,
-        phone_number=phone_number,
-        phone_number_verified=phone_number_verified,
-        email=email_attribute["Value"] if email_attribute is not None else None,
-        email_verified=bool(email_verified_attribute["Value"]) if email_verified_attribute is not None else None,
-        name=name_attribute["Value"] if name_attribute is not None else None
-    )
-
-
 class AuthenticationService:
     def __init__(self):
         self.authentication_dao = AuthenticationDao()
 
     def get_user(self, user_id: str) -> User:
         res = self.authentication_dao.get_user(user_id=user_id)
-        return _map_to_user(res.get("UserAttributes", []))
+        return User.from_attributes(attributes=res.get("UserAttributes", []))
 
     def get_user_by_phone(self, phone_number: str) -> Optional[User]:
         res = self.authentication_dao.get_user_by_phone(phone_number=phone_number)
         if not res:
             return None
 
-        return _map_to_user(res.get("Attributes", []))
+        return User.from_attributes(attributes=res.get("Attributes", []))
 
     def register(self, request: RegisterRequest) -> RegisterResponse:
         res = self.authentication_dao.register(username=request.username, password=request.password)
-        return RegisterResponse(res)
+        return RegisterResponse.from_response(res)
 
     def confirm(self, request: ConfirmSignupRequest):
         self.authentication_dao.confirm(username=request.username, confirmation_code=request.confirmation_code)
@@ -69,9 +50,9 @@ class AuthenticationService:
             print(f"Failed to get user by phone, trying by email instead")
             user = self.authentication_dao.get_user_by_email(email=request.username)
 
-        return LoginResponse(
+        return LoginResponse.from_response(
             id=user.get("Username"),
-            auth=auth_result.get("AuthenticationResult")
+            res=auth_result.get("AuthenticationResult")
         )
 
     def refresh_login(self, request: RefreshLoginRequest) -> RefreshLoginResponse:
@@ -79,7 +60,7 @@ class AuthenticationService:
         if not auth_result:
             raise InvalidRequestError("Failed to refresh login")
 
-        return RefreshLoginResponse(auth=auth_result.get("AuthenticationResult"))
+        return RefreshLoginResponse.from_response(res=auth_result.get("AuthenticationResult"))
 
     def logout(self, request: LogoutRequest):
         self.authentication_dao.logout(access_token=request.access_token)
@@ -98,7 +79,7 @@ class AuthenticationService:
             return None
 
         res = self.authentication_dao.forgot_password(username=request.username)
-        return ForgotPasswordResponse(res)
+        return ForgotPasswordResponse.from_response(res)
 
     def confirm_forgot_password(self, request: ResetPasswordRequest):
         user = self.authentication_dao.get_user_by_phone(phone_number=request.username)

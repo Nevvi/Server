@@ -1,22 +1,36 @@
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
+from typing import Optional, List
+
+from types_boto3_cognito_idp.type_defs import AttributeTypeTypeDef
+
+from src.model.view import View
 
 
 @dataclass
-class User:
-    user_id: str
-    phone_number: str
-    phone_number_verified: bool
+class User(View):
+    userId: str
+    phoneNumber: str
+    phoneNumberVerified: bool
     email: Optional[str]
-    email_verified: Optional[bool]
+    emailVerified: Optional[bool]
     name: Optional[str]
 
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "userId": self.user_id,
-            "phoneNumber": self.phone_number,
-            "phoneNumberVerified": self.phone_number_verified,
-            "email": self.email,
-            "emailVerified": self.email_verified,
-            "name": self.name
-        }
+    @staticmethod
+    def from_attributes(attributes: List[AttributeTypeTypeDef]):
+        user_id: str = next((a for a in attributes if a["Name"] == "sub"))["Value"]
+        phone_number: str = next((a for a in attributes if a["Name"] == "phone_number"))["Value"]
+        phone_number_verified: bool = bool(
+            next((a for a in attributes if a["Name"] == "phone_number_verified"))["Value"])
+
+        email_attribute = next((a for a in attributes if a["Name"] == "email"), None)
+        email_verified_attribute = next((a for a in attributes if a["Name"] == "email_verified"), None)
+        name_attribute = next((a for a in attributes if a["Name"] == "name"), None)
+
+        return User(
+            userId=user_id,
+            phoneNumber=phone_number,
+            phoneNumberVerified=phone_number_verified,
+            email=email_attribute["Value"] if email_attribute is not None else None,
+            emailVerified=bool(email_verified_attribute["Value"]) if email_verified_attribute is not None else None,
+            name=name_attribute["Value"] if name_attribute is not None else None
+        )

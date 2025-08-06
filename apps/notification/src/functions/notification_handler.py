@@ -2,32 +2,13 @@ import json
 import logging
 from typing import List, Any
 
-from pydantic import ValidationError
-
-from src.model.errors import HttpError
+from src.functions.handler_utils import exception_handler
 from src.model.requests import UpdateTokenRequest
 from src.service.notification_service import NotificationService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 service = NotificationService()
-
-
-def exception_handler(func):
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except ValidationError as e:
-            logger.error(f"Caught validation error: {e}")
-            return create_response(400, str(e))
-        except HttpError as e:
-            logger.error(f"Caught HTTP error: {e}")
-            return create_response(e.status_code, e.message)
-        except Exception as e:
-            logger.error(f"Caught exception handling request: {e}")
-            return create_response(500, str(e))
-
-    return wrapper
 
 
 @exception_handler
