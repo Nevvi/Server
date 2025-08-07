@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 
 from integration.integration_test import IntegrationTest
@@ -62,12 +63,12 @@ class TestUserIntegration(IntegrationTest):
         assert not updated.emailConfirmed
 
     def test_searching_users(self):
-        test_user_one = self.create_user(first_name="Jane", last_name="Doe")
-        test_user_two = self.create_user(first_name="John", last_name="Doe")
+        test_user_one = self.create_user(first_name="Jane", last_name="Doe", phone="+16129631237")
+        test_user_two = self.create_user(first_name="John", last_name="Doe", phone="+16129631238")
 
         # Match multiple by name
         request = SearchRequest(name="Doe")
-        res = self.user_service.search_users(user_id=self.user.id, request=request)
+        res = asyncio.run(self.user_service.search_users(user_id=self.user.id, request=request))
         assert res.count == 2
         assert len(res.users) == 2
         self.assert_user_found(test_user_one, res.users)
@@ -75,34 +76,42 @@ class TestUserIntegration(IntegrationTest):
 
         # Match multiple by name (paginated)
         request = SearchRequest(name="Doe", skip=1, limit=1)
-        res = self.user_service.search_users(user_id=self.user.id, request=request)
+        res = asyncio.run(self.user_service.search_users(user_id=self.user.id, request=request))
         assert res.count == 2
         assert len(res.users) == 1
 
         # Match single by name
         request = SearchRequest(name="John")
-        res = self.user_service.search_users(user_id=self.user.id, request=request)
+        res = asyncio.run(self.user_service.search_users(user_id=self.user.id, request=request))
         assert res.count == 1
         assert len(res.users) == 1
         self.assert_user_found(test_user_two, res.users)
 
         # Match single by email
         request = SearchRequest(email=test_user_one.email)
-        res = self.user_service.search_users(user_id=self.user.id, request=request)
+        res = asyncio.run(self.user_service.search_users(user_id=self.user.id, request=request))
         assert res.count == 1
         assert len(res.users) == 1
         self.assert_user_found(test_user_one, res.users)
 
         # Match single by phone
         request = SearchRequest(phoneNumber=test_user_one.phoneNumber)
-        res = self.user_service.search_users(user_id=self.user.id, request=request)
+        res = asyncio.run(self.user_service.search_users(user_id=self.user.id, request=request))
         assert res.count == 1
         assert len(res.users) == 1
         self.assert_user_found(test_user_one, res.users)
 
+        # Search multiple phone number
+        request = SearchRequest(phoneNumbers=["6129631237", "6129631238"])
+        res = asyncio.run(self.user_service.search_users(user_id=self.user.id, request=request))
+        assert res.count == 2
+        assert len(res.users) == 2
+        self.assert_user_found(test_user_one, res.users)
+        self.assert_user_found(test_user_two, res.users)
+
         # Match none
         request = SearchRequest(name="Nomatch")
-        res = self.user_service.search_users(user_id=self.user.id, request=request)
+        res = asyncio.run(self.user_service.search_users(user_id=self.user.id, request=request))
         assert res.count == 0
         assert len(res.users) == 0
 
@@ -112,7 +121,7 @@ class TestUserIntegration(IntegrationTest):
         self.create_connection(user_id=self.user.id, connected_user_id=test_user_one.id)
 
         request = SearchRequest(name="Doe")
-        res = self.user_service.search_users(user_id=self.user.id, request=request)
+        res = asyncio.run(self.user_service.search_users(user_id=self.user.id, request=request))
         assert res.count == 1
         assert len(res.users) == 1
         assert res.users[0].connected
@@ -123,7 +132,7 @@ class TestUserIntegration(IntegrationTest):
         self.create_connection_request(user=self.user, connected_user_id=test_user_one.id)
 
         request = SearchRequest(name="Doe")
-        res = self.user_service.search_users(user_id=self.user.id, request=request)
+        res = asyncio.run(self.user_service.search_users(user_id=self.user.id, request=request))
         assert res.count == 1
         assert len(res.users) == 1
         assert res.users[0].requested

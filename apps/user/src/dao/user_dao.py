@@ -114,7 +114,7 @@ class UserDao:
 
         return list(self.collection.aggregate(pipeline))
 
-    def search_users(self, user_id: str, name: str, phone_numbers: List[str], skip: int, limit: int) -> List[
+    def search_users(self, user_id: str, name: Optional[str], phone_numbers: List[str], skip: int, limit: int) -> List[
         SearchedUser]:
         user = self.get_user(user_id=user_id)
         if not user:
@@ -190,8 +190,6 @@ class UserDao:
             }
         ]
 
-        print(pipeline)
-
         results: List[Dict[str, Any]] = list(self.collection.aggregate(pipeline))
 
         def transform(result: Dict[str, Any]) -> SearchedUser:
@@ -251,7 +249,7 @@ class UserDao:
         }))
 
     @staticmethod
-    def __generate_base_query(user: UserDocument, name: str, phone_numbers: List[str]):
+    def __generate_base_query(user: UserDocument, name: Optional[str], phone_numbers: List[str]):
         user_id = user.get("_id")
         blocked_users = user.get("blockedUsers", [])
         query = {

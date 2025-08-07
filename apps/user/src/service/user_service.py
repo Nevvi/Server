@@ -1,4 +1,6 @@
+import asyncio
 import copy
+import itertools
 from typing import Optional, List
 
 from src.dao.authentication_dao import AuthenticationDao
@@ -10,6 +12,11 @@ from src.model.errors import UserNotFoundError, InvalidRequestError
 from src.model.requests import RegisterRequest, SearchRequest, UpdateRequest, UpdateContactRequest
 from src.model.response import SearchResponse, EMPTY_SEARCH_RESPONSE
 from src.model.user.user import UserView, SlimUserView
+from util.phone_number_utils import format_phone_number
+
+
+def chunk_list(data, chunk_size):
+    return [data[i:i + chunk_size] for i in range(0, len(data), chunk_size)]
 
 
 class UserService:
@@ -27,7 +34,7 @@ class UserService:
         user = self.user_dao.create_user(user_id=request.id, phone_number=request.phone_number)
         return UserView.from_doc(user)
 
-    def search_users(self, user_id: str, request: SearchRequest) -> SearchResponse:
+    async def search_users(self, user_id: str, request: SearchRequest) -> SearchResponse:
         if request.email:
             user = self.user_dao.get_user_by_email(email=request.email)
             return SearchResponse(count=1, users=[SlimUserView.from_user_doc(user)]) if user else EMPTY_SEARCH_RESPONSE
@@ -36,7 +43,21 @@ class UserService:
             user = self.user_dao.get_user_by_phone(phone_number=request.phone_number)
             return SearchResponse(count=1, users=[SlimUserView.from_user_doc(user)]) if user else EMPTY_SEARCH_RESPONSE
 
-        # TODO - phone numbers
+        if request.phone_numbers and len(request.phone_numbers):
+            formatted_numbers = [format_phone_number(p) for p in request.phone_numbers]
+            print(f"Searching for {len(formatted_numbers)} phone numbers")
+
+            async def get_users(phone_numbers: List[str], semaphore):
+                async with semaphore:
+                    return self.user_dao.search_users(user_id=user_id, name=None, phone_numbers=phone_numbers, skip=0, limit=len(phone_numbers))
+
+            concurrency_semaphore = asyncio.Semaphore(10)
+            tasks = [get_users(chunk, concurrency_semaphore) for chunk in chunk_list(formatted_numbers, 20)]
+            print(f"Waiting for {len(tasks)} phone number search tasks")
+
+            users_chunks = await asyncio.gather(*tasks)
+            users = list(itertools.chain.from_iterable(users_chunks))
+            return SearchResponse(count=len(users), users=[SlimUserView.from_searched_user(user) for user in users])
 
         users = self.user_dao.search_users(user_id=user_id, name=request.name, phone_numbers=[], skip=request.skip,
                                            limit=request.limit)

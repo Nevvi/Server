@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import json
 import logging
@@ -65,7 +66,7 @@ def search_users(event, context):
         skip=int(query_params.get("skip")) if "skip" in query_params else 0,
     )
 
-    users = user_service.search_users(user_id=user_id, request=request)
+    users = asyncio.run(user_service.search_users(user_id=user_id, request=request))
     return create_response(200, users)
 
 
