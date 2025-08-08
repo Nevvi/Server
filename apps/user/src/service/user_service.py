@@ -12,7 +12,7 @@ from src.model.errors import UserNotFoundError, InvalidRequestError
 from src.model.requests import RegisterRequest, SearchRequest, UpdateRequest, UpdateContactRequest
 from src.model.response import SearchResponse, EMPTY_SEARCH_RESPONSE
 from src.model.user.user import UserView, SlimUserView
-from util.phone_number_utils import format_phone_number
+from src.util.phone_number_utils import format_phone_number
 
 
 def chunk_list(data, chunk_size):
