@@ -1,6 +1,6 @@
 import phonenumbers as phonenumbers
 
-from model.errors import InvalidRequestError
+from src.model.errors import InvalidRequestError
 
 
 def format_phone_number(phone_number: str) -> str:
