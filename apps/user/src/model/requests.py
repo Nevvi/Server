@@ -75,7 +75,6 @@ class SearchRequest(BaseModel):
     name: Optional[str] = Field(min_length=3, default=None)
     email: Optional[EmailStr] = Field(default=None)
     phone_number: Optional[str] = Field(alias="phoneNumber", default=None)
-    phone_numbers: Optional[List[str]] = Field(alias="phoneNumbers", default=None)
     limit: Optional[int] = Field(default=10, gt=0, le=25)
     skip: Optional[int] = Field(default=0, gte=0)
 

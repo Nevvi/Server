@@ -1,8 +1,9 @@
 import asyncio
 import uuid
 
-from integration.integration_test import IntegrationTest
 from model.requests import RegisterRequest, SearchRequest, UpdateContactRequest, UpdateRequest
+
+from integration.integration_test import IntegrationTest
 
 
 class TestUserIntegration(IntegrationTest):
@@ -101,19 +102,25 @@ class TestUserIntegration(IntegrationTest):
         assert len(res.users) == 1
         self.assert_user_found(test_user_one, res.users)
 
-        # Search multiple phone number
-        request = SearchRequest(phoneNumbers=["6129631237", "6129631238"])
-        res = asyncio.run(self.user_service.search_users(user_id=self.user.id, request=request))
-        assert res.count == 2
-        assert len(res.users) == 2
-        self.assert_user_found(test_user_one, res.users)
-        self.assert_user_found(test_user_two, res.users)
-
         # Match none
         request = SearchRequest(name="Nomatch")
         res = asyncio.run(self.user_service.search_users(user_id=self.user.id, request=request))
         assert res.count == 0
         assert len(res.users) == 0
+
+    def test_search_potential_contacts(self):
+        test_user_one = self.create_user(first_name="Jane", last_name="Doe", phone="+16129631237")
+        test_user_two = self.create_user(first_name="John", last_name="Doe", phone="+16129631238")
+
+        res = asyncio.run(self.user_service.search_potential_contacts(user_id=self.user.id,
+                                                                      phone_numbers=["6129631237",
+                                                                                     "6129631238",
+                                                                                     "6129631240"]))
+        assert len(res.matching) == 2
+        assert len(res.missing) == 1
+        self.assert_user_found(test_user_one, res.matching)
+        self.assert_user_found(test_user_two, res.matching)
+        assert "6129631240" in res.missing
 
     def test_search_connected_user(self):
         test_user_one = self.create_user(first_name="Jane", last_name="Doe")

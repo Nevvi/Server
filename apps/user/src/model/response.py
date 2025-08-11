@@ -25,6 +25,12 @@ class SearchResponse(View):
 
 
 @dataclass
+class ContactSearchResponse(View):
+    matching: List[SlimUserView]
+    missing: List[str]
+
+
+@dataclass
 class UserConnectionResponse:
     id: str
     firstName: str

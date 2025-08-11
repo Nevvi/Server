@@ -10,6 +10,7 @@ class SearchedUser:
     firstName: str
     lastName: str
     bio: str
+    phoneNumber: str
     profileImage: str
     connected: bool
     requested: bool

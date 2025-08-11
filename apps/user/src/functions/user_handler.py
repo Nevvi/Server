@@ -61,13 +61,21 @@ def search_users(event, context):
         name=query_params.get("name"),
         email=query_params.get("email"),
         phoneNumber=query_params.get("phoneNumber"),
-        phoneNumbers=query_params.get("phoneNumbers").split(",") if "phoneNumbers" in query_params else None,
         limit=int(query_params.get("limit")) if "limit" in query_params else 25,
         skip=int(query_params.get("skip")) if "skip" in query_params else 0,
     )
 
     users = asyncio.run(user_service.search_users(user_id=user_id, request=request))
     return create_response(200, users)
+
+
+@exception_handler
+def search_potential_contacts(event, context):
+    user_id = event.get("requestContext").get("authorizer").get("userId")
+    query_params = event.get('queryStringParameters') or {}
+    phone_numbers = query_params.get("phoneNumbers").split(",")
+    res = asyncio.run(user_service.search_potential_contacts(user_id=user_id, phone_numbers=phone_numbers))
+    return create_response(200, res)
 
 
 @exception_handler

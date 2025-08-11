@@ -198,6 +198,7 @@ class UserDao:
                 firstName=result.get("firstName"),
                 lastName=result.get("lastName"),
                 bio=result.get("bio"),
+                phoneNumber=result.get("phoneNumber"),
                 profileImage=result.get("profileImage"),
                 connected=len(result.get("connectedUser", [])) == 1,
                 requested=len(result.get("requestedUser", [])) == 1,

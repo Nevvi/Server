@@ -10,6 +10,7 @@ class UserAuthorizer(AbstractAuthorizer):
         if user_id is not None:
             auth_policy.allow_method(HttpVerb.POST, f"/v1/users/{user_id}/notifications/token")
             auth_policy.allow_method(HttpVerb.GET, f"/v1/users/search")
+            auth_policy.allow_method(HttpVerb.GET, f"/v1/users/search/contacts")
             auth_policy.allow_method(HttpVerb.POST, f"/v1/users/notify")
             auth_policy.allow_method(HttpVerb.GET, f"/v1/users/{user_id}")
             auth_policy.allow_method(HttpVerb.PATCH, f"/v1/users/{user_id}")

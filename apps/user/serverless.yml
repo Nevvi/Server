@@ -188,6 +188,17 @@ functions:
             resultTtlInSeconds: 0
             type: request
 
+  searchContacts:
+    handler: src/functions/user_handler.search_potential_contacts
+    events:
+      - http:
+          path: /v1/users/search/contacts
+          method: get
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+
   notifyUsers:
     handler: src/functions/user_handler.notify_out_of_sync_users
     events:
