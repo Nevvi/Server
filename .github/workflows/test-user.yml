@@ -67,7 +67,7 @@ jobs:
             --name localstack \
             -p 4566:4566 \
             -p 4510-4559:4510-4559 \
-            -e SERVICES=s3,sqs,ses \
+            -e SERVICES=s3,sqs,sns,ses \
             -e DEBUG=0 \
             -e LS_LOG=warn \
             -e EAGER_SERVICE_LOADING=1 \

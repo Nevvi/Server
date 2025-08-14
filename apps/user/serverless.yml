@@ -236,6 +236,21 @@ functions:
 
   # endregion
 
+  # region invite
+
+  inviteUser:
+    handler: src/functions/invite_handler.invite_user
+    events:
+      - http:
+          path: /v1/users/{userId}/invite
+          method: post
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+
+  # endregion
+
   # region connection requests
   createConnectionRequest:
     handler: src/functions/connection_handler.request_connection

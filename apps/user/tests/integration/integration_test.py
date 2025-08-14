@@ -16,19 +16,21 @@ from botocore.exceptions import ClientError
 from pymongo import MongoClient
 from pymongo.errors import CollectionInvalid
 
-from model.connection.connection import ConnectionView
-from model.connection.connection_group import ConnectionGroupView
-from model.connection.connection_request import ConnectionRequestView
-from model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME
-from model.user.address import AddressView
-from model.user.device_settings import DeviceSettingsView
-from model.user.user import UserView, SlimUserView
-from service.admin_service import AdminService
-from service.connection_service import ConnectionService
-from service.export_service import ExportService
-from service.notification_service import NotificationService
-from service.suggestion_service import SuggestionService
-from service.user_service import UserService
+from src.model.connection.connection import ConnectionView
+from src.model.connection.connection_group import ConnectionGroupView
+from src.model.connection.connection_request import ConnectionRequestView
+from src.model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME
+from src.model.document import UserInviteDocument
+from src.model.user.address import AddressView
+from src.model.user.device_settings import DeviceSettingsView
+from src.model.user.user import UserView, SlimUserView
+from src.service.admin_service import AdminService
+from src.service.connection_service import ConnectionService
+from src.service.export_service import ExportService
+from src.service.notification_service import NotificationService
+from src.service.suggestion_service import SuggestionService
+from src.service.user_service import UserService
+from src.service.invite_service import InviteService
 
 
 def generate_random_string(length):
@@ -46,6 +48,13 @@ class IntegrationTest:
         # AWS clients
         self.sqs_client = boto3.client(
             'sqs',
+            endpoint_url=self.aws_url,
+            region_name='us-east-1',
+            aws_access_key_id='test',
+            aws_secret_access_key='test'
+        )
+        self.sns_client = boto3.client(
+            'sns',
             endpoint_url=self.aws_url,
             region_name='us-east-1',
             aws_access_key_id='test',
@@ -79,6 +88,7 @@ class IntegrationTest:
         self.notification_service = NotificationService()
         self.suggestion_service = SuggestionService()
         self.admin_service = AdminService()
+        self.invite_service = InviteService()
 
         # Create and/pr cleanup resources
         self._cleanup_resources()
@@ -96,6 +106,7 @@ class IntegrationTest:
             self.mongo_db.create_collection("connection_groups")
             self.mongo_db.create_collection("connection_requests")
             self.mongo_db.create_collection("connection_suggestions")
+            self.mongo_db.create_collection("user_invites")
         except CollectionInvalid:
             pass
 
@@ -305,6 +316,9 @@ class IntegrationTest:
         self.connection_service.connection_group_dao.add_user(user_id=user_id,
                                                               group_id=group_id,
                                                               connected_user_id=connected_user_id)
+
+    def get_invites(self, phone_number: str) -> List[UserInviteDocument]:
+        return self.invite_service.invite_dao.get_invites(phone_number=phone_number)
 
     @staticmethod
     def assert_user_found(user: UserView, users: List[SlimUserView]):
