@@ -60,7 +60,7 @@ class UserService:
             return SearchResponse(count=1, users=[SlimUserView.from_user_doc(user)]) if user else EMPTY_SEARCH_RESPONSE
 
         if request.phone_number:
-            user = self.user_dao.get_user_by_phone(phone_number=request.phone_number)
+            user = self.user_dao.get_user_by_phone(phone_number=format_phone_number(request.phone_number))
             return SearchResponse(count=1, users=[SlimUserView.from_user_doc(user)]) if user else EMPTY_SEARCH_RESPONSE
 
         users = self.user_dao.search_users(user_id=user_id, name=request.name, phone_numbers=[], skip=request.skip,
