@@ -40,9 +40,7 @@ class InviteService:
         if can_notify:
             print(f"Notifying user {formatted_number} of their invite")
             message = dedent(f"""
-            {user.firstName} {user.lastName} has invited you to join Nevvi!
-            
-            With Nevvi you never ask for an address again
+            {user.firstName} {user.lastName} has invited you to join Nevvi! With Nevvi you never have to ask for an address again
             
             Get started: https://nevvi.net
             """)
