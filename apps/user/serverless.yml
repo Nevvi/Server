@@ -248,6 +248,11 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - sns:Publish
+        Resource: '*'
 
   # endregion
 
