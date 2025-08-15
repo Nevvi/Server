@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 
@@ -17,5 +18,5 @@ def invite_user(event, context):
     body = json.loads(event.get('body', '{}'))
 
     request = InviteConnectionRequest(requestingUserId=path_params.get("userId"), **body)
-    invite_service.invite_user(request=request)
+    asyncio.run(invite_service.invite_user(request=request))
     return create_response(200, {"message": "Invite sent!"})
