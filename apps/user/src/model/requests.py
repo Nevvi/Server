@@ -136,3 +136,9 @@ class DeleteAccountRequest(BaseModel):
 class CreateGroupRequest(BaseModel):
     user_id: str = Field(alias="userId")
     name: str = Field()
+
+
+class InviteConnectionRequest(BaseModel):
+    requesting_user_id: str = Field(alias="requestingUserId")
+    requested_phone_number: str = Field(alias="phoneNumber")
+    permission_group_name: str = Field(alias="permissionGroupName")

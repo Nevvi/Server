@@ -1,4 +1,4 @@
-from integration.integration_test import IntegrationTest
+from tests.integration.integration_test import IntegrationTest
 
 
 class TestSuggestionIntegration(IntegrationTest):

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import TypedDict, Optional, List
 
 from src.model.enums import RequestStatus
@@ -105,3 +106,11 @@ class SuggestedUser:
     bio: str
     profileImage: str
     blockedUsers: List[str]
+
+
+class UserInviteDocument(TypedDict):
+    _id: str
+    invitedPhoneNumber: str
+    requesterUserId: str
+    requesterPermissionGroupName: str
+    createDate: datetime

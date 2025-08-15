@@ -1,10 +1,10 @@
 import asyncio
 
-from integration.integration_test import IntegrationTest
-from model.connection.connection_group import ConnectionGroupView
-from model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME, DEFAULT_CONTACT_INFO_PERMISSION_GROUP_NAME
-from model.enums import RequestStatus
-from model.requests import RequestConnectionRequest, ConfirmConnectionRequest, SearchConnectionsRequest, \
+from tests.integration.integration_test import IntegrationTest
+from src.model.connection.connection_group import ConnectionGroupView
+from src.model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME, DEFAULT_CONTACT_INFO_PERMISSION_GROUP_NAME
+from src.model.enums import RequestStatus
+from src.model.requests import RequestConnectionRequest, ConfirmConnectionRequest, SearchConnectionsRequest, \
     DenyConnectionRequest, UpdateConnectionRequest, BlockConnectionRequest, CreateGroupRequest, \
     AddConnectionToGroupRequest, RemoveConnectionFromGroupRequest
 

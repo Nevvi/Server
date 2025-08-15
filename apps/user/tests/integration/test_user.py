@@ -1,9 +1,9 @@
 import asyncio
 import uuid
 
-from model.requests import RegisterRequest, SearchRequest, UpdateContactRequest, UpdateRequest
+from src.model.requests import RegisterRequest, SearchRequest, UpdateContactRequest, UpdateRequest
 
-from integration.integration_test import IntegrationTest
+from tests.integration.integration_test import IntegrationTest
 
 
 class TestUserIntegration(IntegrationTest):
