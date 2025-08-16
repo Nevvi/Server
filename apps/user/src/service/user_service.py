@@ -5,7 +5,9 @@ from typing import Optional, List
 
 from src.dao.authentication_dao import AuthenticationDao
 from src.dao.connection_dao import ConnectionDao
+from src.dao.connection_request_dao import ConnectionRequestDao
 from src.dao.image_dao import ImageDao
+from src.dao.invite_dao import InviteDao
 from src.dao.user_dao import UserDao
 from src.model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME
 from src.model.errors import UserNotFoundError, InvalidRequestError
@@ -24,14 +26,29 @@ class UserService:
         self.user_dao = UserDao()
         self.image_dao = ImageDao()
         self.connection_dao = ConnectionDao()
+        self.connection_request_dao = ConnectionRequestDao()
         self.authentication_dao = AuthenticationDao()
+        self.invite_dao = InviteDao()
 
     def get_user(self, user_id: str) -> Optional[UserView]:
         user = self.user_dao.get_user(user_id=user_id)
         return UserView.from_doc(user) if user else None
 
     def create_user(self, request: RegisterRequest) -> UserView:
+        # Create the user entry
         user = self.user_dao.create_user(user_id=request.id, phone_number=request.phone_number)
+
+        # Check if anyone invited this user and create connection requests to the created user
+        invites = self.invite_dao.get_invites(format_phone_number(request.phone_number))
+        for invite in invites:
+            requesting_user = self.get_user(user_id=invite.get("requesterUserId"))
+            if not requesting_user:
+                continue
+
+            permission_group = invite.get("requesterPermissionGroupName")
+            self.connection_request_dao.create_connection_request(requesting_user=requesting_user,
+                                                                  requested_user_id=user.get("_id"),
+                                                                  permission_group_name=permission_group)
         return UserView.from_doc(user)
 
     async def search_potential_contacts(self, user_id: str, phone_numbers: List[str]) -> ContactSearchResponse:

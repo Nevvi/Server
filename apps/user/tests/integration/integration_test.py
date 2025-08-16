@@ -31,6 +31,7 @@ from src.service.notification_service import NotificationService
 from src.service.suggestion_service import SuggestionService
 from src.service.user_service import UserService
 from src.service.invite_service import InviteService
+from src.util.phone_number_utils import format_phone_number
 
 
 def generate_random_string(length):
@@ -316,6 +317,11 @@ class IntegrationTest:
         self.connection_service.connection_group_dao.add_user(user_id=user_id,
                                                               group_id=group_id,
                                                               connected_user_id=connected_user_id)
+
+    def create_invite(self, user_id: str, phone_number: str) -> UserInviteDocument:
+        return self.invite_service.invite_dao.create_invite(phone_number=format_phone_number(phone_number),
+                                                            requesting_user_id=user_id,
+                                                            permission_group="All Info")
 
     def get_invites(self, phone_number: str) -> List[UserInviteDocument]:
         return self.invite_service.invite_dao.get_invites(phone_number=phone_number)
