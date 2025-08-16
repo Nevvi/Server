@@ -81,7 +81,7 @@ class ConnectionService:
         if existing_request and existing_request.status == RequestStatus.APPROVED:
             raise AlreadyConnectedError()
         elif existing_request and existing_request.status == RequestStatus.PENDING:
-            request = ConfirmConnectionRequest(requestingUserId=requested_user.id,
+            request = ConfirmConnectionRequest(otherUserId=requested_user.id,
                                                requestedUserId=requesting_user.id,
                                                permissionGroupName=request.permission_group_name)
             return self.confirm_connection(request=request)

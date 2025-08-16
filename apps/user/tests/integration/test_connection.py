@@ -38,6 +38,30 @@ class TestConnectionIntegration(IntegrationTest):
         }
         assert self.assert_sqs_message_sent(expected_body=expected_message, queue_url=self.suggestions_queue)
 
+    def test_request_connection_creates_connection(self):
+        test_user = self.create_user()
+        self.create_connection_request(user=test_user, connected_user_id=self.user.id)
+
+        assert self.connection_service.get_connections(SearchConnectionsRequest(userId=self.user.id)).count == 0
+        assert self.connection_service.get_connections(SearchConnectionsRequest(userId=test_user.id)).count == 0
+
+        request = RequestConnectionRequest(requestingUserId=self.user.id,
+                                           otherUserId=test_user.id,
+                                           permissionGroupName=DEFAULT_ALL_PERMISSION_GROUP_NAME)
+
+        res = self.connection_service.request_connection(request=request)
+        assert res.status == RequestStatus.APPROVED
+        assert self.connection_service.get_connections(SearchConnectionsRequest(userId=self.user.id)).count == 1
+        assert self.connection_service.get_connections(SearchConnectionsRequest(userId=test_user.id)).count == 1
+
+
+        expected_notification = {
+            "userId": test_user.id,
+            "title": "Nevvi",
+            "body": f"{self.user.firstName} accepted your request!"
+        }
+        assert self.assert_sqs_message_sent(expected_body=expected_notification, queue_url=self.notification_queue)
+
     def test_confirm_connection(self):
         test_user = self.create_user()
         self.create_connection_request(user=self.user, connected_user_id=test_user.id)
