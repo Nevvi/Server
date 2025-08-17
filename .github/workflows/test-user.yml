@@ -1,0 +1,105 @@
+name: Test User
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'apps/user/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+        env:
+          MONGO_INITDB_ROOT_USERNAME: testuser
+          MONGO_INITDB_ROOT_PASSWORD: testpass
+          MONGO_INITDB_DATABASE: nevvi
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      wiremock:
+        image: wiremock/wiremock:latest
+        ports:
+          - 8080:8080
+        options: >-
+          --health-cmd "curl -f http://localhost:8080/__admin/health || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('apps/user/**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          cd apps/user
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          # Install AWS CLI for LocalStack verification
+          pip install awscli
+
+      - name: Start LocalStack
+        run: |
+          pip install localstack
+          docker run -d \
+            --name localstack \
+            -p 4566:4566 \
+            -p 4510-4559:4510-4559 \
+            -e SERVICES=s3,sqs,sns,ses \
+            -e DEBUG=0 \
+            -e LS_LOG=warn \
+            -e EAGER_SERVICE_LOADING=1 \
+            -e SKIP_INFRA_DOWNLOADS=1 \
+            localstack/localstack:3.0
+
+      - name: Wait for localstack
+        run: |
+          echo "Waiting for LocalStack..."
+          # Wait up to 3 minutes for LocalStack to be ready
+          timeout 180 bash -c '
+            while true; do
+              if curl -s http://localhost:4566/_localstack/health > /dev/null 2>&1; then
+                echo "LocalStack health endpoint responding"
+                if curl -s http://localhost:4566/_localstack/health | grep -q "available\|running"; then
+                  echo "LocalStack is ready!"
+                  break
+                fi
+              fi
+              echo "Still waiting for LocalStack..."
+              sleep 5
+            done
+          '
+
+      - name: Run tests
+        run: |
+          cd apps/user
+          export PYTHONPATH=.
+          pytest tests/ -v --tb=short
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop localstack || true
+          docker rm localstack || true

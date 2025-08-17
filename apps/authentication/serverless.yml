@@ -1,32 +1,20 @@
+org: nevvi
+app: nevvi
 service: authentication
 
-frameworkVersion: '3'
-variablesResolutionMode: 20210326
+frameworkVersion: '4'
 
 plugins:
+  - serverless-python-requirements
   - serverless-prune-plugin
   - serverless-iam-roles-per-function
-  - serverless-webpack
   - serverless-domain-manager
   - serverless-plugin-split-stacks
 
-params:
-  default:
-    userApiKey: ${ssm:/nevvi/lambda/development/user-api-key}
-    authenticationApiKey: ${ssm:/nevvi/lambda/development/authentication-api-key}
-    basePath: ${self:provider.stage}-authentication
-    domainName: api.development.nevvi.net
-    oauthDomain: https://nevvi-development-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
-    publicUserPoolName: nevvi-development-public-users
-  development:
-    basePath: authentication
-  production:
-    userApiKey: ${ssm:/nevvi/lambda/production/user-api-key}
-    authenticationApiKey: ${ssm:/nevvi/lambda/production/authentication-api-key}
-    basePath: authentication
-    domainName: api.nevvi.net
-    oauthDomain: https://nevvi-api-users.auth.us-east-1.amazoncognito.com/oauth2/token
-    publicUserPoolName: nevvi-public-users
+package:
+  patterns:
+    - '!./**'           # exclude everything first
+    - './src/**'        # include your source directory
 
 custom:
   splitStacks:
@@ -39,14 +27,32 @@ custom:
   customDomain:
     domainName: ${param:domainName}
     basePath: ${param:basePath}
+  pythonRequirements:
+    dockerizePip: true
   publicUserPoolName: ${param:publicUserPoolName}
   publicUserPoolArn: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/arn}
   publicUserPoolId: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/id}
   publicUserPoolClientId: ${ssm:/nevvi/cognito/${self:custom.publicUserPoolName}/clients/authentication/id}
 
+params:
+  default:
+    userApiKey: ${ssm:/nevvi/lambda/development/user-api-key}
+    authenticationApiKey: ${ssm:/nevvi/lambda/development/authentication-api-key}
+    basePath: ${self:provider.stage}-authentication
+    domainName: api.development.nevvi.net
+    publicUserPoolName: nevvi-development-public-users
+  development:
+    basePath: authentication
+  production:
+    userApiKey: ${ssm:/nevvi/lambda/production/user-api-key}
+    authenticationApiKey: ${ssm:/nevvi/lambda/production/authentication-api-key}
+    basePath: authentication
+    domainName: api.nevvi.net
+    publicUserPoolName: nevvi-public-users
+
 provider:
   name: aws
-  runtime: nodejs16.x
+  runtime: python3.12
   lambdaHashingVersion: 20201221
   stage: ${opt:stage, 'test'}
   region: ${opt:region, 'us-east-1'}
@@ -68,33 +74,32 @@ provider:
     name: nevvi-serverless-deployment-bucket
   deploymentPrefix: ${self:provider.stage}
   environment:
-    OAUTH_DOMAIN_URL: ${param:oauthDomain}
     PUBLIC_USER_POOL_CLIENT_ID: ${self:custom.publicUserPoolClientId}
     PUBLIC_USER_POOL_ID: ${self:custom.publicUserPoolId}
-    USER_API_URL: https://${param:domainName}/user
     MIN_IOS_VERSION: 1.9
+    USER_API_URL: https://${param:domainName}/user
     USER_API_KEY: ${param:userApiKey}
 
 functions:
   authorizer:
-    handler: src/functions/Authorizer.authorize
+    handler: src/functions/authorizer.authorize
 
   minAppVersions:
-    handler: src/functions/AuthHandler.getMinAppVersions
+    handler: src/functions/auth_handler.get_min_app_versions
     events:
       - http:
           path: /v1/versions
           method: get
 
   register:
-    handler: src/functions/AuthHandler.register
+    handler: src/functions/auth_handler.register
     events:
       - http:
           path: /v1/register
           method: post
 
   confirm:
-    handler: src/functions/AuthHandler.confirm
+    handler: src/functions/auth_handler.confirm
     events:
       - http:
           path: /v1/confirm
@@ -106,7 +111,7 @@ functions:
         Resource: ${self:custom.publicUserPoolArn}
 
   login:
-    handler: src/functions/AuthHandler.login
+    handler: src/functions/auth_handler.login
     events:
       - http:
           path: /v1/login
@@ -118,21 +123,21 @@ functions:
         Resource: ${self:custom.publicUserPoolArn}
 
   refreshLogin:
-    handler: src/functions/AuthHandler.refreshLogin
+    handler: src/functions/auth_handler.refresh_login
     events:
       - http:
           path: /v1/refreshLogin
           method: post
 
   logout:
-    handler: src/functions/AuthHandler.logout
+    handler: src/functions/auth_handler.logout
     events:
       - http:
           path: /v1/logout
           method: post
 
   resendSignupCode:
-    handler: src/functions/AuthHandler.resendSignupCode
+    handler: src/functions/auth_handler.resend_signup_code
     events:
       - http:
           path: /v1/resendSignupCode
@@ -145,7 +150,7 @@ functions:
         Resource: ${self:custom.publicUserPoolArn}
 
   forgotPassword:
-    handler: src/functions/AuthHandler.forgotPassword
+    handler: src/functions/auth_handler.forgot_password
     events:
       - http:
           path: /v1/forgotPassword
@@ -158,7 +163,7 @@ functions:
         Resource: ${self:custom.publicUserPoolArn}
 
   confirmForgotPassword:
-    handler: src/functions/AuthHandler.confirmForgotPassword
+    handler: src/functions/auth_handler.confirm_forgot_password
     events:
       - http:
           path: /v1/confirmForgotPassword
@@ -171,7 +176,7 @@ functions:
         Resource: ${self:custom.publicUserPoolArn}
 
   sendVerificationCode:
-    handler: src/functions/AuthHandler.sendCode
+    handler: src/functions/auth_handler.send_code
     events:
       - http:
           path: /v1/users/{userId}/sendCode
@@ -187,7 +192,7 @@ functions:
         Resource: ${self:custom.publicUserPoolArn}
 
   confirmVerificationCode:
-    handler: src/functions/AuthHandler.confirmCode
+    handler: src/functions/auth_handler.confirm_code
     events:
       - http:
           path: /v1/users/{userId}/confirmCode
@@ -204,7 +209,7 @@ functions:
         Resource: ${self:custom.publicUserPoolArn}
 
   updateUser:
-    handler: src/functions/AuthHandler.updateUser
+    handler: src/functions/auth_handler.update_user
     events:
       - http:
           path: /api/v1/users/{userId}
