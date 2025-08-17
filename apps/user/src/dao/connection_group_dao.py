@@ -138,6 +138,7 @@ class ConnectionGroupDao:
                 lastName=result.get("lastName"),
                 bio=result.get("bio"),
                 profileImage=result.get("profileImage"),
+                phoneNumber=result.get("phoneNumber"),
                 connected=True,
                 requested=True
             )

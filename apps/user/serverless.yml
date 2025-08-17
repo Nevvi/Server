@@ -193,7 +193,7 @@ functions:
     events:
       - http:
           path: /v1/users/search/contacts
-          method: get
+          method: post
           authorizer:
             name: userAuthorizer
             resultTtlInSeconds: 0

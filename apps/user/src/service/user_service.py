@@ -14,7 +14,7 @@ from src.model.errors import UserNotFoundError, InvalidRequestError
 from src.model.requests import RegisterRequest, SearchRequest, UpdateRequest, UpdateContactRequest
 from src.model.response import SearchResponse, EMPTY_SEARCH_RESPONSE, ContactSearchResponse
 from src.model.user.user import UserView, SlimUserView
-from src.util.phone_number_utils import format_phone_number
+from src.util.phone_number_utils import format_phone_number, is_valid_phone_number
 
 
 def chunk_list(data, chunk_size):
@@ -52,13 +52,14 @@ class UserService:
         return UserView.from_doc(user)
 
     async def search_potential_contacts(self, user_id: str, phone_numbers: List[str]) -> ContactSearchResponse:
-        formatted_numbers = [format_phone_number(p) for p in phone_numbers]
+        valid_numbers = [p for p in phone_numbers if is_valid_phone_number(p)]
+        formatted_numbers = [format_phone_number(p) for p in valid_numbers]
         print(f"Searching for {len(formatted_numbers)} phone numbers")
 
         async def get_users(formatted_phone_numbers: List[str], semaphore):
             async with semaphore:
                 return self.user_dao.search_users(user_id=user_id, name=None, phone_numbers=formatted_phone_numbers,
-                                                  skip=0, limit=len(phone_numbers))
+                                                  skip=0, limit=len(valid_numbers))
 
         concurrency_semaphore = asyncio.Semaphore(10)
         tasks = [get_users(chunk, concurrency_semaphore) for chunk in chunk_list(formatted_numbers, 20)]
@@ -67,7 +68,7 @@ class UserService:
         users_chunks = await asyncio.gather(*tasks)
         users = list(itertools.chain.from_iterable(users_chunks))
         matching_phones = set([user.phoneNumber for user in users])
-        missing_users = [phone for phone in phone_numbers if format_phone_number(phone) not in matching_phones]
+        missing_users = [phone for phone in valid_numbers if format_phone_number(phone) not in matching_phones]
         return ContactSearchResponse(matching=[SlimUserView.from_searched_user(user) for user in users],
                                      missing=missing_users)
 

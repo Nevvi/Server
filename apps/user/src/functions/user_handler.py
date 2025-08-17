@@ -72,8 +72,8 @@ def search_users(event, context):
 @exception_handler
 def search_potential_contacts(event, context):
     user_id = event.get("requestContext").get("authorizer").get("userId")
-    query_params = event.get('queryStringParameters') or {}
-    phone_numbers = query_params.get("phoneNumbers").split(",")
+    body = json.loads(event.get('body', '{}'))
+    phone_numbers = body.get("phoneNumbers")
     res = asyncio.run(user_service.search_potential_contacts(user_id=user_id, phone_numbers=phone_numbers))
     return create_response(200, res)
 
