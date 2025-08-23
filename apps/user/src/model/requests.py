@@ -91,7 +91,7 @@ class SearchConnectionsRequest(BaseModel):
     name: Optional[str] = Field(default=None)
     permission_group: Optional[str] = Field(alias="permissionGroup", default=None)
     in_sync: Optional[bool] = Field(alias="inSync", default=None)
-    limit: Optional[int] = Field(default=200, gt=0, le=1000)
+    limit: Optional[int] = Field(default=25, gt=0, le=100)
     skip: Optional[int] = Field(default=0, gte=0)
 
 
