@@ -177,9 +177,7 @@ class SlimUserView(View):
             bio=doc.bio,
             profileImage=doc.profileImage,
             inSync=doc.inSync,
-            permissionGroup=doc.permissionGroupName,
-            connected=True,
-            requested=True
+            permissionGroup=doc.permissionGroupName
         )
 
     @staticmethod
@@ -190,6 +188,4 @@ class SlimUserView(View):
             lastName=doc.lastName,
             bio=doc.bio,
             profileImage=doc.profileImage,
-            connected=False,
-            requested=False
         )

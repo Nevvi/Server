@@ -43,9 +43,9 @@ class ExportService:
             "lastName": connection.lastName,
             "email": connection.email,
             "phone": connection.phoneNumber,
-            "street": connection.address.street if connection.address else None,
-            "unit": connection.address.unit if connection.address else None,
-            "city": connection.address.city if connection.address else None,
-            "state": connection.address.state if connection.address else None,
-            "zipCode": connection.address.zipCode if connection.address else None
+            "street": connection.address.street,
+            "unit": connection.address.unit,
+            "city": connection.address.city,
+            "state": connection.address.state,
+            "zipCode": connection.address.zipCode
         }
