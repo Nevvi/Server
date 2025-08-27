@@ -255,7 +255,8 @@ class UserDao:
         blocked_users = user.get("blockedUsers", [])
         query = {
             '_id': {'$nin': [user_id, *blocked_users]},  # don't show user themselves or users they blocked
-            'blockedUsers': {'$nin': [user.get("_id")]}  # don't show user people that blocked them
+            'blockedUsers': {'$nin': [user.get("_id")]},  # don't show user people that blocked them
+            'nameLower': {'$ne': None},
         }
 
         if phone_numbers is not None and len(phone_numbers):
