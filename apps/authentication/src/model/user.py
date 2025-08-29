@@ -19,8 +19,7 @@ class User(View):
     def from_attributes(attributes: List[AttributeTypeTypeDef]):
         user_id: str = next((a for a in attributes if a["Name"] == "sub"))["Value"]
         phone_number: str = next((a for a in attributes if a["Name"] == "phone_number"))["Value"]
-        phone_number_verified: bool = bool(
-            next((a for a in attributes if a["Name"] == "phone_number_verified"))["Value"])
+        phone_number_verified: bool = next((a for a in attributes if a["Name"] == "phone_number_verified"))["Value"] == "true"
 
         email_attribute = next((a for a in attributes if a["Name"] == "email"), None)
         email_verified_attribute = next((a for a in attributes if a["Name"] == "email_verified"), None)
@@ -31,6 +30,6 @@ class User(View):
             phoneNumber=phone_number,
             phoneNumberVerified=phone_number_verified,
             email=email_attribute["Value"] if email_attribute is not None else None,
-            emailVerified=bool(email_verified_attribute["Value"]) if email_verified_attribute is not None else None,
+            emailVerified=email_verified_attribute["Value"] == 'true' if email_verified_attribute is not None else None,
             name=name_attribute["Value"] if name_attribute is not None else None
         )
