@@ -76,7 +76,7 @@ provider:
   environment:
     PUBLIC_USER_POOL_CLIENT_ID: ${self:custom.publicUserPoolClientId}
     PUBLIC_USER_POOL_ID: ${self:custom.publicUserPoolId}
-    MIN_IOS_VERSION: 1.9
+    MIN_IOS_VERSION: 1.11
     USER_API_URL: https://${param:domainName}/user
     USER_API_KEY: ${param:userApiKey}
 
