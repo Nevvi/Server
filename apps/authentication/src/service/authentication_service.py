@@ -28,7 +28,7 @@ class AuthenticationService:
         if not res:
             return None
 
-        return User.from_attributes(attributes=res.get("Attributes", []))
+        return User.from_attributes(attributes=res.get("UserAttributes", []))
 
     def register(self, request: RegisterRequest) -> RegisterResponse:
         res = self.authentication_dao.register(username=request.username, password=request.password)
