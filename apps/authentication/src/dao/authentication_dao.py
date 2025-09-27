@@ -1,4 +1,5 @@
 import os
+import logging
 from typing import Optional, Dict, Any
 
 import boto3
@@ -10,6 +11,7 @@ from types_boto3_cognito_idp.type_defs import AdminGetUserResponseTypeDef, GetUs
 
 from src.util.utils import format_phone_number
 
+logger = logging.getLogger(__name__)
 
 class AuthenticationDao:
     def __init__(self):
@@ -36,11 +38,14 @@ class AuthenticationDao:
 
     def get_user_by_phone(self, phone_number: str) -> Optional[UserTypeTypeDef]:
         formatted = format_phone_number(phone_number)
+        logger.info(f"Getting user by phone number: {formatted}")
+
         users: ListUsersResponseTypeDef = self.client.list_users(
             UserPoolId=self.user_pool_id,
             Filter=f"phone_number=\"{formatted}\""
         )
 
+        logger.info(f"Found {len(users.get('Users', []))} users")
         return users.get("Users")[0] if len(users.get("Users", [])) == 1 else None
 
     def update_user(self, username: str, email: Optional[str]) -> AdminUpdateUserAttributesRequestTypeDef:
@@ -69,6 +74,8 @@ class AuthenticationDao:
 
     def confirm(self, username: str, confirmation_code: str) -> ConfirmSignUpResponseTypeDef:
         formatted = format_phone_number(username)
+        logger.info(f"Confirming user {formatted}")
+
         return self.client.confirm_sign_up(
             ClientId=self.user_pool_client_id,
             Username=formatted,
