@@ -29,11 +29,12 @@ class AuthenticationDao:
         return self.client.get_user(AccessToken=access_token)
 
     def get_user_by_email(self, email: str) -> Optional[UserTypeTypeDef]:
+        logger.info(f"Getting user by email: {email}")
         users: ListUsersResponseTypeDef = self.client.list_users(
             UserPoolId=self.user_pool_id,
             Filter=f"email=\"{email}\""
         )
-
+        logger.info(f"Found {len(users.get('Users', []))} users")
         return users.get("Users")[0] if len(users.get("Users", [])) == 1 else None
 
     def get_user_by_phone(self, phone_number: str) -> Optional[UserTypeTypeDef]:
@@ -63,6 +64,7 @@ class AuthenticationDao:
 
     def register(self, username: str, password: str) -> SignUpResponseTypeDef:
         formatted = format_phone_number(username)
+        logger.info(f"Registering user {formatted}")
         return self.client.sign_up(
             ClientId=self.user_pool_client_id,
             Username=formatted,
@@ -123,6 +125,7 @@ class AuthenticationDao:
 
     def resend_confirmation_code(self, username: str) -> ResendConfirmationCodeResponseTypeDef:
         formatted = format_phone_number(username)
+        logger.info(f"Resending confirmation code for {formatted}")
         return self.client.resend_confirmation_code(
             ClientId=self.user_pool_client_id,
             Username=formatted
@@ -130,6 +133,7 @@ class AuthenticationDao:
 
     def forgot_password(self, username: str) -> ForgotPasswordResponseTypeDef:
         formatted = format_phone_number(username)
+        logger.info(f"Forgot password for {formatted}")
         return self.client.forgot_password(
             ClientId=self.user_pool_client_id,
             Username=formatted
@@ -137,6 +141,7 @@ class AuthenticationDao:
 
     def confirm_forgot_password(self, username: str, code: str, password: str) -> Dict[str, Any]:
         formatted = format_phone_number(username)
+        logger.info(f"Confirming forgot password for {formatted}")
         return self.client.confirm_forgot_password(
             ClientId=self.user_pool_client_id,
             Username=formatted,
