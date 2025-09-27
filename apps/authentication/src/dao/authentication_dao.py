@@ -37,17 +37,14 @@ class AuthenticationDao:
         logger.info(f"Found {len(users.get('Users', []))} users")
         return users.get("Users")[0] if len(users.get("Users", [])) == 1 else None
 
-    def get_user_by_phone(self, phone_number: str) -> Optional[UserTypeTypeDef]:
+    def get_user_by_phone(self, phone_number: str) -> AdminGetUserResponseTypeDef:
         formatted = format_phone_number(phone_number)
         logger.info(f"Getting user by phone number: {formatted}")
 
-        users: ListUsersResponseTypeDef = self.client.list_users(
+        return self.client.admin_get_user(
             UserPoolId=self.user_pool_id,
-            Filter=f"phone_number=\"{formatted}\""
+            Username=formatted
         )
-
-        logger.info(f"Found {len(users.get('Users', []))} users")
-        return users.get("Users")[0] if len(users.get("Users", [])) == 1 else None
 
     def update_user(self, username: str, email: Optional[str]) -> AdminUpdateUserAttributesRequestTypeDef:
         attributes = []

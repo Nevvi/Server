@@ -108,6 +108,7 @@ functions:
       - Effect: Allow
         Action:
           - cognito-idp:ListUsers
+          - cognito-idp:AdminGetUser
         Resource: ${self:custom.publicUserPoolArn}
 
   login:
@@ -120,6 +121,7 @@ functions:
       - Effect: Allow
         Action:
           - cognito-idp:ListUsers
+          - cognito-idp:AdminGetUser
         Resource: ${self:custom.publicUserPoolArn}
 
   refreshLogin:
@@ -146,6 +148,7 @@ functions:
       - Effect: Allow
         Action:
           - cognito-idp:ListUsers
+          - cognito-idp:AdminGetUser
           - cognito-idp:ResendConfirmationCode
         Resource: ${self:custom.publicUserPoolArn}
 
@@ -159,6 +162,7 @@ functions:
       - Effect: Allow
         Action:
           - cognito-idp:ListUsers
+          - cognito-idp:AdminGetUser
           - cognito-idp:ForgotPassword
         Resource: ${self:custom.publicUserPoolArn}
 
@@ -172,6 +176,7 @@ functions:
       - Effect: Allow
         Action:
           - cognito-idp:ListUsers
+          - cognito-idp:AdminGetUser
           - cognito-idp:ConfirmForgotPassword
         Resource: ${self:custom.publicUserPoolArn}
 
