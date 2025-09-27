@@ -74,11 +74,14 @@ def confirm(event, context):
     request = ConfirmSignupRequest(username=body.get("username"), confirmation_code=body.get("confirmationCode"))
     auth_service.confirm(request=request)
 
+    # We need the user id to create the user profile, go back to Cognito to get it
     logger.info(f"User {request.username} confirmed.. calling user auth_service to create record")
     user = auth_service.get_user_by_phone(phone_number=request.username)
+
+    # This should never happen if we were able to successfully confirm the account using the same phone number
     if not user:
         logger.error(f"Failed to find cognito user with phone number {request.username}")
-        create_response(500, {})
+        return create_response(500, {})
 
     logger.info("Creating user profile")
     user_service.create_user(id=user.userId, phone_number=user.phoneNumber)
