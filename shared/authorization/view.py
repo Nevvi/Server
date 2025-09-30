@@ -1,6 +1,6 @@
 import json
 
-from json_utils import convert_keys_to_camelcase
+from .json_utils import convert_keys_to_camelcase
 
 
 class View:
