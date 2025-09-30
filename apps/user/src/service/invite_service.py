@@ -1,3 +1,4 @@
+import logging
 from textwrap import dedent
 
 from src.dao.invite_dao import InviteDao
@@ -5,6 +6,9 @@ from src.model.errors import UserNotFoundError
 from src.model.requests import InviteConnectionRequest, SearchRequest
 from src.service.user_service import UserService
 from src.util.phone_number_utils import format_phone_number
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class InviteService:
@@ -20,7 +24,7 @@ class InviteService:
         search_request = SearchRequest(phoneNumber=request.requested_phone_number)
         existing_user = await self.user_service.search_users(user_id=request.requesting_user_id, request=search_request)
         if existing_user.count > 0:
-            print(f"User {request.requesting_user_id} tried to invite existing user {request.requested_phone_number}")
+            logger.info(f"User {request.requesting_user_id} tried to invite existing user {request.requested_phone_number}")
             return
 
         formatted_number = format_phone_number(request.requested_phone_number)
@@ -29,16 +33,16 @@ class InviteService:
         can_invite = len([i for i in existing_invites if i.get("requesterUserId") == user.id]) == 0
 
         if not can_invite:
-            print(f"User {formatted_number} already has an open invite from {user.id}")
+            logger.info(f"User {formatted_number} already has an open invite from {user.id}")
             return
 
-        print(f"Creating invite from {user.id} to user {formatted_number}")
+        logger.info(f"Creating invite from {user.id} to user {formatted_number}")
         self.invite_dao.create_invite(phone_number=formatted_number,
                                       requesting_user_id=user.id,
                                       permission_group=request.permission_group_name)
 
         if can_notify:
-            print(f"Notifying user {formatted_number} of their invite")
+            logger.info(f"Notifying user {formatted_number} of their invite")
             message = dedent(f"""
             {user.firstName} {user.lastName} has invited you to join Nevvi! With Nevvi you never have to ask for an address again.
             

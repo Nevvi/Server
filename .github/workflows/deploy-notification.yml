@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - apps/notification/**
+      - shared/**
 
 jobs:
   deploy-dev:

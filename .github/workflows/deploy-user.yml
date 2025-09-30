@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - apps/user/**
+      - shared/**
 
 jobs:
   deploy-dev:
