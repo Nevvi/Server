@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from src.model.document import AddressDocument
 from src.model.requests import AddressUpdate
-from src.model.view import View
+from shared.authorization.view import View
 
 
 @dataclass

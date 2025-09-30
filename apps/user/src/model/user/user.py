@@ -10,7 +10,7 @@ from src.model.requests import UpdateRequest
 from src.model.user.address import AddressView
 from src.model.user.device_settings import DeviceSettingsView
 from src.model.user.permission_group import PermissionGroupView, DEFAULT_PERMISSION_GROUPS
-from src.model.view import View
+from shared.authorization.view import View
 
 
 @dataclass

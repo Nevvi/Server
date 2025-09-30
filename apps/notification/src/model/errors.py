@@ -1,10 +1,4 @@
-class HttpError(Exception):
-    status_code: int
-    message: str
-
-    def __init__(self, status_code: int, message: str):
-        self.status_code = status_code
-        self.message = message
+from shared.authorization.errors import HttpError
 
 
 class DeviceDoesNotExistError(HttpError):
@@ -15,8 +9,3 @@ class DeviceDoesNotExistError(HttpError):
 class DeviceAlreadyExistsError(HttpError):
     def __init__(self):
         HttpError.__init__(self, status_code=409, message="Device already exists for this user")
-
-
-class InvalidRequestError(HttpError):
-    def __init__(self, message: str):
-        HttpError.__init__(self, status_code=400, message=message)

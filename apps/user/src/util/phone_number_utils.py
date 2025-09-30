@@ -1,6 +1,6 @@
 import phonenumbers as phonenumbers
 
-from src.model.errors import InvalidRequestError
+from shared.authorization.errors import InvalidRequestError
 
 
 def format_phone_number(phone_number: str) -> str:

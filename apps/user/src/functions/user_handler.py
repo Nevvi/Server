@@ -4,7 +4,7 @@ import json
 import logging
 import re
 
-from src.functions.handler_utils import create_response, exception_handler
+from shared.authorization.handler_utils import create_response, exception_handler
 from src.model.errors import UserNotFoundError
 from src.model.requests import RegisterRequest, DeleteAccountRequest, UpdateContactRequest, UpdateRequest, SearchRequest
 from src.model.user.user import UserView

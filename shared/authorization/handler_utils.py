@@ -4,9 +4,8 @@ import logging
 
 from pydantic import ValidationError
 
-from src.model.errors import HttpError
-from src.model.view import View
-
+from authorization.errors import HttpError
+from authorization.view import View
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

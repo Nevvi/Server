@@ -1,5 +1,5 @@
-from authorization.abstract_authorizer import AbstractAuthorizer
-from authorization.auth_policy import AuthPolicy, HttpVerb
+from shared.authorization.abstract_authorizer import AbstractAuthorizer
+from shared.authorization.auth_policy import AuthPolicy, HttpVerb
 
 
 class Authorizer(AbstractAuthorizer):

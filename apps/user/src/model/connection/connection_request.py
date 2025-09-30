@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from src.model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME
 from src.model.document import ConnectionRequestDocument
 from src.model.enums import RequestStatus
-from src.model.view import View
+from shared.authorization.view import View
 
 
 @dataclass
