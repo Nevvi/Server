@@ -19,7 +19,7 @@ def update_device_token(event, context):
     request = UpdateTokenRequest(user_id=path_params.get("userId"), token=body.get("token"))
     service.update_token(request=request)
 
-    logger.info(f"Updated token for user: {request.user_id}")
+    logger.info(f"Updated token for user {request.user_id}")
     return create_response(200, {})
 
 

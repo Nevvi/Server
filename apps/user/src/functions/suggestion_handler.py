@@ -51,13 +51,13 @@ def refresh_suggestions(event, context):
     }
     """
     try:
-        print("Received request to refresh suggestion(s)")
+        logger.info("Received request to refresh suggestion(s)")
         records: List[Any] = event.get("Records", [])
         for record in records:
             try:
                 details = json.loads(record.get("body"))
                 user_id = details.get("userId")
-                print(f"Refreshing suggestions for {user_id}")
+                logger.info(f"Refreshing suggestions for {user_id}")
                 suggestion_service.refresh_suggestions(user_id=user_id)
             except Exception as e:
                 logger.exception("Caught error refreshing suggestions", e)

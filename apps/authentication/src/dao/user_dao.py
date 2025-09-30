@@ -11,7 +11,7 @@ class UserDao:
         self.api_key = os.environ["USER_API_KEY"]
 
     def create_user(self, id: str, phone_number: str):
-        logger.info(f"Creating user {id} with phone {phone_number} against the user api")
+        logger.info(f"Creating user {id} with phone {phone_number} against the user service")
         url = f"{self.base_url}/api/v1/users"
         body = {
             "id": id,
