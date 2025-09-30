@@ -3,6 +3,7 @@ import copy
 import itertools
 from typing import Optional, List
 
+from shared.authorization.errors import InvalidRequestError
 from src.dao.authentication_dao import AuthenticationDao
 from src.dao.connection_dao import ConnectionDao
 from src.dao.connection_request_dao import ConnectionRequestDao
@@ -10,7 +11,7 @@ from src.dao.image_dao import ImageDao
 from src.dao.invite_dao import InviteDao
 from src.dao.user_dao import UserDao
 from src.model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME
-from src.model.errors import UserNotFoundError, InvalidRequestError
+from src.model.errors import UserNotFoundError
 from src.model.requests import RegisterRequest, SearchRequest, UpdateRequest, UpdateContactRequest
 from src.model.response import SearchResponse, EMPTY_SEARCH_RESPONSE, ContactSearchResponse
 from src.model.user.user import UserView, SlimUserView

@@ -1,6 +1,6 @@
 import phonenumbers
 
-from src.model.errors import InvalidRequestError
+from shared.authorization.errors import InvalidRequestError
 
 APP_STORE_CONNECT_PHONE = "+19876543210"
 

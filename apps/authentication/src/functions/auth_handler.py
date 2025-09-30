@@ -2,7 +2,7 @@ import json
 import logging
 import os
 
-from src.functions.handler_utils import create_response, exception_handler
+from shared.authorization.handler_utils import create_response, exception_handler
 from src.model.requests import LoginRequest, RegisterRequest, ConfirmSignupRequest, RefreshLoginRequest, LogoutRequest, \
     ResendSignupCodeRequest, ForgotPasswordRequest, ResetPasswordRequest, SendCodeRequest, ConfirmCodeRequest, \
     UpdateRequest

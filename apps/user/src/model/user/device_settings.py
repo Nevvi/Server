@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from src.model.document import DeviceSettingsDocument
 from src.model.requests import DeviceSettingsUpdate
-from src.model.view import View
+from shared.authorization.view import View
 
 
 @dataclass

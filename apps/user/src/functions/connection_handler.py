@@ -1,7 +1,7 @@
 import json
 import logging
 
-from src.functions.handler_utils import create_response, exception_handler
+from shared.authorization.handler_utils import create_response, exception_handler
 from src.model.requests import RequestConnectionRequest, ConfirmConnectionRequest, DenyConnectionRequest, \
     SearchConnectionsRequest, UpdateConnectionRequest, BlockConnectionRequest
 from src.service.connection_service import ConnectionService

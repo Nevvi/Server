@@ -2,7 +2,7 @@ import json
 import logging
 from typing import List, Any
 
-from src.functions.handler_utils import exception_handler
+from shared.authorization.handler_utils import exception_handler
 from src.model.requests import UpdateTokenRequest
 from src.service.notification_service import NotificationService
 
