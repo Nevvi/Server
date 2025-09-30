@@ -1,6 +1,7 @@
 import asyncio
 from typing import List, Optional
 
+from shared.authorization.errors import InvalidRequestError
 from src.dao.authentication_dao import AuthenticationDao
 from src.dao.connection_dao import ConnectionDao
 from src.dao.connection_group_dao import ConnectionGroupDao
@@ -10,7 +11,7 @@ from src.model.connection.connection import UserConnectionView
 from src.model.connection.connection_group import ConnectionGroupView
 from src.model.connection.connection_request import ConnectionRequestView
 from src.model.enums import RequestStatus
-from src.model.errors import InvalidRequestError, UserNotFoundError, ConnectionRequestExistsError, AlreadyConnectedError, \
+from src.model.errors import UserNotFoundError, ConnectionRequestExistsError, AlreadyConnectedError, \
     ConnectionRequestDoesNotExistError, ConnectionDoesNotExistError, GroupDoesNotExistError, UserAlreadyInGroupError, \
     UserNotInGroupError
 from src.model.requests import RequestConnectionRequest, ConfirmConnectionRequest, DenyConnectionRequest, \
