@@ -15,6 +15,7 @@ package:
   patterns:
     - '!./**'           # exclude everything first
     - './src/**'        # include your source directory
+    - '../../shared/**' # include shared modules
 
 custom:
   splitStacks:

@@ -1,5 +1,5 @@
-from src.functions.abstract_authorizer import AbstractAuthorizer
-from src.functions.auth_policy import AuthPolicy, HttpVerb
+from authorization.abstract_authorizer import AbstractAuthorizer
+from authorization.auth_policy import AuthPolicy, HttpVerb
 
 
 class Authorizer(AbstractAuthorizer):
