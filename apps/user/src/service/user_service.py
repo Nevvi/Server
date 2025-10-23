@@ -1,5 +1,7 @@
 import asyncio
 import copy
+from datetime import datetime
+
 import itertools
 from typing import Optional, List
 
@@ -15,11 +17,8 @@ from src.model.errors import UserNotFoundError
 from src.model.requests import RegisterRequest, SearchRequest, UpdateRequest, UpdateContactRequest
 from src.model.response import SearchResponse, EMPTY_SEARCH_RESPONSE, ContactSearchResponse
 from src.model.user.user import UserView, SlimUserView
+from src.util.list_utils import chunk_list
 from src.util.phone_number_utils import format_phone_number, is_valid_phone_number
-
-
-def chunk_list(data, chunk_size):
-    return [data[i:i + chunk_size] for i in range(0, len(data), chunk_size)]
 
 
 class UserService:
@@ -139,3 +138,7 @@ class UserService:
     def get_blocked_users(self, user_id: str) -> List[SlimUserView]:
         users = self.user_dao.get_blocked_users(user_id=user_id)
         return [SlimUserView.from_user_doc(user) for user in users]
+
+    def get_users_by_birthday(self, birthday: datetime) -> List[UserView]:
+        users = self.user_dao.get_users_by_birthday(birthday=birthday)
+        return [UserView.from_doc(doc) for doc in users]

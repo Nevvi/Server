@@ -131,8 +131,8 @@ def notify_out_of_sync_users(event, context):
 
 @exception_handler
 def notify_birthdays(event, context):
-    notified = notification_service.notify_birthdays()
-    return create_response(200, {"users": notified})
+    notification_service.notify_birthdays()
+    return create_response(200, {"success": True})
 
 
 def get_user_by_id(id: str) -> UserView:
