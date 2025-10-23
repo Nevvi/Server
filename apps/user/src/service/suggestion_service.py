@@ -8,7 +8,6 @@ from src.dao.refresh_suggestions_dao import RefreshSuggestionsDao
 from src.dao.suggestions_dao import SuggestionsDao
 from src.dao.user_dao import UserDao
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

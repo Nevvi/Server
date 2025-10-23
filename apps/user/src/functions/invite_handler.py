@@ -6,7 +6,6 @@ from shared.authorization.handler_utils import create_response, exception_handle
 from src.model.requests import InviteConnectionRequest
 from src.service.invite_service import InviteService
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 invite_service = InviteService()

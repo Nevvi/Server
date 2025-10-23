@@ -5,7 +5,6 @@ from typing import List, Any
 from shared.authorization.handler_utils import create_response, exception_handler
 from src.service.suggestion_service import SuggestionService
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 suggestion_service = SuggestionService()

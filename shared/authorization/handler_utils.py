@@ -7,7 +7,11 @@ from pydantic import ValidationError
 from .errors import HttpError
 from .view import View
 
-logging.basicConfig(level=logging.INFO)
+# Configure root logger for AWS Lambda
+# In Lambda, the root logger is pre-configured, so basicConfig() won't work
+# We need to explicitly set the level on the root logger
+logging.getLogger().setLevel(logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 

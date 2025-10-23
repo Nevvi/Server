@@ -6,7 +6,6 @@ from shared.authorization.handler_utils import exception_handler
 from src.model.requests import UpdateTokenRequest
 from src.service.notification_service import NotificationService
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 service = NotificationService()
 
@@ -46,6 +45,7 @@ def send_notification(event, context):
         records: List[Any] = event.get("Records", [])
         for record in records:
             try:
+                logger.info(f"Received notification record: {record}")
                 details = json.loads(record.get("body"))
                 user_id = details.get("userId")
                 title = details.get("title")

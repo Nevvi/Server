@@ -9,8 +9,6 @@ from src.model.requests import LoginRequest, RegisterRequest, ConfirmSignupReque
 from src.service.authentication_service import AuthenticationService
 from src.service.user_service import UserService
 
-logging.basicConfig(level=logging.INFO)
-logging.getLogger().setLevel(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 auth_service = AuthenticationService()

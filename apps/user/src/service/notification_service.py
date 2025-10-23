@@ -11,7 +11,6 @@ from src.service.user_service import UserService
 
 eastern_timezone = pytz.timezone('US/Eastern')
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -45,6 +44,7 @@ class NotificationService:
         now_eastern = datetime.now(eastern_timezone)
         logger.info(f"Current time in Eastern timezone: {now_eastern}")
         users = self.user_service.get_users_by_birthday(birthday=now_eastern)
+        logger.info(f"Found {len(users)} users with birthdays today")
 
         async def notify_connection(user: UserView, connection: SearchedConnection):
             text = f"It's ${user.firstName} ${user.lastName}'s birthday!"

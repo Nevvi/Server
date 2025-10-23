@@ -6,7 +6,6 @@ from src.model.requests import RequestConnectionRequest, ConfirmConnectionReques
     SearchConnectionsRequest, UpdateConnectionRequest, BlockConnectionRequest
 from src.service.connection_service import ConnectionService
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 connection_service = ConnectionService()

@@ -12,7 +12,6 @@ from src.service.admin_service import AdminService
 from src.service.notification_service import NotificationService
 from src.service.user_service import UserService
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 user_service = UserService()

@@ -7,7 +7,6 @@ from src.model.requests import InviteConnectionRequest, SearchRequest
 from src.service.user_service import UserService
 from src.util.phone_number_utils import format_phone_number
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
