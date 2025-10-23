@@ -131,7 +131,7 @@ def notify_out_of_sync_users(event, context):
 
 @exception_handler
 def notify_birthdays(event, context):
-    notification_service.notify_birthdays()
+    asyncio.run(notification_service.notify_birthdays())
     return create_response(200, {"success": True})
 
 
