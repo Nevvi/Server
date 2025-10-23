@@ -59,9 +59,9 @@ def refresh_suggestions(event, context):
                 logger.info(f"Refreshing suggestions for {user_id}")
                 suggestion_service.refresh_suggestions(user_id=user_id)
             except Exception as e:
-                logger.exception("Caught error refreshing suggestions", e)
+                logger.exception("Caught error refreshing suggestions")
     except Exception as e:
-        logger.exception("Caught error refreshing suggestions", e)
+        logger.exception("Caught error refreshing suggestions")
 
     # Always return true no matter what
     return True

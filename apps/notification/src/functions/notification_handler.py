@@ -53,9 +53,9 @@ def send_notification(event, context):
                 logger.info(f"Sending notification to {user_id}")
                 service.send_notification(user_id=user_id, title=title, body=body)
             except Exception as e:
-                logger.exception("Caught error sending notification", e)
+                logger.exception("Caught error sending notification")
     except Exception as e:
-        logger.exception("Caught error sending notifications", e)
+        logger.exception("Caught error sending notifications")
 
     # Always return true no matter what
     return True
