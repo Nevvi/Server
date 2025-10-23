@@ -244,6 +244,7 @@ class UserDao:
         return blocked_users
 
     def get_users_by_birthday(self, birthday: datetime) -> List[UserDocument]:
+        # TODO - transform out of document class
         return list(self.collection.find(filter={
             'birthdayMonth': birthday.month,
             'birthdayDayOfMonth': birthday.day,

@@ -248,7 +248,7 @@ class IntegrationTest:
             assert actual_count > 0, f"Expected at least 1 call, but found {actual_count}"
 
     def create_user(self, first_name: str = None, last_name: str = None, phone: str = None,
-                    blocked_users: list = None) -> UserView:
+                    blocked_users: list = None, birthday: str = "2000-01-01") -> UserView:
         address = AddressView(street=generate_random_string(12),
                               city=generate_random_string(8),
                               state=generate_random_string(2),
@@ -279,7 +279,7 @@ class IntegrationTest:
             permissionGroups=[],
             blockedUsers=blocked_users,
             profileImage="user-image",
-            birthday="2000-01-01",
+            birthday=birthday,
             createDate=now,
             updateDate=now
         )
