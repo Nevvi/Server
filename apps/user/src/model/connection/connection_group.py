@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import List
 
 from src.model.document import ConnectionGroupDocument
-from src.model.view import View
+from shared.authorization.view import View
 
 
 @dataclass

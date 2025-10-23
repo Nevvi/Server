@@ -5,7 +5,7 @@ from src.dao.connection_dao import ConnectionSearchResponse
 from src.model.document import ConnectionGroupSearch
 from src.model.user.address import AddressView
 from src.model.user.user import SlimUserView
-from src.model.view import View
+from shared.authorization.view import View
 
 
 @dataclass

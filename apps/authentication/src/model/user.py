@@ -3,7 +3,7 @@ from typing import Optional, List
 
 from types_boto3_cognito_idp.type_defs import AttributeTypeTypeDef
 
-from src.model.view import View
+from shared.authorization.view import View
 
 
 @dataclass

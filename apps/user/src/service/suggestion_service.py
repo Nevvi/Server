@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 from src.model.user.user import SlimUserView
@@ -6,6 +7,8 @@ from src.dao.connection_request_dao import ConnectionRequestDao
 from src.dao.refresh_suggestions_dao import RefreshSuggestionsDao
 from src.dao.suggestions_dao import SuggestionsDao
 from src.dao.user_dao import UserDao
+
+logger = logging.getLogger(__name__)
 
 
 class SuggestionService:
@@ -44,7 +47,7 @@ class SuggestionService:
 
     def refresh_suggestions(self, user_id: str):
         possible_suggestions = self.suggestions_dao.find_possible_suggestions(user_id=user_id)
-        print(f"{len(possible_suggestions)} possible suggestions for user {user_id}")
+        logger.info(f"{len(possible_suggestions)} possible suggestions for user {user_id}")
         valid_suggestions = [s for s in possible_suggestions if user_id not in s.blockedUsers]
 
         relevant_suggestions = []

@@ -6,7 +6,7 @@ from pymongo.synchronous.collection import Collection
 
 from src.model.document import SuggestedUser
 
-MIN_SHARED_CONNECTIONS = 2
+MIN_SHARED_CONNECTIONS = 3
 
 
 class SuggestionsDao:

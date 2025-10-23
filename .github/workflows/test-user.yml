@@ -95,7 +95,7 @@ jobs:
       - name: Run tests
         run: |
           cd apps/user
-          export PYTHONPATH=.
+          export PYTHONPATH=.:../../
           pytest tests/ -v --tb=short
 
       - name: Cleanup

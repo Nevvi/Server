@@ -4,7 +4,7 @@ from typing import Optional
 from types_boto3_cognito_idp.type_defs import AuthenticationResultTypeTypeDef, SignUpResponseTypeDef, \
     GetUserAttributeVerificationCodeResponseTypeDef, ForgotPasswordResponseTypeDef
 
-from src.model.view import View
+from shared.authorization.view import View
 
 
 @dataclass

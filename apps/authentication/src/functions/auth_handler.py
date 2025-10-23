@@ -2,15 +2,13 @@ import json
 import logging
 import os
 
-from src.functions.handler_utils import create_response, exception_handler
+from shared.authorization.handler_utils import create_response, exception_handler
 from src.model.requests import LoginRequest, RegisterRequest, ConfirmSignupRequest, RefreshLoginRequest, LogoutRequest, \
     ResendSignupCodeRequest, ForgotPasswordRequest, ResetPasswordRequest, SendCodeRequest, ConfirmCodeRequest, \
     UpdateRequest
 from src.service.authentication_service import AuthenticationService
 from src.service.user_service import UserService
 
-logging.basicConfig(level=logging.INFO)
-logging.getLogger().setLevel(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 auth_service = AuthenticationService()

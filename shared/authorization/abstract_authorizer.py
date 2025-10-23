@@ -4,7 +4,7 @@ from typing import Dict
 
 import jwt
 
-from src.functions.auth_policy import AuthPolicy, ApiOptions
+from .auth_policy import AuthPolicy, ApiOptions
 
 logger = logging.getLogger(__name__)
 

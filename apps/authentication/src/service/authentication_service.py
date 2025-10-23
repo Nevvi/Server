@@ -3,9 +3,9 @@ from typing import Optional
 
 from types_boto3_cognito_idp.type_defs import GetUserAttributeVerificationCodeResponseTypeDef
 
+from shared.authorization.errors import InvalidRequestError
 from src.dao.authentication_dao import AuthenticationDao
-from src.model.errors import InvalidRequestError, UserNotFoundError, UserEmailAlreadyExistsError, \
-    PasswordResetRequiredError
+from src.model.errors import UserNotFoundError, UserEmailAlreadyExistsError, PasswordResetRequiredError
 from src.model.requests import RegisterRequest, ConfirmSignupRequest, LoginRequest, RefreshLoginRequest, \
     LogoutRequest, ResendSignupCodeRequest, ForgotPasswordRequest, ResetPasswordRequest, SendCodeRequest, \
     ConfirmCodeRequest, UpdateRequest
@@ -105,7 +105,7 @@ class AuthenticationService:
         # Only one email can exist per user
         if request.email:
             user = self.authentication_dao.get_user_by_email(email=request.email)
-            if user and _map_to_user(user.get("Attributes")).user_id != user_id:
+            if user and User.from_attributes(user.get("Attributes")).user_id != user_id:
                 raise UserEmailAlreadyExistsError(request.email)
 
         self.authentication_dao.update_user(username=user_id, email=request.email)

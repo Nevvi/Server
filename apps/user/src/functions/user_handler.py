@@ -4,7 +4,7 @@ import json
 import logging
 import re
 
-from src.functions.handler_utils import create_response, exception_handler
+from shared.authorization.handler_utils import create_response, exception_handler
 from src.model.errors import UserNotFoundError
 from src.model.requests import RegisterRequest, DeleteAccountRequest, UpdateContactRequest, UpdateRequest, SearchRequest
 from src.model.user.user import UserView
@@ -12,7 +12,6 @@ from src.service.admin_service import AdminService
 from src.service.notification_service import NotificationService
 from src.service.user_service import UserService
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 user_service = UserService()
@@ -131,8 +130,8 @@ def notify_out_of_sync_users(event, context):
 
 @exception_handler
 def notify_birthdays(event, context):
-    notified = notification_service.notify_birthdays()
-    return create_response(200, {"users": notified})
+    asyncio.run(notification_service.notify_birthdays())
+    return create_response(200, {"success": True})
 
 
 def get_user_by_id(id: str) -> UserView:

@@ -2,11 +2,10 @@ import json
 import logging
 from typing import List, Any
 
-from src.functions.handler_utils import exception_handler
+from shared.authorization.handler_utils import exception_handler
 from src.model.requests import UpdateTokenRequest
 from src.service.notification_service import NotificationService
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 service = NotificationService()
 
@@ -19,7 +18,7 @@ def update_device_token(event, context):
     request = UpdateTokenRequest(user_id=path_params.get("userId"), token=body.get("token"))
     service.update_token(request=request)
 
-    logger.info(f"Updated token for user: {request.user_id}")
+    logger.info(f"Updated token for user {request.user_id}")
     return create_response(200, {})
 
 
@@ -46,6 +45,7 @@ def send_notification(event, context):
         records: List[Any] = event.get("Records", [])
         for record in records:
             try:
+                logger.info(f"Received notification record: {record}")
                 details = json.loads(record.get("body"))
                 user_id = details.get("userId")
                 title = details.get("title")
@@ -53,9 +53,9 @@ def send_notification(event, context):
                 logger.info(f"Sending notification to {user_id}")
                 service.send_notification(user_id=user_id, title=title, body=body)
             except Exception as e:
-                logger.exception("Caught error sending notification", e)
+                logger.exception("Caught error sending notification")
     except Exception as e:
-        logger.exception("Caught error sending notifications", e)
+        logger.exception("Caught error sending notifications")
 
     # Always return true no matter what
     return True

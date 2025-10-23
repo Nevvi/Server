@@ -2,10 +2,9 @@ import json
 import logging
 from typing import List, Any
 
-from src.functions.handler_utils import create_response, exception_handler
+from shared.authorization.handler_utils import create_response, exception_handler
 from src.service.suggestion_service import SuggestionService
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 suggestion_service = SuggestionService()
@@ -51,18 +50,18 @@ def refresh_suggestions(event, context):
     }
     """
     try:
-        print("Received request to refresh suggestion(s)")
+        logger.info("Received request to refresh suggestion(s)")
         records: List[Any] = event.get("Records", [])
         for record in records:
             try:
                 details = json.loads(record.get("body"))
                 user_id = details.get("userId")
-                print(f"Refreshing suggestions for {user_id}")
+                logger.info(f"Refreshing suggestions for {user_id}")
                 suggestion_service.refresh_suggestions(user_id=user_id)
             except Exception as e:
-                logger.exception("Caught error refreshing suggestions", e)
+                logger.exception("Caught error refreshing suggestions")
     except Exception as e:
-        logger.exception("Caught error refreshing suggestions", e)
+        logger.exception("Caught error refreshing suggestions")
 
     # Always return true no matter what
     return True
