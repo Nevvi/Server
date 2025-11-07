@@ -47,11 +47,11 @@ class NotificationService:
         logger.info(f"Found {len(users)} users with birthdays today")
 
         async def notify_connection(user: UserView, connection: SearchedConnection):
-            text = f"It's ${user.firstName} ${user.lastName}'s birthday!"
+            text = f"It's {user.firstName} {user.lastName}'s birthday!"
             body = f"Wish them a happy birthday"
             connection_user = self.user_service.get_user(user_id=connection.id)
             if connection_user.deviceSettings.notifyBirthdays:
-                logger.info(f"Notifying ${connection.id} about birthday for ${user.id}")
+                logger.info(f"Notifying {connection.id} about birthday for {user.id}")
                 return self.notification_dao.send_notification(connection.id, text, body)
             return None
 
