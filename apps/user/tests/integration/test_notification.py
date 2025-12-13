@@ -20,7 +20,7 @@ class TestNotificationIntegration(IntegrationTest):
 
         expected_message = {
             "userId": self.user.id,
-            "title": f"It's ${test_user_two.firstName} ${test_user_two.lastName}'s birthday!",
+            "title": f"It's {test_user_two.firstName} {test_user_two.lastName}'s birthday!",
             "body": f"Wish them a happy birthday"
         }
 
