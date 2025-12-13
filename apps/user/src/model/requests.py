@@ -142,3 +142,4 @@ class InviteConnectionRequest(BaseModel):
     requesting_user_id: str = Field(alias="requestingUserId")
     requested_phone_number: str = Field(alias="phoneNumber")
     permission_group_name: str = Field(alias="permissionGroupName")
+    reason: Optional[str] = Field(alias="reason", default=None)
