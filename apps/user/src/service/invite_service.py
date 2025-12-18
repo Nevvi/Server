@@ -18,13 +18,13 @@ def _format_invite_message(user: UserView, reason: Optional[str] = None) -> str:
         return dedent(f"""
             {user.firstName} {user.lastName} is collecting addresses for their wedding via Nevvi.
             
-            Get started: https://nevvi.net
+            Share yours: https://nevvi.net
             """)
     elif reason == InviteReason.HOLIDAY_CARDS:
         return dedent(f"""
             {user.firstName} {user.lastName} is collecting addresses for holiday cards via Nevvi.
             
-            Get started: https://nevvi.net
+            Share yours: https://nevvi.net
             """)
     else:
         return dedent(f"""
