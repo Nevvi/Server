@@ -72,7 +72,7 @@ class UpdateConnectionRequest(BaseModel):
 
 
 class SearchRequest(BaseModel):
-    name: Optional[str] = Field(min_length=3, default=None)
+    name: Optional[str] = Field(default=None)
     email: Optional[EmailStr] = Field(default=None)
     phone_number: Optional[str] = Field(alias="phoneNumber", default=None)
     limit: Optional[int] = Field(default=10, gt=0, le=25)
