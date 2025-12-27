@@ -89,6 +89,6 @@ def update_connection(event, context):
 def block_connection(event, context):
     path_params = event.get('pathParameters') or {}
     request = BlockConnectionRequest(userId=path_params.get("userId"),
-                                     other_user_id=path_params.get("connectedUserId"))
+                                     otherUserId=path_params.get("connectedUserId"))
     res = connection_service.block_connection(request=request)
     return create_response(200, res)
