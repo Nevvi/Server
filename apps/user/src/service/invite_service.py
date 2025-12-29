@@ -1,13 +1,37 @@
 import logging
 from textwrap import dedent
+from typing import Optional
 
 from src.dao.invite_dao import InviteDao
+from src.model.enums import InviteReason
 from src.model.errors import UserNotFoundError
 from src.model.requests import InviteConnectionRequest, SearchRequest
+from src.model.user.user import UserView
 from src.service.user_service import UserService
 from src.util.phone_number_utils import format_phone_number
 
 logger = logging.getLogger(__name__)
+
+
+def _format_invite_message(user: UserView, reason: Optional[str] = None) -> str:
+    if reason == InviteReason.WEDDING:
+        return dedent(f"""
+            {user.firstName} {user.lastName} is collecting addresses for their wedding via Nevvi.
+            
+            Share yours: https://nevvi.net
+            """)
+    elif reason == InviteReason.HOLIDAY_CARDS:
+        return dedent(f"""
+            {user.firstName} {user.lastName} is collecting addresses for holiday cards via Nevvi.
+            
+            Share yours: https://nevvi.net
+            """)
+    else:
+        return dedent(f"""
+            {user.firstName} {user.lastName} has invited you to join Nevvi! With Nevvi you never have to ask for an address again.
+            
+            Get started: https://nevvi.net
+            """)
 
 
 class InviteService:
@@ -23,7 +47,8 @@ class InviteService:
         search_request = SearchRequest(phoneNumber=request.requested_phone_number)
         existing_user = await self.user_service.search_users(user_id=request.requesting_user_id, request=search_request)
         if existing_user.count > 0:
-            logger.info(f"User {request.requesting_user_id} tried to invite existing user {request.requested_phone_number}")
+            logger.info(
+                f"User {request.requesting_user_id} tried to invite existing user {request.requested_phone_number}")
             return
 
         formatted_number = format_phone_number(request.requested_phone_number)
@@ -42,9 +67,5 @@ class InviteService:
 
         if can_notify:
             logger.info(f"Notifying user {formatted_number} of their invite")
-            message = dedent(f"""
-            {user.firstName} {user.lastName} has invited you to join Nevvi! With Nevvi you never have to ask for an address again.
-            
-            Get started: https://nevvi.net
-            """)
+            message = _format_invite_message(user, request.reason)
             self.invite_dao.send_invite(phone_number=formatted_number, message=message)

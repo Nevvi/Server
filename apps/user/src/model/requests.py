@@ -72,7 +72,7 @@ class UpdateConnectionRequest(BaseModel):
 
 
 class SearchRequest(BaseModel):
-    name: Optional[str] = Field(min_length=3, default=None)
+    name: Optional[str] = Field(default=None)
     email: Optional[EmailStr] = Field(default=None)
     phone_number: Optional[str] = Field(alias="phoneNumber", default=None)
     limit: Optional[int] = Field(default=10, gt=0, le=25)
@@ -142,3 +142,4 @@ class InviteConnectionRequest(BaseModel):
     requesting_user_id: str = Field(alias="requestingUserId")
     requested_phone_number: str = Field(alias="phoneNumber")
     permission_group_name: str = Field(alias="permissionGroupName")
+    reason: Optional[str] = Field(alias="reason", default=None)
