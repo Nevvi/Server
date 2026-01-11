@@ -322,10 +322,11 @@ class IntegrationTest:
                                                               group_id=group_id,
                                                               connected_user_id=connected_user_id)
 
-    def create_invite(self, user_id: str, phone_number: str) -> UserInviteDocument:
+    def create_invite(self, user_id: str, phone_number: str, connection_group_ids: List[str]) -> UserInviteDocument:
         return self.invite_service.invite_dao.create_invite(phone_number=format_phone_number(phone_number),
                                                             requesting_user_id=user_id,
-                                                            permission_group="All Info")
+                                                            permission_group="All Info",
+                                                            connection_group_ids=connection_group_ids)
 
     def get_invites(self, phone_number: str) -> List[UserInviteDocument]:
         return self.invite_service.invite_dao.get_invites(phone_number=phone_number)
