@@ -25,6 +25,7 @@ class ConnectionGroupDao:
             name=name,
             userId=user_id,
             connections=[],
+            invites=[],
             createDate=now,
             updateDate=now,
         )
@@ -54,6 +55,22 @@ class ConnectionGroupDao:
         })
 
         return res.deleted_count == 1
+
+    def add_invite(self, user_id: str, group_id: str, phone_number: str) -> bool:
+        res = self.collection.update_one(
+            filter={"userId": user_id, "_id": group_id},
+            update={"$push": {"invites": phone_number}}
+        )
+
+        return res.modified_count == 1
+
+    def remove_invite(self, user_id: str, group_id: str, phone_number: str) -> bool:
+        res = self.collection.update_one(
+            filter={"userId": user_id, "_id": group_id},
+            update={"$pull": {"invites": phone_number}}
+        )
+
+        return res.modified_count == 1
 
     def add_user(self, user_id: str, group_id: str, connected_user_id: str) -> bool:
         res = self.collection.update_one(

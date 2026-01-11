@@ -32,7 +32,7 @@ class ConnectionRequestDao:
         }))
 
     def create_connection_request(self, requesting_user: UserView, requested_user_id: str,
-                                  permission_group_name: str) -> ConnectionRequestDocument:
+                                  permission_group_name: str, connection_group_ids: List[str]) -> ConnectionRequestDocument:
         now = datetime.now(timezone.utc).isoformat()
         document = ConnectionRequestDocument(
             requestingUserId=requesting_user.id,
@@ -41,6 +41,7 @@ class ConnectionRequestDao:
             requesterFirstName=requesting_user.firstName,
             requesterLastName=requesting_user.lastName,
             requestingPermissionGroupName=permission_group_name,
+            requestingConnectionGroupIds=connection_group_ids,
             status=RequestStatus.PENDING,
             createDate=now,
             updateDate=now,

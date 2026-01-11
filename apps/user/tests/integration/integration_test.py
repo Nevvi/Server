@@ -303,10 +303,14 @@ class IntegrationTest:
         return ConnectionView.from_doc(self.connection_service.connection_dao.get_connection(user_id=user_id,
                                                                                              connected_user_id=connected_user_id))
 
-    def create_connection_request(self, user: UserView, connected_user_id: str) -> ConnectionRequestView:
+    def create_connection_request(self, user: UserView, connected_user_id: str, connection_group_ids=None) -> ConnectionRequestView:
+        if connection_group_ids is None:
+            connection_group_ids = []
+
         doc = self.connection_service.connection_request_dao.create_connection_request(requesting_user=user,
                                                                                        requested_user_id=connected_user_id,
-                                                                                       permission_group_name=DEFAULT_ALL_PERMISSION_GROUP_NAME)
+                                                                                       permission_group_name=DEFAULT_ALL_PERMISSION_GROUP_NAME,
+                                                                                       connection_group_ids=connection_group_ids)
         return ConnectionRequestView.from_doc(doc)
 
     def create_connection_group(self, user_id: str, name: str = generate_random_string(8)) -> ConnectionGroupView:

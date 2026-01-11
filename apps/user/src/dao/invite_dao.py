@@ -1,13 +1,10 @@
 import os
 import uuid
 from datetime import datetime, timezone
-from textwrap import dedent
 from typing import List
 
-import boto3
 import pymongo
 from pymongo.synchronous.collection import Collection
-from types_boto3_sns import SNSClient
 
 from src.model.document import UserInviteDocument
 
@@ -20,12 +17,14 @@ class InviteDao:
     def get_invites(self, phone_number: str) -> List[UserInviteDocument]:
         return list(self.collection.find(filter={"invitedPhoneNumber": phone_number}))
 
-    def create_invite(self, phone_number: str, requesting_user_id: str, permission_group: str) -> UserInviteDocument:
+    def create_invite(self, phone_number: str, requesting_user_id: str, permission_group: str,
+                      connection_group_ids: List[str]) -> UserInviteDocument:
         document = UserInviteDocument(
             _id=str(uuid.uuid4()),
             invitedPhoneNumber=phone_number,
             requesterUserId=requesting_user_id,
             requesterPermissionGroupName=permission_group,
+            requesterConnectionGroupIds=connection_group_ids,
             createDate=datetime.now(timezone.utc)
         )
 

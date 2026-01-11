@@ -46,9 +46,11 @@ class UserService:
                 continue
 
             permission_group = invite.get("requesterPermissionGroupName")
+            connection_group_ids = invite.get("requesterConnectionGroupIds", [])
             self.connection_request_dao.create_connection_request(requesting_user=requesting_user,
                                                                   requested_user_id=user.get("_id"),
-                                                                  permission_group_name=permission_group)
+                                                                  permission_group_name=permission_group,
+                                                                  connection_group_ids=connection_group_ids)
         return UserView.from_doc(user)
 
     async def search_potential_contacts(self, user_id: str, phone_numbers: List[str]) -> ContactSearchResponse:

@@ -99,12 +99,14 @@ class RequestConnectionRequest(BaseModel):
     requesting_user_id: str = Field(alias="requestingUserId")
     requested_user_id: str = Field(alias="otherUserId")
     permission_group_name: str = Field(alias="permissionGroupName")
+    connection_group_ids: List[str] = Field(alias="connectionGroupIds", default=[])
 
 
 class ConfirmConnectionRequest(BaseModel):
     requesting_user_id: str = Field(alias="otherUserId")
     requested_user_id: str = Field(alias="requestedUserId")
     permission_group_name: str = Field(alias="permissionGroupName")
+    connection_group_ids: List[str] = Field(alias="connectionGroupIds", default=[])
 
 
 class AddConnectionToGroupRequest(BaseModel):
@@ -142,3 +144,4 @@ class InviteConnectionRequest(BaseModel):
     requesting_user_id: str = Field(alias="requestingUserId")
     requested_phone_number: str = Field(alias="phoneNumber")
     permission_group_name: str = Field(alias="permissionGroupName")
+    connection_group_ids: List[str] = Field(alias="connectionGroupIds", default=[])

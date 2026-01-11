@@ -84,13 +84,15 @@ class ConnectionService:
         elif existing_request and existing_request.status == RequestStatus.PENDING:
             request = ConfirmConnectionRequest(otherUserId=requested_user.id,
                                                requestedUserId=requesting_user.id,
-                                               permissionGroupName=request.permission_group_name)
-            return self.confirm_connection(request=request)
+                                               permissionGroupName=request.permission_group_name,
+                                               connectionGroupIds=request.connection_group_ids)
+            return self.confirm_connection(confirm_request=request)
 
         # All checks pass... Create the new request!
         new_request = self.connection_request_dao.create_connection_request(requesting_user=requesting_user,
                                                                             requested_user_id=requested_user.id,
-                                                                            permission_group_name=request.permission_group_name)
+                                                                            permission_group_name=request.permission_group_name,
+                                                                            connection_group_ids=request.connection_group_ids)
 
         # Notify the requested user and remove the requested user as a suggestion
         request_text = f"{requesting_user.firstName} would like to connect!"
@@ -99,52 +101,79 @@ class ConnectionService:
 
         return ConnectionRequestView.from_doc(new_request)
 
-    def confirm_connection(self, request: ConfirmConnectionRequest) -> ConnectionRequestView:
-        existing_request = self.get_connection_request(requesting_user=request.requesting_user_id,
-                                                       requested_user=request.requested_user_id)
-        if not existing_request:
+    def confirm_connection(self, confirm_request: ConfirmConnectionRequest) -> ConnectionRequestView:
+        connection_request = self.get_connection_request(requesting_user=confirm_request.requesting_user_id,
+                                                         requested_user=confirm_request.requested_user_id)
+        if not connection_request:
             raise ConnectionRequestDoesNotExistError()
 
-        requesting_user = self.user_service.get_user(user_id=request.requesting_user_id)
+        requesting_user = self.user_service.get_user(user_id=confirm_request.requesting_user_id)
         if not requesting_user:
-            raise UserNotFoundError(request.requesting_user_id)
+            raise UserNotFoundError(confirm_request.requesting_user_id)
 
-        requested_user = self.user_service.get_user(user_id=request.requested_user_id)
+        requested_user = self.user_service.get_user(user_id=confirm_request.requested_user_id)
         if not requested_user:
-            raise UserNotFoundError(request.requested_user_id)
+            raise UserNotFoundError(confirm_request.requested_user_id)
 
-        if existing_request.status != RequestStatus.PENDING:
+        if connection_request.status != RequestStatus.PENDING:
             raise InvalidRequestError("Request is not in a pending status")
 
         # All checks pass!
         # Update the connection request status
         # Create the connections for both users
+        # Add each user to the requested connection groups (remove from invite list if applicable)
         # Remove each user as suggestions to each other
         # Send a notification
         # TODO - use asyncio to run these operations in parallel
-        existing_request.status = RequestStatus.APPROVED
-        self.connection_request_dao.update_connection_request(requesting_user_id=request.requesting_user_id,
-                                                              requested_user_id=request.requested_user_id,
+        connection_request.status = RequestStatus.APPROVED
+        self.connection_request_dao.update_connection_request(requesting_user_id=confirm_request.requesting_user_id,
+                                                              requested_user_id=confirm_request.requested_user_id,
                                                               status=RequestStatus.APPROVED)
 
-        self.connection_dao.create_connection(user_id=request.requesting_user_id,
-                                              connected_user_id=request.requested_user_id,
-                                              permission_group_name=existing_request.requestingPermissionGroupName)
+        self.connection_dao.create_connection(user_id=confirm_request.requesting_user_id,
+                                              connected_user_id=confirm_request.requested_user_id,
+                                              permission_group_name=connection_request.requestingPermissionGroupName)
 
-        self.connection_dao.create_connection(user_id=request.requested_user_id,
-                                              connected_user_id=request.requesting_user_id,
-                                              permission_group_name=request.permission_group_name)
+        self.connection_dao.create_connection(user_id=confirm_request.requested_user_id,
+                                              connected_user_id=confirm_request.requesting_user_id,
+                                              permission_group_name=confirm_request.permission_group_name)
+
+        # The user that created the request wants to add them to some groups once they are connected
+        if len(connection_request.requestingConnectionGroupIds):
+            existing_groups = self.get_connection_groups(user_id=confirm_request.requesting_user_id)
+            for group in [g for g in existing_groups if g.id in connection_request.requestingConnectionGroupIds]:
+                print(f"Adding {confirm_request.requested_user_id} to group {group.name}")
+                self.connection_group_dao.add_user(user_id=confirm_request.requesting_user_id,
+                                                   group_id=group.id,
+                                                   connected_user_id=confirm_request.requested_user_id)
+                if requested_user.phoneNumber in group.invites:
+                    self.connection_group_dao.remove_invite(user_id=confirm_request.requesting_user_id,
+                                                            group_id=group.id,
+                                                            phone_number=requested_user.phoneNumber)
+
+        # The user that confirmed the request wants to add them to some groups once they are connected
+        if len(confirm_request.connection_group_ids):
+            existing_groups = self.get_connection_groups(user_id=confirm_request.requested_user_id)
+            for group in [g for g in existing_groups if g.id in confirm_request.connection_group_ids]:
+                print(f"Adding {confirm_request.requesting_user_id} to group {group.name}")
+                self.connection_group_dao.add_user(user_id=confirm_request.requested_user_id,
+                                                   group_id=group.id,
+                                                   connected_user_id=confirm_request.requesting_user_id)
+                if requesting_user.phoneNumber in group.invites:
+                    self.connection_group_dao.remove_invite(user_id=confirm_request.requested_user_id,
+                                                            group_id=group.id,
+                                                            phone_number=requesting_user.phoneNumber)
 
         request_text = f"{requested_user.firstName} accepted your request!"
-        self.notification_service.send_notification(user_id=request.requesting_user_id, message=request_text)
+        self.notification_service.send_notification(user_id=confirm_request.requesting_user_id, message=request_text)
 
-        self.suggestion_service.remove_suggestion(user_id=request.requesting_user_id,
-                                                  suggested_user_id=request.requested_user_id)
+        self.suggestion_service.remove_suggestion(user_id=confirm_request.requesting_user_id,
+                                                  suggested_user_id=confirm_request.requested_user_id)
 
-        self.suggestion_service.remove_suggestion(user_id=request.requested_user_id,
-                                                  suggested_user_id=request.requesting_user_id)
+        self.suggestion_service.remove_suggestion(user_id=confirm_request.requested_user_id,
+                                                  suggested_user_id=confirm_request.requesting_user_id)
 
-        return existing_request
+        return connection_request
 
     def deny_connection(self, request: DenyConnectionRequest) -> ConnectionRequestView:
         existing_request = self.get_connection_request(requesting_user=request.other_user_id,
@@ -250,6 +279,10 @@ class ConnectionService:
 
         new_group = self.connection_group_dao.create_group(user_id=request.user_id, name=request.name)
         return ConnectionGroupView.from_document(new_group)
+
+    def get_connection_group(self, user_id: str, group_id: str) -> ConnectionGroupView:
+        doc = self.connection_group_dao.get_group(user_id=user_id, group_id=group_id)
+        return ConnectionGroupView.from_document(doc)
 
     def get_connection_groups(self, user_id: str) -> List[ConnectionGroupView]:
         docs = self.connection_group_dao.get_groups(user_id=user_id)
