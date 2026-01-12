@@ -11,6 +11,7 @@ class ConnectionGroupView(View):
     userId: str
     name: str
     connections: List[str]
+    invites: List[str]
 
     @staticmethod
     def from_document(doc: ConnectionGroupDocument):
@@ -18,7 +19,8 @@ class ConnectionGroupView(View):
             id=doc.get("_id"),
             name=doc.get("name"),
             userId=doc.get("userId"),
-            connections=doc.get("connections")
+            connections=doc.get("connections"),
+            invites=doc.get("invites")
         )
 
     def add_user(self, user_id: str):

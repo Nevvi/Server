@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+from typing import List
 
 from src.model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME
 from src.model.document import ConnectionRequestDocument
@@ -15,6 +16,7 @@ class ConnectionRequestView(View):
     requesterLastName: str
     requesterImage: str
     requestingPermissionGroupName: str
+    requestingConnectionGroupIds: List[str]
     status: RequestStatus
 
     @staticmethod
@@ -26,5 +28,6 @@ class ConnectionRequestView(View):
             requesterLastName=doc.get("requesterLastName"),
             requesterImage=doc.get("requesterImage", os.environ["DEFAULT_PROFILE_IMAGE"]),
             requestingPermissionGroupName=doc.get("requestingPermissionGroupName", DEFAULT_ALL_PERMISSION_GROUP_NAME),
+            requestingConnectionGroupIds=doc.get("requestingConnectionGroupIds", []),
             status=doc.get("status")
         )

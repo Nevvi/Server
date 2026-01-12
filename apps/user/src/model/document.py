@@ -82,6 +82,7 @@ class ConnectionGroupDocument(TypedDict):
     userId: str
     name: str
     connections: List[str]
+    invites: List[str]
     createDate: str
     updateDate: str
 
@@ -93,6 +94,7 @@ class ConnectionRequestDocument(TypedDict):
     requesterLastName: str
     requesterImage: str
     requestingPermissionGroupName: str
+    requestingConnectionGroupIds: List[str]
     status: RequestStatus
     createDate: str
     updateDate: str
@@ -113,4 +115,5 @@ class UserInviteDocument(TypedDict):
     invitedPhoneNumber: str
     requesterUserId: str
     requesterPermissionGroupName: str
+    requesterConnectionGroupIds: List[str]
     createDate: datetime

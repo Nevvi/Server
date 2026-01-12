@@ -303,10 +303,14 @@ class IntegrationTest:
         return ConnectionView.from_doc(self.connection_service.connection_dao.get_connection(user_id=user_id,
                                                                                              connected_user_id=connected_user_id))
 
-    def create_connection_request(self, user: UserView, connected_user_id: str) -> ConnectionRequestView:
+    def create_connection_request(self, user: UserView, connected_user_id: str, connection_group_ids=None) -> ConnectionRequestView:
+        if connection_group_ids is None:
+            connection_group_ids = []
+
         doc = self.connection_service.connection_request_dao.create_connection_request(requesting_user=user,
                                                                                        requested_user_id=connected_user_id,
-                                                                                       permission_group_name=DEFAULT_ALL_PERMISSION_GROUP_NAME)
+                                                                                       permission_group_name=DEFAULT_ALL_PERMISSION_GROUP_NAME,
+                                                                                       connection_group_ids=connection_group_ids)
         return ConnectionRequestView.from_doc(doc)
 
     def create_connection_group(self, user_id: str, name: str = generate_random_string(8)) -> ConnectionGroupView:
@@ -318,10 +322,11 @@ class IntegrationTest:
                                                               group_id=group_id,
                                                               connected_user_id=connected_user_id)
 
-    def create_invite(self, user_id: str, phone_number: str) -> UserInviteDocument:
+    def create_invite(self, user_id: str, phone_number: str, connection_group_ids: List[str]) -> UserInviteDocument:
         return self.invite_service.invite_dao.create_invite(phone_number=format_phone_number(phone_number),
                                                             requesting_user_id=user_id,
-                                                            permission_group="All Info")
+                                                            permission_group="All Info",
+                                                            connection_group_ids=connection_group_ids)
 
     def get_invites(self, phone_number: str) -> List[UserInviteDocument]:
         return self.invite_service.invite_dao.get_invites(phone_number=phone_number)

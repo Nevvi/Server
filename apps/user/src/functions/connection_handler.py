@@ -27,7 +27,7 @@ def confirm_connection(event, context):
     body = json.loads(event.get('body', '{}'))
 
     request = ConfirmConnectionRequest(requestedUserId=path_params.get("userId"), **body)
-    res = connection_service.confirm_connection(request=request)
+    res = connection_service.confirm_connection(confirm_request=request)
     return create_response(200, res)
 
 

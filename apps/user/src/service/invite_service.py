@@ -1,5 +1,6 @@
 import logging
 
+from src.dao.connection_group_dao import ConnectionGroupDao
 from src.dao.invite_dao import InviteDao
 from src.model.errors import UserNotFoundError
 from src.model.requests import InviteConnectionRequest, SearchRequest
@@ -13,6 +14,7 @@ class InviteService:
     def __init__(self):
         self.user_service = UserService()
         self.invite_dao = InviteDao()
+        self.connection_group_dao = ConnectionGroupDao()
 
     async def invite_user(self, request: InviteConnectionRequest):
         user = self.user_service.get_user(user_id=request.requesting_user_id)
@@ -37,4 +39,11 @@ class InviteService:
         logger.info(f"Creating invite from {user.id} to user {formatted_number}")
         self.invite_dao.create_invite(phone_number=formatted_number,
                                       requesting_user_id=user.id,
-                                      permission_group=request.permission_group_name)
+                                      permission_group=request.permission_group_name,
+                                      connection_group_ids=request.connection_group_ids)
+
+        existing_groups = self.connection_group_dao.get_groups(user_id=user.id)
+        for group in [g for g in existing_groups if g.get("_id") in request.connection_group_ids]:
+            group_id = group.get('_id')
+            logger.info(f"Adding invited number {formatted_number} to group {group_id}")
+            self.connection_group_dao.add_invite(user_id=user.id, group_id=group_id, phone_number=formatted_number)
