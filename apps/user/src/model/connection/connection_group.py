@@ -19,8 +19,8 @@ class ConnectionGroupView(View):
             id=doc.get("_id"),
             name=doc.get("name"),
             userId=doc.get("userId"),
-            connections=doc.get("connections"),
-            invites=doc.get("invites")
+            connections=doc.get("connections", []),
+            invites=doc.get("invites", [])
         )
 
     def add_user(self, user_id: str):
