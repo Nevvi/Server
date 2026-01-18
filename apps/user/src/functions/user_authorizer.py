@@ -42,6 +42,7 @@ class UserAuthorizer(AbstractAuthorizer):
             auth_policy.allow_method(HttpVerb.GET, f"/v1/users/{user_id}/connection-groups/*/connections")
             auth_policy.allow_method(HttpVerb.POST, f"/v1/users/{user_id}/connection-groups/*/connections")
             auth_policy.allow_method(HttpVerb.DELETE, f"/v1/users/{user_id}/connection-groups/*/connections")
+            auth_policy.allow_method(HttpVerb.POST, f"/v1/users/{user_id}/connection-groups/*/invites/*")
         else:
             auth_policy.deny_all_methods()
 
