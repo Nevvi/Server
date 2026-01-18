@@ -16,12 +16,14 @@ from src.model.errors import UserNotFoundError, ConnectionRequestExistsError, Al
     UserNotInGroupError
 from src.model.requests import RequestConnectionRequest, ConfirmConnectionRequest, DenyConnectionRequest, \
     SearchConnectionsRequest, UpdateConnectionRequest, BlockConnectionRequest, CreateGroupRequest, \
-    SearchGroupsRequest, AddConnectionToGroupRequest, RemoveConnectionFromGroupRequest
+    SearchGroupsRequest, AddConnectionToGroupRequest, RemoveConnectionFromGroupRequest, RemindGroupInviteRequest
 from src.model.response import SearchResponse
 from src.service.export_service import ExportService
+from src.service.invite_service import InviteService
 from src.service.notification_service import NotificationService
 from src.service.suggestion_service import SuggestionService
 from src.service.user_service import UserService
+from src.util.phone_number_utils import format_phone_number
 
 
 class ConnectionService:
@@ -35,6 +37,7 @@ class ConnectionService:
         self.suggestion_service = SuggestionService()
         self.export_service = ExportService()
         self.user_service = UserService()
+        self.invite_service = InviteService()
 
     def get_connection_request(self, requesting_user: str, requested_user: str) -> Optional[ConnectionRequestView]:
         res = self.connection_request_dao.get_connection_request(requesting_user_id=requesting_user,
@@ -373,3 +376,15 @@ class ConnectionService:
             group.remove_user(request.connected_user_id)
 
         return group
+
+    def remind_group_invite(self, request: RemindGroupInviteRequest):
+        group = self.connection_group_dao.get_group(user_id=request.user_id, group_id=request.group_id)
+        if not group:
+            raise GroupDoesNotExistError(request.group_id)
+
+        formatted_number = format_phone_number(request.phone_number)
+        group = ConnectionGroupView.from_document(group)
+        if formatted_number not in group.invites:
+            raise UserNotInGroupError()
+
+        self.invite_service.remind_invite(phone_number=formatted_number)

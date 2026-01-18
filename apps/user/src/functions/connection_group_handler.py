@@ -4,7 +4,7 @@ import logging
 
 from shared.authorization.handler_utils import create_response, exception_handler
 from src.model.requests import CreateGroupRequest, SearchGroupsRequest, AddConnectionToGroupRequest, \
-    RemoveConnectionFromGroupRequest
+    RemoveConnectionFromGroupRequest, RemindGroupInviteRequest
 from src.service.connection_service import ConnectionService
 
 logger = logging.getLogger(__name__)
@@ -82,4 +82,15 @@ def remove_connection(event, context):
                                                groupId=path_params.get("groupId"),
                                                connectedUserId=body.get("userId"))
     res = connection_service.remove_connection_from_group(request=request)
+    return create_response(200, res)
+
+
+@exception_handler
+def remind_group_invite(event, context):
+    path_params = event.get('pathParameters') or {}
+
+    request = RemindGroupInviteRequest(userId=path_params.get("userId"),
+                                       groupId=path_params.get("groupId"),
+                                       phoneNumber=path_params.get("phoneNumber"))
+    res = connection_service.remind_group_invite(request=request)
     return create_response(200, res)

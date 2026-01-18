@@ -47,3 +47,7 @@ class InviteService:
             group_id = group.get('_id')
             logger.info(f"Adding invited number {formatted_number} to group {group_id}")
             self.connection_group_dao.add_invite(user_id=user.id, group_id=group_id, phone_number=formatted_number)
+
+    def remind_invite(self, phone_number: str):
+        # TODO - throttle reminders
+        self.invite_dao.remind_invite(phone_number=phone_number)

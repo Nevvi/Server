@@ -249,11 +249,6 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
-    iamRoleStatements:
-      - Effect: Allow
-        Action:
-          - sns:Publish
-        Resource: '*'
 
   # endregion
 
@@ -506,5 +501,21 @@ functions:
             name: userAuthorizer
             resultTtlInSeconds: 0
             type: request
+
+  remindGroupInvite:
+    handler: src/functions/connection_group_handler.remind_group_invite
+    events:
+      - http:
+          path: /v1/users/{userId}/connection-groups/{groupId}/invites/{phoneNumber}
+          method: post
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            type: request
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - sns:Publish
+        Resource: '*'
 
   # endregion

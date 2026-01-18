@@ -121,6 +121,12 @@ class RemoveConnectionFromGroupRequest(BaseModel):
     connected_user_id: str = Field(alias="connectedUserId")
 
 
+class RemindGroupInviteRequest(BaseModel):
+    user_id: str = Field(alias="userId")
+    group_id: str = Field(alias="groupId")
+    phone_number: str = Field(alias="phoneNumber")
+
+
 class DenyConnectionRequest(BaseModel):
     user_id: str = Field(alias="userId")
     other_user_id: str = Field(alias="otherUserId")
