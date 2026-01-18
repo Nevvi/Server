@@ -15,7 +15,7 @@ from src.model.document import UserInviteDocument
 REMINDER_MESSAGE = dedent(f"""
         You have an outstanding invite to join Nevvi! 
         
-        Here's where you can get started:
+        Get started here:
         iPhone app: https://apps.apple.com/us/app/nevvi/id1669915435
         Web: https://nevvi.net
         """)
