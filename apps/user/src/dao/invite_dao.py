@@ -38,14 +38,20 @@ class InviteDao:
             requesterUserId=requesting_user_id,
             requesterPermissionGroupName=permission_group,
             requesterConnectionGroupIds=connection_group_ids,
-            createDate=datetime.now(timezone.utc)
+            createDate=datetime.now(timezone.utc),
+            lastNotifyDate=datetime.now(timezone.utc),
         )
 
         self.collection.insert_one(document)
         return document
 
-    def remind_invite(self, phone_number: str):
+    def remind_invite(self, user_id: str, phone_number: str):
         self.sns.publish(PhoneNumber=phone_number, Message=REMINDER_MESSAGE)
+
+        self.collection.update_one(
+            filter={"requesterUserId": user_id, "invitedPhoneNumber": phone_number},
+            update={"$set": {"lastNotifyDate": datetime.now(timezone.utc)}}
+        )
 
 
 if __name__ == "__main__":

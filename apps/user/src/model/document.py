@@ -117,3 +117,4 @@ class UserInviteDocument(TypedDict):
     requesterPermissionGroupName: str
     requesterConnectionGroupIds: List[str]
     createDate: datetime
+    lastNotifyDate: datetime

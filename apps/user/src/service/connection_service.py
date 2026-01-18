@@ -387,4 +387,4 @@ class ConnectionService:
         if formatted_number not in group.invites:
             raise UserNotInGroupError()
 
-        self.invite_service.remind_invite(phone_number=formatted_number)
+        self.invite_service.remind_invite(user_id=request.user_id, phone_number=formatted_number)

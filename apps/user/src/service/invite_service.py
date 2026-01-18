@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta
 
 from src.dao.connection_group_dao import ConnectionGroupDao
 from src.dao.invite_dao import InviteDao
@@ -48,6 +49,16 @@ class InviteService:
             logger.info(f"Adding invited number {formatted_number} to group {group_id}")
             self.connection_group_dao.add_invite(user_id=user.id, group_id=group_id, phone_number=formatted_number)
 
-    def remind_invite(self, phone_number: str):
-        # TODO - throttle reminders
-        self.invite_dao.remind_invite(phone_number=phone_number)
+    def remind_invite(self, user_id: str, phone_number: str):
+        existing_invites = self.invite_dao.get_invites(phone_number=phone_number)
+        user_invite = next((i for i in existing_invites if i.get("requesterUserId") == user_id), None)
+        if not user_invite:
+            logger.info(f"No invite found for {phone_number}")
+            return
+
+        one_day_ago = datetime.now() - timedelta(days=1)
+        if user_invite.get("lastNotifyDate") >= one_day_ago:
+            logger.info(f"Reminder for {phone_number} was sent by {user_id} less than 24 hours ago")
+            return
+
+        self.invite_dao.remind_invite(user_id=user_id, phone_number=phone_number)
