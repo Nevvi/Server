@@ -57,7 +57,7 @@ class InviteService:
             return
 
         one_day_ago = datetime.now() - timedelta(days=1)
-        if user_invite.get("lastNotifyDate") >= one_day_ago:
+        if user_invite.get("lastNotifyDate", user_invite.get("createDate")) >= one_day_ago:
             logger.info(f"Reminder for {phone_number} was sent by {user_id} less than 24 hours ago")
             return
 
