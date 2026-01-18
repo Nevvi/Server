@@ -8,9 +8,11 @@ from tests.integration.integration_test import IntegrationTest
 
 class TestUserIntegration(IntegrationTest):
     def test_create_user_initializes_fields(self):
-        phone_number = "6511234567"
         test_user_one = self.create_user(first_name="Jane", last_name="Doe")
-        self.create_invite(user_id=test_user_one.id, phone_number=phone_number)
+
+        phone_number = "6511234567"
+        test_group = self.create_connection_group(user_id=test_user_one.id, name="Test")
+        self.create_invite(user_id=test_user_one.id, phone_number=phone_number, connection_group_ids=[test_group.id])
 
         user_id = str(uuid.uuid4())
         assert len(self.connection_service.get_pending_requests(user_id=user_id)) == 0
@@ -27,6 +29,7 @@ class TestUserIntegration(IntegrationTest):
         assert len(pending_requests) == 1
         assert pending_requests[0].requestingUserId == test_user_one.id
         assert pending_requests[0].requestedUserId == user_id
+        assert pending_requests[0].requestingConnectionGroupIds == [test_group.id]
 
         new_user = self.user_service.get_user(user_id=user_id)
         assert user == new_user

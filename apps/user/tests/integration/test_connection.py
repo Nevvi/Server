@@ -1,12 +1,13 @@
 import asyncio
+import uuid
 
-from tests.integration.integration_test import IntegrationTest
 from src.model.connection.connection_group import ConnectionGroupView
 from src.model.constants import DEFAULT_ALL_PERMISSION_GROUP_NAME, DEFAULT_CONTACT_INFO_PERMISSION_GROUP_NAME
 from src.model.enums import RequestStatus
 from src.model.requests import RequestConnectionRequest, ConfirmConnectionRequest, SearchConnectionsRequest, \
     DenyConnectionRequest, UpdateConnectionRequest, BlockConnectionRequest, CreateGroupRequest, \
     AddConnectionToGroupRequest, RemoveConnectionFromGroupRequest
+from tests.integration.integration_test import IntegrationTest
 
 
 class TestConnectionIntegration(IntegrationTest):
@@ -40,20 +41,31 @@ class TestConnectionIntegration(IntegrationTest):
 
     def test_request_connection_creates_connection(self):
         test_user = self.create_user()
-        self.create_connection_request(user=test_user, connected_user_id=self.user.id)
+
+        # Automatically add the user to the test group once the connection gets created
+        test_group = self.create_connection_group(user_id=test_user.id, name="Test")
+        self.create_connection_request(user=test_user,
+                                       connected_user_id=self.user.id,
+                                       connection_group_ids=[test_group.id])
 
         assert self.connection_service.get_connections(SearchConnectionsRequest(userId=self.user.id)).count == 0
         assert self.connection_service.get_connections(SearchConnectionsRequest(userId=test_user.id)).count == 0
 
+        # Automatically add the user to my group once the connection gets created
+        my_group = self.create_connection_group(user_id=self.user.id, name="Test")
         request = RequestConnectionRequest(requestingUserId=self.user.id,
                                            otherUserId=test_user.id,
-                                           permissionGroupName=DEFAULT_ALL_PERMISSION_GROUP_NAME)
+                                           permissionGroupName=DEFAULT_ALL_PERMISSION_GROUP_NAME,
+                                           connectionGroupIds=[my_group.id])
 
         res = self.connection_service.request_connection(request=request)
+
+        # Request was approved, connections were created, users added to the applicable groups
         assert res.status == RequestStatus.APPROVED
         assert self.connection_service.get_connections(SearchConnectionsRequest(userId=self.user.id)).count == 1
         assert self.connection_service.get_connections(SearchConnectionsRequest(userId=test_user.id)).count == 1
-
+        assert len(self.connection_service.get_connection_group(user_id=test_user.id, group_id=test_group.id).connections) == 1
+        assert len(self.connection_service.get_connection_group(user_id=self.user.id, group_id=my_group.id).connections) == 1
 
         expected_notification = {
             "userId": test_user.id,
@@ -72,10 +84,56 @@ class TestConnectionIntegration(IntegrationTest):
         request = ConfirmConnectionRequest(otherUserId=self.user.id,
                                            requestedUserId=test_user.id,
                                            permissionGroupName=DEFAULT_ALL_PERMISSION_GROUP_NAME)
-        self.connection_service.confirm_connection(request=request)
+        self.connection_service.confirm_connection(confirm_request=request)
 
         assert self.connection_service.get_connections(SearchConnectionsRequest(userId=self.user.id)).count == 1
         assert self.connection_service.get_connections(SearchConnectionsRequest(userId=test_user.id)).count == 1
+
+        expected_notification = {
+            "userId": self.user.id,
+            "title": "Nevvi",
+            "body": f"{test_user.firstName} accepted your request!"
+        }
+        assert self.assert_sqs_message_sent(expected_body=expected_notification, queue_url=self.notification_queue)
+
+        expected_message = {
+            "userId": self.user.id,
+        }
+        assert self.assert_sqs_message_sent(expected_body=expected_message, queue_url=self.suggestions_queue)
+
+    def test_confirm_invited_connection(self):
+        test_user = self.create_user()
+
+        my_group = self.create_connection_group(user_id=self.user.id, name="Test")
+        self.connection_service.connection_group_dao.add_invite(user_id=self.user.id,
+                                                                group_id=my_group.id,
+                                                                phone_number=test_user.phoneNumber)
+        test_group = self.connection_service.get_connection_group(user_id=self.user.id, group_id=my_group.id)
+        assert len(test_group.connections) == 0
+        assert len(test_group.invites) == 1
+
+        # Add the test user to the group once the request is confirmed, should ignore an old connection group id
+        bogus_connection_group_id = str(uuid.uuid4())
+        self.create_connection_request(user=self.user,
+                                       connected_user_id=test_user.id,
+                                       connection_group_ids=[my_group.id, bogus_connection_group_id])
+
+        assert self.connection_service.get_connections(SearchConnectionsRequest(userId=self.user.id)).count == 0
+        assert self.connection_service.get_connections(SearchConnectionsRequest(userId=test_user.id)).count == 0
+
+        request = ConfirmConnectionRequest(otherUserId=self.user.id,
+                                           requestedUserId=test_user.id,
+                                           permissionGroupName=DEFAULT_ALL_PERMISSION_GROUP_NAME,
+                                           connectionGroupIds=[])
+        self.connection_service.confirm_connection(confirm_request=request)
+
+        assert self.connection_service.get_connections(SearchConnectionsRequest(userId=self.user.id)).count == 1
+        assert self.connection_service.get_connections(SearchConnectionsRequest(userId=test_user.id)).count == 1
+
+        # Confirmed user got removed from the invite list and added to the connection list
+        test_group = self.connection_service.get_connection_group(user_id=self.user.id, group_id=my_group.id)
+        assert len(test_group.connections) == 1
+        assert len(test_group.invites) == 0
 
         expected_notification = {
             "userId": self.user.id,
@@ -116,13 +174,17 @@ class TestConnectionIntegration(IntegrationTest):
         test_user_two = self.create_user()
 
         # We can see all the info for user one, but only contact info for user two
-        self.create_connection(user_id=test_user_one.id, connected_user_id=self.user.id,
+        self.create_connection(user_id=test_user_one.id,
+                               connected_user_id=self.user.id,
                                permission_group=DEFAULT_ALL_PERMISSION_GROUP_NAME)
-        self.create_connection(user_id=self.user.id, connected_user_id=test_user_one.id,
+        self.create_connection(user_id=self.user.id,
+                               connected_user_id=test_user_one.id,
                                permission_group=DEFAULT_ALL_PERMISSION_GROUP_NAME)
-        self.create_connection(user_id=test_user_two.id, connected_user_id=self.user.id,
+        self.create_connection(user_id=test_user_two.id,
+                               connected_user_id=self.user.id,
                                permission_group=DEFAULT_CONTACT_INFO_PERMISSION_GROUP_NAME)
-        self.create_connection(user_id=self.user.id, connected_user_id=test_user_two.id,
+        self.create_connection(user_id=self.user.id,
+                               connected_user_id=test_user_two.id,
                                permission_group=DEFAULT_ALL_PERMISSION_GROUP_NAME)
 
         user_one_connection = self.connection_service.get_user_connection(user_id=self.user.id,
@@ -161,7 +223,8 @@ class TestConnectionIntegration(IntegrationTest):
         assert test_user_connection.mailingAddress is not None
         assert test_user_connection.birthday is not None
 
-        update_request = UpdateConnectionRequest(userId=self.user.id, otherUserId=test_user.id,
+        update_request = UpdateConnectionRequest(userId=self.user.id,
+                                                 otherUserId=test_user.id,
                                                  permissionGroupName=DEFAULT_CONTACT_INFO_PERMISSION_GROUP_NAME)
         self.connection_service.update_connection(request=update_request)
 
@@ -179,9 +242,11 @@ class TestConnectionIntegration(IntegrationTest):
         test_user = self.create_user()
         self.create_connection_request(user=self.user, connected_user_id=test_user.id)
         self.create_connection_request(user=test_user, connected_user_id=self.user.id)
-        self.create_connection(user_id=test_user.id, connected_user_id=self.user.id,
+        self.create_connection(user_id=test_user.id,
+                               connected_user_id=self.user.id,
                                permission_group=DEFAULT_ALL_PERMISSION_GROUP_NAME)
-        self.create_connection(user_id=self.user.id, connected_user_id=test_user.id,
+        self.create_connection(user_id=self.user.id,
+                               connected_user_id=test_user.id,
                                permission_group=DEFAULT_ALL_PERMISSION_GROUP_NAME)
 
         assert len(self.user.blockedUsers) == 0
@@ -222,9 +287,11 @@ class TestConnectionIntegration(IntegrationTest):
         assert len(new_group.connections) == 0
 
         test_user = self.create_user()
-        self.create_connection(user_id=self.user.id, connected_user_id=test_user.id,
+        self.create_connection(user_id=self.user.id,
+                               connected_user_id=test_user.id,
                                permission_group=DEFAULT_ALL_PERMISSION_GROUP_NAME)
-        self.create_connection(user_id=test_user.id, connected_user_id=self.user.id,
+        self.create_connection(user_id=test_user.id,
+                               connected_user_id=self.user.id,
                                permission_group=DEFAULT_ALL_PERMISSION_GROUP_NAME)
 
         request = AddConnectionToGroupRequest(userId=self.user.id, connectedUserId=test_user.id, groupId=new_group.id)
@@ -240,7 +307,9 @@ class TestConnectionIntegration(IntegrationTest):
         assert len(test_group.connections) == 1
         assert test_user.id in test_group.connections
 
-        request = RemoveConnectionFromGroupRequest(userId=self.user.id, connectedUserId=test_user.id, groupId=new_group.id)
+        request = RemoveConnectionFromGroupRequest(userId=self.user.id,
+                                                   connectedUserId=test_user.id,
+                                                   groupId=new_group.id)
         self.connection_service.remove_connection_from_group(request=request)
 
         test_group = get_group()
@@ -248,9 +317,11 @@ class TestConnectionIntegration(IntegrationTest):
 
     def test_export_group(self):
         test_user = self.create_user()
-        self.create_connection(user_id=self.user.id, connected_user_id=test_user.id,
+        self.create_connection(user_id=self.user.id,
+                               connected_user_id=test_user.id,
                                permission_group=DEFAULT_ALL_PERMISSION_GROUP_NAME)
-        self.create_connection(user_id=test_user.id, connected_user_id=self.user.id,
+        self.create_connection(user_id=test_user.id,
+                               connected_user_id=self.user.id,
                                permission_group=DEFAULT_ALL_PERMISSION_GROUP_NAME)
 
         new_group = self.create_connection_group(user_id=self.user.id)
