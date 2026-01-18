@@ -92,5 +92,5 @@ def remind_group_invite(event, context):
     request = RemindGroupInviteRequest(userId=path_params.get("userId"),
                                        groupId=path_params.get("groupId"),
                                        phoneNumber=path_params.get("phoneNumber"))
-    res = connection_service.remind_group_invite(request=request)
-    return create_response(200, res)
+    connection_service.remind_group_invite(request=request)
+    return create_response(200, True)
